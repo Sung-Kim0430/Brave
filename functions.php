@@ -8,6 +8,7 @@ function themeInit()
 {
     Helper::options()->commentsAntiSpam = false; //关闭反垃圾
     Helper::options()->commentsCheckReferer = false; //关闭检查评论来源URL与文章链接是否一致判断(否则会无法评论)
+    Helper::options()->commentsRequireURL = false;
     Helper::options()->commentsMaxNestingLevels = '999'; //最大嵌套层数
     Helper::options()->commentsPageDisplay = 'first'; //强制评论第一页
     Helper::options()->commentsOrder = 'DESC'; //将最新的评论展示在前

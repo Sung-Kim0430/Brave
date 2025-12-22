@@ -63,25 +63,25 @@ echo $commentClass;
                                 href="<?php $this->options->profileUrl(); ?>"><?php $this->user->screenName(); ?></a>.
                         <a href="<?php $this->options->logoutUrl(); ?>" title="Logout"><?php _e('退出'); ?> &raquo;</a>
                     </p>
-                <?php else : ?>
-                    <div class="form-row">
-                        <div class="form-group col-md-4">
-                            <input type="text" name="author" id="author" class="form-control"
-                                   placeholder="<?php _e('姓名或昵称*'); ?>" value="<?php $this->remember('author'); ?>"
-                                   required/>
-                        </div>
-                        <div class="form-group col-md-4">
-                            <input type="email" name="mail" id="mail" class="form-control"
-                                   placeholder="<?php _e('邮箱*'); ?>"
-                                   value="<?php $this->remember('mail'); ?>" <?php if ($this->options->commentsRequireMail) : ?> required<?php endif; ?> />
-                        </div>
-                        <div class="form-group col-md-4">
-                            <input type="url" name="url" id="url" class="form-control"
-                                   placeholder="<?php _e('网站或博客'); ?>"
-                                   value="<?php $this->remember('url'); ?>" <?php if ($this->options->commentsRequireURL) : ?> required<?php endif; ?> />
-                        </div>
-                    </div>
-                <?php endif; ?>
+	                <?php else : ?>
+	                    <div class="form-row">
+	                        <div class="form-group col-md-4">
+	                            <input type="text" name="author" id="author" class="form-control"
+	                                   placeholder="<?php _e('姓名或昵称*'); ?>" value="<?php $this->remember('author'); ?>"
+	                                   required/>
+	                        </div>
+	                        <div class="form-group col-md-4">
+	                            <input type="email" name="mail" id="mail" class="form-control"
+	                                   placeholder="<?php _e('邮箱*'); ?>"
+	                                   value="<?php $this->remember('mail'); ?>" <?php if ($this->options->commentsRequireMail) : ?> required<?php endif; ?> />
+	                        </div>
+	                        <div class="form-group col-md-4">
+	                            <input type="url" name="url" id="url" class="form-control"
+	                                   placeholder="<?php _e('网站或博客'); ?>"
+	                                   value="<?php $this->remember('url'); ?>" />
+	                        </div>
+	                    </div>
+	                <?php endif; ?>
                 <div class="form-group">
                     <textarea rows="3" cols="50" name="text" id="textarea" class="form-control"
                               placeholder="<?php _e('写下对我们的祝福'); ?>"
