@@ -19,7 +19,7 @@ $this->need('base/nav.php');
             <?php while ($this->next()) : ?>
                 <article style="padding: 20px;border-bottom: 1px solid rgba(0,123,255,.2);text-align: center;" class="post">
                     <h4 class="post-title" itemprop="name headline"><a class=" list-wbc" itemprop="url" href="<?php $this->permalink() ?>"><?php $this->title() ?></a></h4>
-                    <time datetime="<?php $this->date('c'); ?>" itemprop="datePublished"> 落笔于 <?php $this->date(); ?></time>
+                    <time datetime="<?php $this->date('c'); ?>" itemprop="datePublished"><?php $this->date('Y-m-d'); ?></time>
                 </article>
             <?php endwhile; ?>
         <?php else : ?>
