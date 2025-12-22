@@ -10,7 +10,7 @@ $this->need('base/nav.php');
 ?>
 <div class="container">
     <blockquote class="blockquote text-center my-5 py-2">
-        <h5 class="card-title lover-card-title">我们在一起已经</h5>
+        <h5 class="card-title lover-card-title">这是我们在一起的</h5>
         <h5 id="site_runtime"></h5>
     </blockquote>
     <div class="row indexPlate">
