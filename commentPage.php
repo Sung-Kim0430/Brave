@@ -32,17 +32,14 @@ $comments->alt(' comment-odd', ' comment-even');
 echo $commentClass;
 ?>">
 
-    <div class="commentlist">
-        <div class="comment" id="li-<?php $comments->theId(); ?>">
-            <div id="<?php $comments->theId(); ?>">
-                <div class="comment-avatar"><img alt="" src="<?= App::avatarQQ($comments->mail); ?>s=100"
-                                                 class="avatar avatar-96 photo" height="96" width="96"
-                                                 style="display: inline;"></div>
-                <div class="comment-body">
-                    <div class="comment_author">
-                        <span class="name"><?php $comments->author(); ?></span>
-                        <em><?php $comments->date('Y-m-d H:i'); ?></em>
-                    </div>
+	    <div class="commentlist">
+	        <div class="comment" id="li-<?php $comments->theId(); ?>">
+	            <div id="<?php $comments->theId(); ?>">
+	                <div class="comment-body">
+	                    <div class="comment_author">
+	                        <span class="name"><?php $comments->author(); ?></span>
+	                        <em><?php $comments->date('Y-m-d H:i'); ?></em>
+	                    </div>
                     <div class="comment-text">
                         <?php $comments->content(); ?>
                     </div>
