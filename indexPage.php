@@ -10,7 +10,7 @@ $this->need('base/nav.php');
 ?>
 <div class="container">
     <blockquote class="blockquote text-center my-5 py-2">
-        <h5 class="card-title lover-card-title">这是我们在一起的</h5>
+        <h5 class="card-title lover-card-title">已相伴</h5>
         <h5 id="site_runtime"></h5>
     </blockquote>
     <div class="row indexPlate">
@@ -24,8 +24,8 @@ $this->need('base/nav.php');
                             </div>
                         </div>
                         <div class="col">
-                            <p class="h5">祝福板</p>
-                            <p class="small text-muted mb-1">💌写下祝福</p>
+                            <p class="h5">祝愿墙</p>
+                            <p class="small text-muted mb-1">写下一句祝愿</p>
                         </div>
                     </div>
                 </div>
@@ -41,8 +41,8 @@ $this->need('base/nav.php');
                             </div>
                         </div>
                         <div class="col">
-                            <p class="h5">点点滴滴</p>
-                            <p class="small text-muted mb-1">💖我们的瞬间</p>
+                            <p class="h5">点滴时光</p>
+                            <p class="small text-muted mb-1">把瞬间收进岁月</p>
                         </div>
                     </div>
                 </div>
@@ -58,8 +58,8 @@ $this->need('base/nav.php');
                             </div>
                         </div>
                         <div class="col">
-                            <p class="h5">Love List</p>
-                            <p class="small text-muted mb-1">📜有你相伴</p>
+                            <p class="h5">恋爱清单</p>
+                            <p class="small text-muted mb-1">把喜欢写成清单</p>
                         </div>
                     </div>
                 </div>

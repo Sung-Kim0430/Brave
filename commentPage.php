@@ -52,23 +52,23 @@ echo $commentClass;
     <div id="<?php $this->respondId(); ?>" class="respond list-content mx-auto mt-5">
         <div class="list-top">
             <?php if ($comments->have()) : ?>
-                <h5 class="text-center"><?php $this->commentsNum(_t('暂无祝福'), _t('仅有一条祝福'), _t('累计已经收到<span class="bigfontNum"> %d </span>条祝福')); ?></h5>
+                <h5 class="text-center"><?php $this->commentsNum(_t('尚无祝愿'), _t('仅有一则祝愿'), _t('已收下<span class="bigfontNum"> %d </span>份祝愿')); ?></h5>
                 <?php $comments->listComments(); ?>
-                <?php $comments->pageNav('&laquo; 前一页', '后一页 &raquo;'); ?>
+                <?php $comments->pageNav('&laquo; 上一页', '下一页 &raquo;'); ?>
             <?php endif; ?>
             <form method="post" action="<?php $this->commentUrl() ?>" name="comment-form" id="comment-form" role="form"
                   class="comment-form">
                 <?php if ($this->user->hasLogin()) : ?>
-                    <p><?php _e('登录身份: '); ?><a
+                    <p><?php _e('当前身份: '); ?><a
                                 href="<?php $this->options->profileUrl(); ?>"><?php $this->user->screenName(); ?></a>.
-                        <a href="<?php $this->options->logoutUrl(); ?>" title="Logout"><?php _e('退出'); ?> &raquo;</a>
+                        <a href="<?php $this->options->logoutUrl(); ?>" title="Logout"><?php _e('退出登录'); ?> &raquo;</a>
                     </p>
 	                <?php else : ?>
 	                    <div class="form-row">
 	                        <div class="form-group col-md-4">
 	                            <input type="text" name="author" id="author" class="form-control"
-	                                   placeholder="<?php _e('姓名或昵称*'); ?>" value="<?php $this->remember('author'); ?>"
-	                                   required/>
+		                                   placeholder="<?php _e('你的称呼*'); ?>" value="<?php $this->remember('author'); ?>"
+		                                   required/>
 	                        </div>
 	                        <div class="form-group col-md-4">
 	                            <input type="email" name="mail" id="mail" class="form-control"
@@ -77,24 +77,24 @@ echo $commentClass;
 	                        </div>
 	                        <div class="form-group col-md-4">
 	                            <input type="url" name="url" id="url" class="form-control"
-	                                   placeholder="<?php _e('网站或博客'); ?>"
-	                                   value="<?php $this->remember('url'); ?>" />
+		                                   placeholder="<?php _e('网站/博客（可选）'); ?>"
+		                                   value="<?php $this->remember('url'); ?>" />
 	                        </div>
 	                    </div>
 	                <?php endif; ?>
                 <div class="form-group">
                     <textarea rows="3" cols="50" name="text" id="textarea" class="form-control"
-                              placeholder="<?php _e('写下对我们的祝福'); ?>"
-                              required><?php $this->remember('text'); ?></textarea>
+	                              placeholder="<?php _e('把祝愿写给我们'); ?>"
+	                              required><?php $this->remember('text'); ?></textarea>
                 </div>
                 <div class="form-group">
-                    <button type="submit" class="float-right btn btn-outline-danger"><?php _e('祝福发送'); ?></button>
+                    <button type="submit" class="float-right btn btn-outline-danger"><?php _e('送出祝愿'); ?></button>
                 </div>
             </form>
         </div>
     </div>
 <?php else : ?>
-    <h3><?php _e('评论已关闭'); ?></h3>
+    <h3><?php _e('留言暂已关闭'); ?></h3>
 <?php endif; ?>
 
 <?php $this->need('base/footer.php'); ?>
