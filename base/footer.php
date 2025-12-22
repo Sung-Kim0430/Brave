@@ -3,8 +3,19 @@
 	<h6>©<?php $this->options->title() ?></h6>
 	<p class="h6"> Powered by <a href="http://typecho.org" target="_blank">Typecho</a> ※ Theme is <a href="https://blog.zwying.com" target="_blank">Brave</a></p>
 </div>
-<script src="https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery.pjax/2.0.1/jquery.pjax.min.js" type="application/javascript"></script>
-<script src="https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/nprogress/0.2.0/nprogress.min.js" type="application/javascript"></script>
+<script>
+	window.jQuery || document.write('<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" type="application/javascript"><\\/script>');
+</script>
+<script src="https://cdn.staticfile.org/jquery.pjax/2.0.1/jquery.pjax.min.js" type="application/javascript"></script>
+<script>
+	if (window.jQuery && (!window.jQuery.fn || !window.jQuery.fn.pjax)) {
+		document.write('<script src="https://cdn.jsdelivr.net/npm/jquery-pjax@2.0.1/jquery.pjax.min.js" type="application/javascript"><\\/script>');
+	}
+</script>
+<script src="https://cdn.staticfile.org/nprogress/0.2.0/nprogress.min.js" type="application/javascript"></script>
+<script>
+	window.NProgress || document.write('<script src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js" type="application/javascript"><\\/script>');
+</script>
 <script>
 	window.showSiteRuntime = function() {
         var site_runtime = $("#site_runtime");
