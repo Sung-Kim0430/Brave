@@ -1,10 +1,11 @@
 <?php
 use Typecho\Widget\Helper\Form\Element\Text;
 use Typecho\Widget\Helper\Form\Element\Textarea;
+use Typecho\Widget\Helper\Form\Element\Radio;
 if (!defined('__TYPECHO_ROOT_DIR__')) exit;
 require_once("core/shortcodes.php");
 require_once("core/App.php");
-function themeInit()
+function themeInit($archive = null)
 {
     Helper::options()->commentsAntiSpam = false; //关闭反垃圾
     Helper::options()->commentsCheckReferer = false; //关闭检查评论来源URL与文章链接是否一致判断(否则会无法评论)
@@ -12,7 +13,19 @@ function themeInit()
     Helper::options()->commentsMaxNestingLevels = '999'; //最大嵌套层数
     Helper::options()->commentsPageDisplay = 'first'; //强制评论第一页
     Helper::options()->commentsOrder = 'DESC'; //将最新的评论展示在前
-    Helper::options()->commentsHTMLTagAllowed = '<a href=""> <img src=""> <img src="" class=""> <code> <del>';
+
+    $allowCommentImg = false;
+    $options = Helper::options();
+    if (isset($options->commentAllowImg) && (string)$options->commentAllowImg === '1') {
+        $allowCommentImg = true;
+    }
+
+    // 仅放行评论中必要的基础标签与属性（额外净化在模板输出阶段处理）。
+    $allowedTags = '<a href="" title="" rel="" target=""> <code> <pre> <del> <strong> <em> <blockquote> <p> <br> <ul> <ol> <li> <hr>';
+    if ($allowCommentImg) {
+        $allowedTags .= ' <img src="" alt="" title="" class="">';
+    }
+    Helper::options()->commentsHTMLTagAllowed = $allowedTags;
     Helper::options()->commentsMarkdown = true;
 }
 /**
@@ -48,6 +61,30 @@ function themeConfig($form)
 
     $timePageIcon = new Text('timePageIcon', NULL, NULL, _t('首页点点滴滴图标'), _t('在此输入图标直链，将显示在首页点点滴滴小版块中'));
     $form->addInput($timePageIcon);
+
+    $commentAllowImg = new Radio(
+        'commentAllowImg',
+        array(
+            '0' => _t('不允许（推荐）'),
+            '1' => _t('允许（兼容旧版本）'),
+        ),
+        '0',
+        _t('评论允许图片'),
+        _t('开启后评论内容中的 <img> 会被保留；关闭可减少追踪像素与外链风险。')
+    );
+    $form->addInput($commentAllowImg);
+
+    $loveListTitleAllowHtml = new Radio(
+        'loveListTitleAllowHtml',
+        array(
+            '0' => _t('仅纯文本（推荐）'),
+            '1' => _t('允许少量 HTML（兼容）'),
+        ),
+        '0',
+        _t('Love List 标题允许 HTML'),
+        _t('开启后 [item] 标题允许 <del><code><strong><em><br> 等少量标签；关闭则全部按纯文本输出。')
+    );
+    $form->addInput($loveListTitleAllowHtml);
 
     $CustomContenth = new Textarea('头部自定义', NULL, NULL, _t('头部自定义内容'), _t('位于头部，head内，适合放置一些链接引用或自定义内容'));
     $form->addInput($CustomContenth);

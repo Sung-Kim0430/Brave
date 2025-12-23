@@ -33,6 +33,11 @@
 - `blessingPageIcon` / `blessingPageLink`：首页祝福板卡片图标与链接
 - `timePageIcon`：首页点滴时光图标（链接当前写死为 `/index.php/blog/`，可自行改主题代码或通过路由配置适配）
 
+安全相关（推荐保持默认）：
+
+- `commentAllowImg`：评论允许图片开关；关闭可减少追踪像素与外链风险
+- `loveListTitleAllowHtml`：Love List 标题是否允许少量 HTML（兼容模式）
+
 高级项（具备脚本/样式执行能力，请谨慎授权）：
 
 - `头部自定义`：输出到 `base/head.php` 的 `<head>` 内

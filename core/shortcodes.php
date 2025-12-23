@@ -408,7 +408,15 @@ function do_shortcodes_in_html_tags( $content, $ignore_html, $tagnames ) {
 			continue;
 		}
 
-		$attributes = wp_kses_attr_parse( $element );
+			// WordPress 的 shortcodes 逻辑依赖 KSES（wp_kses_*）来解析/净化属性。
+			// 在 Typecho 主题内通常不会引入完整的 WP KSES 实现；若缺失则做安全降级：
+			// 不处理 HTML 标签/属性内部的短代码，避免 fatal 并减少属性注入风险。
+			if ( ! function_exists( 'wp_kses_attr_parse' ) || ! function_exists( 'wp_kses_one_attr' ) ) {
+				$element = strtr( $element, $trans );
+				continue;
+			}
+
+			$attributes = wp_kses_attr_parse( $element );
 		if ( false === $attributes ) {
 			// Some plugins are doing things like [name] <[email]>.
 			if ( 1 === preg_match( '%^<\s*\[\[?[^\[\]]+\]%', $element ) ) {

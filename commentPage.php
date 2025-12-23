@@ -41,11 +41,18 @@ echo $commentClass;
 	                        <span class="name"><?php $comments->author(); ?></span>
 	                        <em><?php $comments->date('Y-m-d H:i'); ?></em>
 	                    </div>
-                    <div class="comment-text">
-                        <?php $comments->content(); ?>
-                    </div>
-                </div>
-            </div>
+	                    <div class="comment-text">
+	                        <?php
+                            ob_start();
+                            $comments->content();
+                            $commentHtml = ob_get_clean();
+                            $allowImages = isset(Helper::options()->commentAllowImg)
+                                && (string)Helper::options()->commentAllowImg === '1';
+                            echo App::sanitizeCommentHtml($commentHtml, $allowImages);
+                            ?>
+	                    </div>
+	                </div>
+	            </div>
         </div>
     </div>
 <?php } ?>

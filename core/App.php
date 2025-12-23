@@ -34,6 +34,316 @@ class App
         }
     }
 
+    public static function normalizeUrl($url, $allowRelative, $allowedSchemes)
+    {
+        if (!is_string($url)) {
+            return '';
+        }
+
+        $url = trim($url);
+        if ($url === '') {
+            return '';
+        }
+
+        // Normalize for scheme checks: decode entities and remove ASCII control/space chars.
+        $decoded = html_entity_decode($url, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $decoded = preg_replace('/[\\x00-\\x20]+/u', '', $decoded);
+
+        // Block dangerous schemes even if obfuscated with entities/whitespace.
+        if (preg_match('#^(?:javascript|data|vbscript):#i', $decoded)) {
+            return '';
+        }
+
+        // Allow protocol-relative URLs (e.g. //example.com/a.png).
+        if (strpos($decoded, '//') === 0) {
+            return $url;
+        }
+
+        if (preg_match('#^([a-z][a-z0-9+.-]*):#i', $decoded, $m)) {
+            $scheme = strtolower($m[1]);
+            if (!in_array($scheme, $allowedSchemes, true)) {
+                return '';
+            }
+            return $url;
+        }
+
+        if ($allowRelative) {
+            $firstChar = substr($url, 0, 1);
+            if ($firstChar === '/' || $firstChar === '#') {
+                return $url;
+            }
+            if (strpos($url, './') === 0 || strpos($url, '../') === 0) {
+                return $url;
+            }
+        }
+
+        return '';
+    }
+
+    private static function normalizeClassList($class)
+    {
+        $class = (string)$class;
+        $class = preg_replace('/[^A-Za-z0-9 _-]+/', '', $class);
+        $class = trim(preg_replace('/\\s+/', ' ', $class));
+        return $class;
+    }
+
+    private static function normalizeRelTokens($rel, $requiredTokens)
+    {
+        $rel = strtolower((string)$rel);
+        $parts = preg_split('/\\s+/', trim($rel));
+        $map = array();
+        foreach ($parts as $p) {
+            if ($p === '') continue;
+            $map[$p] = true;
+        }
+        foreach ($requiredTokens as $token) {
+            $map[$token] = true;
+        }
+        return implode(' ', array_keys($map));
+    }
+
+    private static function unwrapNode($node)
+    {
+        $parent = $node->parentNode;
+        if (!$parent) {
+            return;
+        }
+
+        while ($node->firstChild) {
+            $parent->insertBefore($node->firstChild, $node);
+        }
+        $parent->removeChild($node);
+    }
+
+    private static function sanitizeElementAttributes($element, $allowedAttrsByTag)
+    {
+        $tag = strtolower($element->nodeName);
+        $allowed = isset($allowedAttrsByTag[$tag]) ? $allowedAttrsByTag[$tag] : array();
+        $allowedMap = array();
+        foreach ($allowed as $attrName) {
+            $allowedMap[strtolower($attrName)] = true;
+        }
+
+        $removeElement = false;
+
+        if ($element->hasAttributes()) {
+            $toRemove = array();
+            foreach ($element->attributes as $attr) {
+                $name = strtolower($attr->nodeName);
+
+                // Drop all event handler attributes like onclick/onerror...
+                if (strpos($name, 'on') === 0) {
+                    $toRemove[] = $name;
+                    continue;
+                }
+
+                if (!isset($allowedMap[$name])) {
+                    $toRemove[] = $name;
+                    continue;
+                }
+
+                $value = $attr->nodeValue;
+
+                if ($tag === 'a' && $name === 'href') {
+                    $safeUrl = self::normalizeUrl($value, true, array('http', 'https', 'mailto'));
+                    if ($safeUrl === '') {
+                        $toRemove[] = $name;
+                    } else {
+                        $element->setAttribute('href', $safeUrl);
+                    }
+                    continue;
+                }
+
+                if ($tag === 'img' && $name === 'src') {
+                    $safeUrl = self::normalizeUrl($value, true, array('http', 'https'));
+                    if ($safeUrl === '') {
+                        $removeElement = true;
+                    } else {
+                        $element->setAttribute('src', $safeUrl);
+                    }
+                    continue;
+                }
+
+                if (($tag === 'code' || $tag === 'pre') && $name === 'class') {
+                    $safeClass = self::normalizeClassList($value);
+                    if ($safeClass === '') {
+                        $toRemove[] = $name;
+                    } else {
+                        $element->setAttribute('class', $safeClass);
+                    }
+                    continue;
+                }
+
+                if ($tag === 'img' && $name === 'class') {
+                    $safeClass = self::normalizeClassList($value);
+                    if ($safeClass === '') {
+                        $toRemove[] = $name;
+                    } else {
+                        $element->setAttribute('class', $safeClass);
+                    }
+                    continue;
+                }
+
+                if ($tag === 'a' && $name === 'target') {
+                    $target = strtolower(trim((string)$value));
+                    if ($target !== '_blank' && $target !== '_self') {
+                        $toRemove[] = $name;
+                    } else {
+                        $element->setAttribute('target', $target);
+                    }
+                    continue;
+                }
+
+                if ($tag === 'a' && $name === 'rel') {
+                    // Normalized later (after attribute iteration).
+                    continue;
+                }
+
+                if ($tag === 'img' && ($name === 'loading' || $name === 'referrerpolicy')) {
+                    // Overwrite later with safer defaults.
+                    continue;
+                }
+            }
+
+            foreach ($toRemove as $name) {
+                $element->removeAttribute($name);
+            }
+        }
+
+        if ($removeElement) {
+            $parent = $element->parentNode;
+            if ($parent) {
+                $parent->removeChild($element);
+            }
+            return false;
+        }
+
+        // Post-process a/img attributes with safer defaults.
+        if ($tag === 'a') {
+            $rel = $element->getAttribute('rel');
+            $element->setAttribute('rel', self::normalizeRelTokens($rel, array('nofollow', 'ugc', 'noopener', 'noreferrer')));
+        }
+
+        if ($tag === 'img') {
+            $element->setAttribute('loading', 'lazy');
+            $element->setAttribute('referrerpolicy', 'no-referrer');
+        }
+
+        return true;
+    }
+
+    private static function sanitizeHtmlFragment($html, $allowedTags, $allowedAttrsByTag)
+    {
+        $html = (string)$html;
+        if ($html === '') {
+            return '';
+        }
+
+        if (!class_exists('DOMDocument')) {
+            // Safe fallback: render as plain text.
+            return htmlspecialchars($html, ENT_QUOTES, 'UTF-8');
+        }
+
+        $dom = new DOMDocument('1.0', 'UTF-8');
+        $prev = libxml_use_internal_errors(true);
+
+        $wrapped = '<div>' . $html . '</div>';
+        if (defined('LIBXML_HTML_NOIMPLIED') && defined('LIBXML_HTML_NODEFDTD')) {
+            $dom->loadHTML('<?xml encoding="UTF-8">' . $wrapped, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        } else {
+            $dom->loadHTML('<?xml encoding="UTF-8">' . $wrapped);
+        }
+
+        libxml_clear_errors();
+        libxml_use_internal_errors($prev);
+
+        $root = $dom->getElementsByTagName('div')->item(0);
+        if (!$root) {
+            return htmlspecialchars($html, ENT_QUOTES, 'UTF-8');
+        }
+
+        $allowedTagMap = array();
+        foreach ($allowedTags as $tag) {
+            $allowedTagMap[strtolower($tag)] = true;
+        }
+
+        $walk = function ($node) use (&$walk, $allowedTagMap, $allowedAttrsByTag) {
+            $children = array();
+            foreach ($node->childNodes as $child) {
+                $children[] = $child;
+            }
+
+            foreach ($children as $child) {
+                if ($child->nodeType === XML_COMMENT_NODE) {
+                    $node->removeChild($child);
+                    continue;
+                }
+
+                if ($child->nodeType !== XML_ELEMENT_NODE) {
+                    continue;
+                }
+
+                $tag = strtolower($child->nodeName);
+
+                if (!isset($allowedTagMap[$tag])) {
+                    // Remove dangerous blocks entirely; otherwise unwrap to keep inner text.
+                    if ($tag === 'script' || $tag === 'style' || $tag === 'iframe' || $tag === 'object' || $tag === 'embed') {
+                        $node->removeChild($child);
+                    } else {
+                        self::unwrapNode($child);
+                    }
+                    continue;
+                }
+
+                $kept = self::sanitizeElementAttributes($child, $allowedAttrsByTag);
+                if ($kept) {
+                    $walk($child);
+                }
+            }
+        };
+
+        $walk($root);
+
+        $out = '';
+        foreach ($root->childNodes as $child) {
+            $out .= $dom->saveHTML($child);
+        }
+
+        return $out;
+    }
+
+    public static function sanitizeCommentHtml($html, $allowImages = false)
+    {
+        $allowedTags = array('a', 'p', 'br', 'strong', 'em', 'del', 'code', 'pre', 'blockquote', 'ul', 'ol', 'li', 'hr');
+        if ($allowImages) {
+            $allowedTags[] = 'img';
+        }
+
+        $allowedAttrsByTag = array(
+            'a' => array('href', 'title', 'rel', 'target'),
+            'code' => array('class'),
+            'pre' => array('class'),
+            'img' => array('src', 'alt', 'title', 'class', 'loading', 'referrerpolicy'),
+        );
+
+        return self::sanitizeHtmlFragment($html, $allowedTags, $allowedAttrsByTag);
+    }
+
+    public static function sanitizeLoveListTitle($title, $allowHtml = false)
+    {
+        $title = (string)$title;
+
+        if (!$allowHtml) {
+            return htmlspecialchars($title, ENT_QUOTES, 'UTF-8');
+        }
+
+        return self::sanitizeHtmlFragment(
+            $title,
+            array('del', 'code', 'strong', 'em', 'br'),
+            array()
+        );
+    }
 }
 
 function loveListAcc($atts, $content = '')
@@ -45,19 +355,51 @@ function loveListAcc($atts, $content = '')
             $matches[3][$i] = shortcode_parse_atts($matches[3][$i]);
         }
         $out = '<div class="accordion mx-auto mt-5" id="loveList">';
+
+        $allowTitleHtml = false;
+        $options = Helper::options();
+        if (isset($options->loveListTitleAllowHtml) && (string)$options->loveListTitleAllowHtml === '1') {
+            $allowTitleHtml = true;
+        }
+
         foreach ($matches[3] as $key => $value){
+            if (!is_array($value)) {
+                $value = array();
+            }
+
+            $status = isset($value['status']) ? (string)$value['status'] : '0';
+            $isTodo = ($status === '0');
+
+            $rawTitle = isset($matches[5][$key]) ? (string)$matches[5][$key] : '';
+            $safeTitle = App::sanitizeLoveListTitle($rawTitle, $allowTitleHtml);
+
+            $rawImg = isset($value['img']) ? (string)$value['img'] : '';
+            $style = '';
+            if ($rawImg !== '') {
+                $safeImg = App::normalizeUrl($rawImg, true, array('http', 'https'));
+                if ($safeImg !== '') {
+                    $safeImg = str_replace(array("\\", "\r", "\n"), array("\\\\", '', ''), $safeImg);
+                    $safeImg = str_replace("'", "\\'", $safeImg);
+                    $style = "background-image: url('{$safeImg}')";
+                }
+            }
+
             $out .= '<div class="card">';
             $out .= '<div class="card-header p-1 bg-white" id="heading'.$key.'"><h2 class="mb-0">';
             $out .= '<span class="btn collapsed ml-auto d-flex align-items-center" type="button" data-toggle="collapse" data-target="#collapse'.$key.'" aria-expanded="false" aria-controls="collapse'.$key.'">';
-            if ($value['status'] == "0")
+            if ($isTodo)
                 $out .= '<img class="statusIcon" src="'.Helper::options()->themeUrl.'/svg/todo.svg">';
             else
                 $out .= '<img class="statusIcon" src="'.Helper::options()->themeUrl.'/svg/ok.svg">';
-            $out .= '<strong>'.$matches[5][$key].'</strong>';
+            $out .= '<strong>'.$safeTitle.'</strong>';
             $out .= '</span></h2></div>';
             $out .= '<div id="collapse'.$key.'" class="collapse" aria-labelledby="heading'.$key.'" data-parent="#loveList">';
             $out .= '<div class="card-body p-0">';
-            $out .= '<section style="background-image: url('.$value['img'].')"></section>';
+            if ($style !== '') {
+                $out .= '<section style="'.htmlspecialchars($style, ENT_QUOTES, 'UTF-8').'"></section>';
+            } else {
+                $out .= '<section></section>';
+            }
             $out .= '</div></div></div>';
         }
         $out .= '</div>';

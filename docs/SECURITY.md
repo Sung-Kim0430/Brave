@@ -15,6 +15,10 @@
   - `core/App.php`
   - `core/shortcodes.php`
 
+- 评论输出净化（祝福板）：`commentPage.php` 对评论内容进行二次净化（白名单标签 + URL 协议校验 + 移除事件属性），并提供 `commentAllowImg` 开关来控制是否允许评论图片。
+- Love List 输出加固：`core/App.php` 对 `[item]` 的 `status/img/title` 做了 `isset` 检查与上下文转义，并提供 `loveListTitleAllowHtml` 兼容开关（仅允许少量标签）。
+- Shortcodes 安全降级：`core/shortcodes.php` 在缺失 `wp_kses_*` 依赖时跳过 HTML 标签/属性内部短代码解析，避免 fatal 并减少属性注入风险。
+
 ## 高权限配置项的风险提示
 
 主题设置中包含可直接输出 HTML/CSS/JS 的字段（见 `functions.php:52` 起）：
@@ -44,4 +48,3 @@
 - 防刷与速率限制
 
 以上属于站点整体策略，未在本次“保持功能不变”的修复范围内强制修改。
-
