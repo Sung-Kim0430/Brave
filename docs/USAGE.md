@@ -36,7 +36,14 @@
 安全相关（推荐保持默认）：
 
 - `commentAllowImg`：评论允许图片开关；关闭可减少追踪像素与外链风险
+- `commentAntiSpam`：评论反垃圾开关；开启可降低垃圾评论风险
+- `commentCheckReferer`：评论 Referer 检查；更安全但可能导致部分环境无法评论
+- `commentMaxNestingLevels`：评论最大嵌套层数（建议 3~10）
 - `loveListTitleAllowHtml`：Love List 标题是否允许少量 HTML（兼容模式）
+- `assetsSource`：静态资源加载方式（默认本地，减少 CDN 供应链风险）
+- `cdnEnableSRI`：CDN 模式下是否为外链资源启用 SRI（默认开启）
+- `cdnEnableCSP`：CDN 模式下是否启用 CSP（默认开启）
+- `cspPolicy`：自定义 CSP 策略（可选；留空使用主题内置默认）
 
 高级项（具备脚本/样式执行能力，请谨慎授权）：
 

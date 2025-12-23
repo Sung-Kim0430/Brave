@@ -7,15 +7,39 @@ require_once("core/shortcodes.php");
 require_once("core/App.php");
 function themeInit($archive = null)
 {
-    Helper::options()->commentsAntiSpam = false; //关闭反垃圾
-    Helper::options()->commentsCheckReferer = false; //关闭检查评论来源URL与文章链接是否一致判断(否则会无法评论)
+    $options = Helper::options();
+
+    // 评论安全相关：提供可配置开关（默认偏安全，但尽量避免影响原有可用性）。
+    $commentAntiSpam = true;
+    if (isset($options->commentAntiSpam) && (string)$options->commentAntiSpam === '0') {
+        $commentAntiSpam = false;
+    }
+
+    // Referer 检查在部分站点/代理/隐私策略下可能导致无法评论，因此默认关闭，提供手动开启。
+    $commentCheckReferer = false;
+    if (isset($options->commentCheckReferer) && (string)$options->commentCheckReferer === '1') {
+        $commentCheckReferer = true;
+    }
+
+    $commentMaxNestingLevels = 10;
+    if (isset($options->commentMaxNestingLevels) && is_numeric($options->commentMaxNestingLevels)) {
+        $commentMaxNestingLevels = (int)$options->commentMaxNestingLevels;
+    }
+    if ($commentMaxNestingLevels < 1) {
+        $commentMaxNestingLevels = 1;
+    }
+    if ($commentMaxNestingLevels > 50) {
+        $commentMaxNestingLevels = 50;
+    }
+
+    Helper::options()->commentsAntiSpam = $commentAntiSpam;
+    Helper::options()->commentsCheckReferer = $commentCheckReferer;
     Helper::options()->commentsRequireURL = false;
-    Helper::options()->commentsMaxNestingLevels = '999'; //最大嵌套层数
+    Helper::options()->commentsMaxNestingLevels = (string)$commentMaxNestingLevels;
     Helper::options()->commentsPageDisplay = 'first'; //强制评论第一页
     Helper::options()->commentsOrder = 'DESC'; //将最新的评论展示在前
 
     $allowCommentImg = false;
-    $options = Helper::options();
     if (isset($options->commentAllowImg) && (string)$options->commentAllowImg === '1') {
         $allowCommentImg = true;
     }
@@ -62,6 +86,39 @@ function themeConfig($form)
     $timePageIcon = new Text('timePageIcon', NULL, NULL, _t('首页点点滴滴图标'), _t('在此输入图标直链，将显示在首页点点滴滴小版块中'));
     $form->addInput($timePageIcon);
 
+    $commentAntiSpam = new Radio(
+        'commentAntiSpam',
+        array(
+            '1' => _t('开启（推荐）'),
+            '0' => _t('关闭（兼容）'),
+        ),
+        '1',
+        _t('评论反垃圾'),
+        _t('开启可降低垃圾评论风险；若与插件/站点策略冲突可关闭。')
+    );
+    $form->addInput($commentAntiSpam);
+
+    $commentCheckReferer = new Radio(
+        'commentCheckReferer',
+        array(
+            '0' => _t('关闭（默认）'),
+            '1' => _t('开启（更安全）'),
+        ),
+        '0',
+        _t('评论 Referer 检查'),
+        _t('开启可减少跨站投递评论；但在部分 HTTPS/代理/隐私策略下可能导致无法评论。')
+    );
+    $form->addInput($commentCheckReferer);
+
+    $commentMaxNestingLevels = new Text(
+        'commentMaxNestingLevels',
+        NULL,
+        '10',
+        _t('评论最大嵌套层数'),
+        _t('建议 3~10；过大可能被滥用导致性能问题（已在代码中限制最大为 50）。')
+    );
+    $form->addInput($commentMaxNestingLevels);
+
     $commentAllowImg = new Radio(
         'commentAllowImg',
         array(
@@ -85,6 +142,51 @@ function themeConfig($form)
         _t('开启后 [item] 标题允许 <del><code><strong><em><br> 等少量标签；关闭则全部按纯文本输出。')
     );
     $form->addInput($loveListTitleAllowHtml);
+
+    $assetsSource = new Radio(
+        'assetsSource',
+        array(
+            'local' => _t('本地（推荐）'),
+            'cdn' => _t('CDN（兼容）'),
+        ),
+        'local',
+        _t('静态资源加载方式'),
+        _t('本地模式将从主题目录加载 jQuery/Bootstrap/pjax/nprogress，降低供应链风险；CDN 模式保持原有网络加载方式。')
+    );
+    $form->addInput($assetsSource);
+
+    $cdnEnableSRI = new Radio(
+        'cdnEnableSRI',
+        array(
+            '1' => _t('开启（默认）'),
+            '0' => _t('关闭'),
+        ),
+        '1',
+        _t('CDN 模式启用 SRI'),
+        _t('仅在静态资源加载方式为「CDN」时生效；开启后会为外部脚本/样式添加 integrity 校验，降低 CDN 被篡改风险。')
+    );
+    $form->addInput($cdnEnableSRI);
+
+    $cdnEnableCSP = new Radio(
+        'cdnEnableCSP',
+        array(
+            '1' => _t('开启（默认）'),
+            '0' => _t('关闭'),
+        ),
+        '1',
+        _t('CDN 模式启用 CSP'),
+        _t('仅在静态资源加载方式为「CDN」时生效；开启后会在 <head> 输出 CSP（Content-Security-Policy）以降低 XSS/供应链风险。若使用了额外外链脚本，可通过自定义策略放行或关闭。')
+    );
+    $form->addInput($cdnEnableCSP);
+
+    $cspPolicy = new Textarea(
+        'cspPolicy',
+        NULL,
+        NULL,
+        _t('自定义 CSP 策略（可选）'),
+        _t('留空则使用主题内置默认策略；仅在「CDN 模式 + 启用 CSP」时生效。示例：default-src \'self\'; script-src \'self\' \'unsafe-inline\' https://cdn.staticfile.org;')
+    );
+    $form->addInput($cspPolicy);
 
     $CustomContenth = new Textarea('头部自定义', NULL, NULL, _t('头部自定义内容'), _t('位于头部，head内，适合放置一些链接引用或自定义内容'));
     $form->addInput($CustomContenth);

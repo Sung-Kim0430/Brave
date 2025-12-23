@@ -32,12 +32,18 @@
 
 ## 供应链风险（CDN）
 
-主题默认从第三方 CDN 加载 jQuery / Bootstrap / pjax / nprogress 等资源（见 `base/head.php`、`base/footer.php`）。
+主题支持两种静态资源加载方式（见 `functions.php` 的 `assetsSource` 选项）：
+
+- 本地（默认）：从主题目录 `base/vendor/` 加载 jQuery / Bootstrap / pjax / nprogress，降低供应链风险。
+- CDN（兼容）：继续从第三方 CDN 加载资源（见 `base/head.php`、`base/footer.php`）。
+  - 默认启用 `cdnEnableSRI`：为外链脚本/样式添加 `integrity`（SRI）校验与 `crossorigin="anonymous"`。
+  - 默认启用 `cdnEnableCSP`：在 `<head>` 输出 CSP（Content-Security-Policy），限制脚本/样式来源并禁止危险能力（如 `object-src`）。
+  - 可选配置 `cspPolicy`：自定义 CSP 策略（留空使用主题内置默认策略）。
 
 建议（可选）：
 
-1. 尽量使用固定版本并自托管静态资源；
-2. 如果继续使用 CDN，考虑为关键脚本引入 SRI（Subresource Integrity）与更严格的 CSP（Content-Security-Policy）。
+1. 尽量使用固定版本并自托管静态资源（本主题已默认启用本地模式）；
+2. 如果继续使用 CDN，建议进一步引入 SRI（Subresource Integrity）与更严格的 CSP（Content-Security-Policy）。
 
 ## 评论与内容发布
 

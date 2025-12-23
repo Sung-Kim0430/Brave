@@ -4,19 +4,18 @@
 	<h6>©<?php $this->options->title() ?></h6>
 	<p class="h6"> Powered by <a href="http://typecho.org" target="_blank" rel="noopener noreferrer">Typecho</a> and <a href="https://github.com/Sung-Kim0430/Brave" target="_blank" rel="noopener noreferrer">Brave-Theme</a></p>
 </div>
-<script>
-	window.jQuery || document.write('<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" type="application/javascript"><\\/script>');
-</script>
-<script src="https://cdn.staticfile.org/jquery.pjax/2.0.1/jquery.pjax.min.js" type="application/javascript"></script>
-<script>
-	if (window.jQuery && (!window.jQuery.fn || !window.jQuery.fn.pjax)) {
-		document.write('<script src="https://cdn.jsdelivr.net/npm/jquery-pjax@2.0.1/jquery.pjax.min.js" type="application/javascript"><\\/script>');
-	}
-</script>
-<script src="https://cdn.staticfile.org/nprogress/0.2.0/nprogress.min.js" type="application/javascript"></script>
-<script>
-	window.NProgress || document.write('<script src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js" type="application/javascript"><\\/script>');
-</script>
+<?php $assetsSource = (isset(Helper::options()->assetsSource) ? (string)Helper::options()->assetsSource : 'local'); ?>
+<?php $cdnEnableSRI = !isset(Helper::options()->cdnEnableSRI) || (string)Helper::options()->cdnEnableSRI !== '0'; ?>
+<?php $enableSRI = ($assetsSource === 'cdn' && $cdnEnableSRI); ?>
+<?php if ($assetsSource === 'cdn') : ?>
+	<script src="https://cdn.staticfile.org/jquery.pjax/2.0.1/jquery.pjax.min.js" type="application/javascript"
+	        <?php if ($enableSRI) : ?>integrity="sha384-VLg3MPOy+5T9leB7r4BBB56zHq4/e0We8vujbAvJwp3xNDhj3b7Fg6+jOVs6bym1" crossorigin="anonymous"<?php endif; ?>></script>
+	<script src="https://cdn.staticfile.org/nprogress/0.2.0/nprogress.min.js" type="application/javascript"
+	        <?php if ($enableSRI) : ?>integrity="sha384-WVrcwN/kiINFnwTi170GvMPVLHVBao1WfcXL/BZAK3VaUaaWX0OOsxMgCiFmrIb1" crossorigin="anonymous"<?php endif; ?>></script>
+<?php else : ?>
+	<script src="<?php $this->options->themeUrl('/base/vendor/jquery.pjax-2.0.1.min.js'); ?>" type="application/javascript"></script>
+	<script src="<?php $this->options->themeUrl('/base/vendor/nprogress-0.2.0.min.js'); ?>" type="application/javascript"></script>
+<?php endif; ?>
 <script>
 	window.showSiteRuntime = function() {
         var site_runtime = $("#site_runtime");
