@@ -1,4 +1,12 @@
 <?php if (!defined('__TYPECHO_ROOT_DIR__')) exit; ?>
+<?php
+$heroStyle = App::buildBackgroundImageStyle(isset($this->options->heroimg) ? (string)$this->options->heroimg : '');
+$boyAvatar = App::escapeUrlAttribute(isset($this->options->boy) ? (string)$this->options->boy : '', true, array('http', 'https'));
+$girlAvatar = App::escapeUrlAttribute(isset($this->options->girl) ? (string)$this->options->girl : '', true, array('http', 'https'));
+$boyName = App::escapeHtml(isset($this->options->boyname) ? (string)$this->options->boyname : '');
+$girlName = App::escapeHtml(isset($this->options->girlname) ? (string)$this->options->girlname : '');
+$navSay = App::escapeHtml(isset($this->options->navsay) ? (string)$this->options->navsay : '');
+?>
 <div class="container-fluid position-relative">
     <nav class="navbar navbar-expand-lg navbar-dark  text-white bg-transparent">
         <div class="container">
@@ -11,19 +19,19 @@
                 <ul class="navbar-nav mr-auto">
                 </ul>
                 <span class="navbar-text">
-                    <?php $this->options->navsay() ?>
+                    <?php echo $navSay; ?>
                 </span>
             </div>
         </div>
     </nav>
-    <section class="lover-background" style="background-image: url(<?php $this->options->heroimg(); ?>)"></section>
+    <section class="lover-background" <?php if ($heroStyle !== '') : ?>style="<?php echo htmlspecialchars($heroStyle, ENT_QUOTES, 'UTF-8'); ?>"<?php endif; ?>></section>
     <section class="container lover-container d-flex flex-column align-content-center justify-content-center">
         <div class="row align-items-center pb-5 lover">
             <div class="col">
                 <div class="d-flex flex-column">
-                    <img class="mx-auto avatar-img rounded-circle" src="<?php $this->options->boy(); ?>"
-                         alt="<?php $this->options->boyname(); ?>">
-                    <h4 class="mx-auto text-white pt-2"><?php $this->options->boyname(); ?></h4>
+                    <img class="mx-auto avatar-img rounded-circle" src="<?php echo $boyAvatar; ?>"
+                         alt="<?php echo $boyName; ?>">
+                    <h4 class="mx-auto text-white pt-2"><?php echo $boyName; ?></h4>
                 </div>
             </div>
             <div class="col">
@@ -33,9 +41,9 @@
             </div>
             <div class="col">
                 <div class="d-flex flex-column">
-                    <img class="mx-auto avatar-img rounded-circle" src="<?php $this->options->girl(); ?>"
-                         alt="<?php $this->options->girlname(); ?>">
-                    <h4 class="mx-auto text-white pt-2"><?php $this->options->girlname(); ?></h4>
+                    <img class="mx-auto avatar-img rounded-circle" src="<?php echo $girlAvatar; ?>"
+                         alt="<?php echo $girlName; ?>">
+                    <h4 class="mx-auto text-white pt-2"><?php echo $girlName; ?></h4>
                 </div>
             </div>
         </div>

@@ -7,6 +7,7 @@
 <?php $assetsSource = (isset(Helper::options()->assetsSource) ? (string)Helper::options()->assetsSource : 'local'); ?>
 <?php $cdnEnableSRI = !isset(Helper::options()->cdnEnableSRI) || (string)Helper::options()->cdnEnableSRI !== '0'; ?>
 <?php $enableSRI = ($assetsSource === 'cdn' && $cdnEnableSRI); ?>
+<?php $enableCustomCode = !isset(Helper::options()->enableCustomCode) || (string)Helper::options()->enableCustomCode !== '0'; ?>
 <?php if ($assetsSource === 'cdn') : ?>
 	<script src="https://cdn.staticfile.org/jquery.pjax/2.0.1/jquery.pjax.min.js" type="application/javascript"
 	        <?php if ($enableSRI) : ?>integrity="sha384-VLg3MPOy+5T9leB7r4BBB56zHq4/e0We8vujbAvJwp3xNDhj3b7Fg6+jOVs6bym1" crossorigin="anonymous"<?php endif; ?>></script>
@@ -21,7 +22,7 @@
         var site_runtime = $("#site_runtime");
 		if (!site_runtime) return;
 		window.setTimeout("showSiteRuntime()", 1000);
-		start = new Date("<?php $this->options->lovetime(); ?>");
+		start = new Date(<?php echo App::escapeJsString(isset($this->options->lovetime) ? (string)$this->options->lovetime : ''); ?>);
 		now = new Date();
 		T = (now.getTime() - start.getTime());
 		i = 24 * 60 * 60 * 1000;
@@ -45,13 +46,20 @@
         NProgress.start();
     });
     $(document).on('pjax:complete', function() {
-        <?php $this->options->pjax回调(); ?>
+        <?php if ($enableCustomCode) : ?>
+            <?php
+            ob_start();
+            $this->options->pjax回调();
+            $pjaxCallback = ob_get_clean();
+            echo App::escapeInlineScriptSnippet($pjaxCallback);
+            ?>
+        <?php endif; ?>
         NProgress.done();
     });
 </script>
 <script src="<?php $this->options->themeUrl('/base/main.js'); ?>"></script>
 <?php $this->footer(); ?>
-<?php $this->options->底部自定义(); ?>
+<?php if ($enableCustomCode) : ?><?php $this->options->底部自定义(); ?><?php endif; ?>
 </body>
 
 </html>

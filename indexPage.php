@@ -6,6 +6,11 @@ if (!defined('__TYPECHO_ROOT_DIR__')) exit;
  * Author: Veen Zhao
  * CreateTime: 2021/2/6 22:32
  */
+$blessingPageLink = App::escapeUrlAttribute(isset($this->options->blessingPageLink) ? (string)$this->options->blessingPageLink : '', true, array('http', 'https'));
+$blessingPageIcon = App::escapeUrlAttribute(isset($this->options->blessingPageIcon) ? (string)$this->options->blessingPageIcon : '', true, array('http', 'https'));
+$timePageIcon = App::escapeUrlAttribute(isset($this->options->timePageIcon) ? (string)$this->options->timePageIcon : '', true, array('http', 'https'));
+$loveListPageLink = App::escapeUrlAttribute(isset($this->options->loveListPageLink) ? (string)$this->options->loveListPageLink : '', true, array('http', 'https'));
+$loveListPageIcon = App::escapeUrlAttribute(isset($this->options->loveListPageIcon) ? (string)$this->options->loveListPageIcon : '', true, array('http', 'https'));
 $this->need('base/head.php');
 $this->need('base/nav.php');
 ?>
@@ -16,12 +21,12 @@ $this->need('base/nav.php');
     </blockquote>
     <div class="row indexPlate">
         <div class="col-md-4">
-            <a href="<?php $this->options->blessingPageLink() ?>" class="card ">
+            <a href="<?php echo $blessingPageLink; ?>" class="card ">
                 <div class="card-body">
                     <div class="row align-items-center">
                         <div class="col-auto">
                             <div class="avatar avatar-md">
-                                <img src="<?php $this->options->blessingPageIcon() ?>" alt="..." class="avatar-img rounded-circle">
+                                <img src="<?php echo $blessingPageIcon; ?>" alt="..." class="avatar-img rounded-circle">
                             </div>
                         </div>
                         <div class="col">
@@ -38,7 +43,7 @@ $this->need('base/nav.php');
                     <div class="row align-items-center">
                         <div class="col-auto">
                             <div class="avatar avatar-md">
-                                <img src="<?php $this->options->timePageIcon() ?>" alt="..." class="avatar-img rounded-circle">
+                                <img src="<?php echo $timePageIcon; ?>" alt="..." class="avatar-img rounded-circle">
                             </div>
                         </div>
                         <div class="col">
@@ -50,12 +55,12 @@ $this->need('base/nav.php');
             </a>
         </div>
         <div class="col-md-4">
-            <a href="<?php $this->options->loveListPageLink() ?>" class="card ">
+            <a href="<?php echo $loveListPageLink; ?>" class="card ">
                 <div class="card-body">
                     <div class="row align-items-center">
                         <div class="col-auto">
                             <div class="avatar avatar-md">
-                                <img src="<?php $this->options->loveListPageIcon() ?>" alt="..." class="avatar-img rounded-circle">
+                                <img src="<?php echo $loveListPageIcon; ?>" alt="..." class="avatar-img rounded-circle">
                             </div>
                         </div>
                         <div class="col">

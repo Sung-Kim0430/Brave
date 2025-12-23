@@ -41,12 +41,14 @@
 - `commentMaxNestingLevels`：评论最大嵌套层数（建议 3~10）
 - `loveListTitleAllowHtml`：Love List 标题是否允许少量 HTML（兼容模式）
 - `assetsSource`：静态资源加载方式（默认本地，减少 CDN 供应链风险）
+- `fontSource`：字体加载方式（默认本地/系统字体；在线字体会引入第三方字体链接）
 - `cdnEnableSRI`：CDN 模式下是否为外链资源启用 SRI（默认开启）
 - `cdnEnableCSP`：CDN 模式下是否启用 CSP（默认开启）
 - `cspPolicy`：自定义 CSP 策略（可选；留空使用主题内置默认）
 
 高级项（具备脚本/样式执行能力，请谨慎授权）：
 
+- `enableCustomCode`：是否在前台输出下述自定义 HTML/CSS/JS 字段（默认开启；关闭更安全）
 - `头部自定义`：输出到 `base/head.php` 的 `<head>` 内
 - `Css自定义`：输出到 `base/head.php` 的 `<style>` 内
 - `底部自定义`：输出到 `base/footer.php` 的 `</body>` 之前

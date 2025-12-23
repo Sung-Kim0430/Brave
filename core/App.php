@@ -7,6 +7,11 @@ if (!defined('__TYPECHO_ROOT_DIR__')) exit;
 
 class App
 {
+    public static function escapeHtml($value)
+    {
+        return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+    }
+
     public static function parseShortCode($content)
     {
         $content = do_shortcode($content);
@@ -78,6 +83,53 @@ class App
         }
 
         return '';
+    }
+
+    public static function escapeUrlAttribute($url, $allowRelative = true, $allowedSchemes = array('http', 'https'))
+    {
+        $safeUrl = self::normalizeUrl($url, $allowRelative, $allowedSchemes);
+        if ($safeUrl === '') {
+            return '';
+        }
+        return htmlspecialchars($safeUrl, ENT_QUOTES, 'UTF-8');
+    }
+
+    public static function buildBackgroundImageStyle($url)
+    {
+        $safeUrl = self::normalizeUrl($url, true, array('http', 'https'));
+        if ($safeUrl === '') {
+            return '';
+        }
+
+        // Prevent breaking out of CSS url('...') and the HTML style attribute.
+        $safeUrl = str_replace(array("\r", "\n", "\t"), '', $safeUrl);
+        $safeUrl = str_replace(array("'", '"', '\\'), array('%27', '%22', '%5C'), $safeUrl);
+
+        return "background-image: url('{$safeUrl}')";
+    }
+
+    public static function escapeJsString($value)
+    {
+        if (!is_string($value)) {
+            $value = (string)$value;
+        }
+
+        $json = json_encode($value, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+        return ($json !== false) ? $json : '""';
+    }
+
+    public static function escapeInlineScriptSnippet($js)
+    {
+        $js = (string)$js;
+        // Prevent closing the <script> element early (e.g. via </script> inside user-provided snippets).
+        return str_ireplace('</script', '<\\/script', $js);
+    }
+
+    public static function escapeInlineStyleSnippet($css)
+    {
+        $css = (string)$css;
+        // Prevent closing the <style> element early (e.g. via </style> inside user-provided snippets).
+        return str_ireplace('</style', '<\\/style', $css);
     }
 
     private static function normalizeClassList($class)

@@ -155,6 +155,18 @@ function themeConfig($form)
     );
     $form->addInput($assetsSource);
 
+    $fontSource = new Radio(
+        'fontSource',
+        array(
+            'local' => _t('本地/系统字体（推荐）'),
+            'remote' => _t('在线字体（兼容）'),
+        ),
+        'local',
+        _t('字体加载方式'),
+        _t('本地模式不引入第三方字体链接（若系统未安装 Inter 会自动回退）；在线模式会从 https://gfonts.ctfile.com 加载 Inter 字体，存在供应链/可用性风险。')
+    );
+    $form->addInput($fontSource);
+
     $cdnEnableSRI = new Radio(
         'cdnEnableSRI',
         array(
@@ -187,6 +199,18 @@ function themeConfig($form)
         _t('留空则使用主题内置默认策略；仅在「CDN 模式 + 启用 CSP」时生效。示例：default-src \'self\'; script-src \'self\' \'unsafe-inline\' https://cdn.staticfile.org;')
     );
     $form->addInput($cspPolicy);
+
+    $enableCustomCode = new Radio(
+        'enableCustomCode',
+        array(
+            '1' => _t('开启（兼容）'),
+            '0' => _t('关闭（更安全）'),
+        ),
+        '1',
+        _t('输出自定义 HTML/CSS/JS'),
+        _t('控制是否在前台输出「头部自定义 / Css自定义 / 底部自定义 / pjax回调」等高权限字段；关闭可降低被误用或后台被劫持后的风险。')
+    );
+    $form->addInput($enableCustomCode);
 
     $CustomContenth = new Textarea('头部自定义', NULL, NULL, _t('头部自定义内容'), _t('位于头部，head内，适合放置一些链接引用或自定义内容'));
     $form->addInput($CustomContenth);
