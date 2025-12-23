@@ -29,4 +29,5 @@ Brave 是一个 Typecho 情侣主题，提供「已相伴」计时、祝福板�
 本主题包含可直接输出 HTML/CSS/JS 的设置项（例如 `头部自定义`、`Css自定义`、`底部自定义`、`pjax回调`）。
 这些能力等价于「在前台执行任意脚本」，请确保只有可信管理员账号能修改主题设置。
 
-另外，主题默认使用第三方 CDN 加载前端依赖；如对供应链风险敏感，建议自托管并引入 SRI/CSP（详见 `docs/SECURITY.md`）。
+主题默认使用本地 `base/vendor/` 加载前端依赖，以降低 CDN 供应链风险；也可在主题设置中切换到 CDN 模式。
+CDN 模式下主题默认启用 SRI（Subresource Integrity）与 CSP（Content-Security-Policy），如遇兼容性问题可按需关闭或自定义（详见 `docs/SECURITY.md`）。
