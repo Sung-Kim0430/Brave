@@ -1,3 +1,4 @@
+<?php if (!defined('__TYPECHO_ROOT_DIR__')) exit; ?>
 <div class="container-fluid position-relative">
     <nav class="navbar navbar-expand-lg navbar-dark  text-white bg-transparent">
         <div class="container">

@@ -1,7 +1,8 @@
+<?php if (!defined('__TYPECHO_ROOT_DIR__')) exit; ?>
 </div>
 <div class="p-5 text-center ">
 	<h6>©<?php $this->options->title() ?></h6>
-	<p class="h6"> Powered by <a href="http://typecho.org" target="_blank">Typecho</a> and <a href="https://github.com/Sung-Kim0430/Brave" target="_blank">Brave-Theme</a></p>
+	<p class="h6"> Powered by <a href="http://typecho.org" target="_blank" rel="noopener noreferrer">Typecho</a> and <a href="https://github.com/Sung-Kim0430/Brave" target="_blank" rel="noopener noreferrer">Brave-Theme</a></p>
 </div>
 <script>
 	window.jQuery || document.write('<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" type="application/javascript"><\\/script>');

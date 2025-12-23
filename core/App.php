@@ -1,4 +1,5 @@
 <?php
+if (!defined('__TYPECHO_ROOT_DIR__')) exit;
 /**
  * Author: Veen Zhao
  * CreateTime: 2020/9/5 18:26
