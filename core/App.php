@@ -46,13 +46,15 @@ class App
         }
 
         $url = trim($url);
+        // Remove ASCII control chars to avoid browser/parser discrepancies.
+        $url = preg_replace('/[\\x00-\\x1F\\x7F]+/', '', $url);
         if ($url === '') {
             return '';
         }
 
         // Normalize for scheme checks: decode entities and remove ASCII control/space chars.
         $decoded = html_entity_decode($url, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        $decoded = preg_replace('/[\\x00-\\x20]+/u', '', $decoded);
+        $decoded = preg_replace('/[\\x00-\\x20]+/', '', $decoded);
 
         // Block dangerous schemes even if obfuscated with entities/whitespace.
         if (preg_match('#^(?:javascript|data|vbscript):#i', $decoded)) {
@@ -298,11 +300,23 @@ class App
         }
 
         $dom = new DOMDocument('1.0', 'UTF-8');
+        // Defense-in-depth: avoid external entity resolution / network loads.
+        $dom->resolveExternals = false;
+        $dom->substituteEntities = false;
+        $dom->validateOnParse = false;
         $prev = libxml_use_internal_errors(true);
 
         $wrapped = '<div>' . $html . '</div>';
+        $flags = 0;
         if (defined('LIBXML_HTML_NOIMPLIED') && defined('LIBXML_HTML_NODEFDTD')) {
-            $dom->loadHTML('<?xml encoding="UTF-8">' . $wrapped, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+            $flags |= (LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        }
+        if (defined('LIBXML_NONET')) {
+            $flags |= LIBXML_NONET;
+        }
+
+        if ($flags !== 0) {
+            $dom->loadHTML('<?xml encoding="UTF-8">' . $wrapped, $flags);
         } else {
             $dom->loadHTML('<?xml encoding="UTF-8">' . $wrapped);
         }

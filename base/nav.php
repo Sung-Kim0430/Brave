@@ -1,5 +1,11 @@
 <?php if (!defined('__TYPECHO_ROOT_DIR__')) exit; ?>
 <?php
+$siteUrl = isset(Helper::options()->siteUrl) ? (string)Helper::options()->siteUrl : '/';
+$siteUrl = App::escapeUrlAttribute($siteUrl, true, array('http', 'https'));
+if ($siteUrl === '') {
+    $siteUrl = '/';
+}
+
 $heroStyle = App::buildBackgroundImageStyle(isset($this->options->heroimg) ? (string)$this->options->heroimg : '');
 $boyAvatar = App::escapeUrlAttribute(isset($this->options->boy) ? (string)$this->options->boy : '', true, array('http', 'https'));
 $girlAvatar = App::escapeUrlAttribute(isset($this->options->girl) ? (string)$this->options->girl : '', true, array('http', 'https'));
@@ -10,7 +16,7 @@ $navSay = App::escapeHtml(isset($this->options->navsay) ? (string)$this->options
 <div class="container-fluid position-relative">
     <nav class="navbar navbar-expand-lg navbar-dark  text-white bg-transparent">
         <div class="container">
-            <a class="navbar-brand" href="<?php Helper::options()->siteUrl() ?>"><?php $this->options->title() ?></a>
+            <a class="navbar-brand" href="<?php echo $siteUrl; ?>"><?php $this->options->title() ?></a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarText"
                     aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>

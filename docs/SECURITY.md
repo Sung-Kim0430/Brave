@@ -16,10 +16,12 @@
   - `core/shortcodes.php`
 
 - 评论输出净化（祝福板）：`commentPage.php` 对评论内容进行二次净化（白名单标签 + URL 协议校验 + 移除事件属性），并提供 `commentAllowImg` 开关来控制是否允许评论图片。
+- HTML 解析防护：`core/App.php` 的 DOM 解析（用于评论/少量 HTML 白名单净化）显式禁用外部实体/网络访问（`LIBXML_NONET`），作为防御性措施避免潜在 XXE/意外外联。
 - Love List 输出加固：`core/App.php` 对 `[item]` 的 `status/img/title` 做了 `isset` 检查与上下文转义，并提供 `loveListTitleAllowHtml` 兼容开关（仅允许少量标签）。
 - 主题设置 URL 输出加固：`base/nav.php`、`indexPage.php` 对头像/图标/跳转链接等配置项做 URL 规范化 + 属性转义，降低恶意协议（`javascript:` 等）与属性注入风险。
 - JS 字符串输出加固：`base/footer.php` 的 `lovetime` 使用安全的 JS 字符串编码输出，避免配置被注入导致脚本语法错误或意外执行。
 - Shortcodes 安全降级：`core/shortcodes.php` 在缺失 `wp_kses_*` 依赖时跳过 HTML 标签/属性内部短代码解析，避免 fatal 并减少属性注入风险。
+- SVG 外链 DTD 清理：`svg/*.svg` 移除 `<!DOCTYPE ...>` 外链声明，减少浏览器/解析器尝试加载外部 DTD 的风险与额外请求。
 
 ## 高权限配置项的风险提示
 

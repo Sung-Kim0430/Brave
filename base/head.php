@@ -47,7 +47,7 @@ if ($enableCSP) {
 
     // Prefer response headers over meta tags when possible.
     if ($cspPolicy !== '' && !headers_sent()) {
-        $cspHeader = str_replace(array("\r", "\n"), ' ', $cspPolicy);
+        $cspHeader = preg_replace('/[\\x00-\\x1F\\x7F]+/', ' ', $cspPolicy);
         header('Content-Security-Policy: ' . $cspHeader);
     }
 }
