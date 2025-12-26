@@ -21,7 +21,7 @@
 	window.showSiteRuntime = function() {
         var site_runtime = $("#site_runtime");
 		if (!site_runtime) return;
-		window.setTimeout("showSiteRuntime()", 1000);
+		window.setTimeout(window.showSiteRuntime, 1000);
 		start = new Date(<?php echo App::escapeJsString(isset($this->options->lovetime) ? (string)$this->options->lovetime : ''); ?>);
 		now = new Date();
 		T = (now.getTime() - start.getTime());
