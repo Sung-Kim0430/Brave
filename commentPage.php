@@ -38,7 +38,12 @@ echo $commentClass;
 	            <div id="<?php $comments->theId(); ?>">
 	                <div class="comment-body">
 	                    <div class="comment_author">
-	                        <span class="name"><?php $comments->author(); ?></span>
+	                        <span class="name"><?php
+                                ob_start();
+                                $comments->author();
+                                $authorHtml = ob_get_clean();
+                                echo App::sanitizeCommentHtml($authorHtml, false);
+                                ?></span>
 	                        <em><?php $comments->date('Y-m-d H:i'); ?></em>
 	                    </div>
 	                    <div class="comment-text">

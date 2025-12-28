@@ -1,5 +1,19 @@
 <?php
 if (!defined('__TYPECHO_ROOT_DIR__')) exit;
+
+// WordPress 兼容层：Typecho 环境下通常不存在 WP 的 i18n / debug 辅助函数。
+// 这里提供最小的降级实现，避免在边缘分支触发 fatal。
+if (!function_exists('__')) {
+	function __( $text ) {
+		return $text;
+	}
+}
+
+if (!function_exists('_doing_it_wrong')) {
+	function _doing_it_wrong( $function, $message, $version ) {
+		// no-op
+	}
+}
 /**
  * WordPress API for creating bbcode-like tags or what WordPress calls
  * "shortcodes". The tag and attribute parsing or regular expression code is
