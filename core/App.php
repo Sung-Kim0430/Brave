@@ -334,31 +334,41 @@ class App
             $allowedTagMap[strtolower($tag)] = true;
         }
 
-        $walk = function ($node) use (&$walk, $allowedTagMap, $allowedAttrsByTag) {
-            $children = array();
-            foreach ($node->childNodes as $child) {
-                $children[] = $child;
-            }
+        $dangerousTags = array(
+            'script' => true,
+            'style' => true,
+            'iframe' => true,
+            'object' => true,
+            'embed' => true,
+        );
 
-            foreach ($children as $child) {
+        $walk = function ($node) use (&$walk, $allowedTagMap, $allowedAttrsByTag, $dangerousTags) {
+            for ($child = $node->firstChild; $child !== null; ) {
+                $next = $child->nextSibling;
+
                 if ($child->nodeType === XML_COMMENT_NODE) {
                     $node->removeChild($child);
+                    $child = $next;
                     continue;
                 }
 
                 if ($child->nodeType !== XML_ELEMENT_NODE) {
+                    $child = $next;
                     continue;
                 }
 
                 $tag = strtolower($child->nodeName);
 
                 if (!isset($allowedTagMap[$tag])) {
-                    // Remove dangerous blocks entirely; otherwise unwrap to keep inner text.
-                    if ($tag === 'script' || $tag === 'style' || $tag === 'iframe' || $tag === 'object' || $tag === 'embed') {
+                    // Remove dangerous blocks entirely; otherwise sanitize children then unwrap.
+                    if (isset($dangerousTags[$tag])) {
                         $node->removeChild($child);
                     } else {
+                        $walk($child);
                         self::unwrapNode($child);
                     }
+
+                    $child = $next;
                     continue;
                 }
 
@@ -366,6 +376,8 @@ class App
                 if ($kept) {
                     $walk($child);
                 }
+
+                $child = $next;
             }
         };
 
