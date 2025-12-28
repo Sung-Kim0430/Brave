@@ -16,6 +16,7 @@
   - `core/shortcodes.php`
 
 - 评论输出净化（祝福板）：`commentPage.php` 对评论内容进行二次净化（白名单标签 + URL 协议校验 + 移除事件属性），并提供 `commentAllowImg` 开关来控制是否允许评论图片。
+- 评论作者输出净化（祝福板）：`commentPage.php` 对 `$comments->author()` 的输出做白名单净化，降低作者名/作者链接在不同 Typecho 版本与配置下带来的 XSS 风险。
 - HTML 解析防护：`core/App.php` 的 DOM 解析（用于评论/少量 HTML 白名单净化）显式禁用外部实体/网络访问（`LIBXML_NONET`），作为防御性措施避免潜在 XXE/意外外联。
 - Love List 输出加固：`core/App.php` 对 `[item]` 的 `status/img/title` 做了 `isset` 检查与上下文转义，并提供 `loveListTitleAllowHtml` 兼容开关（仅允许少量标签）。
 - 主题设置 URL 输出加固：`base/nav.php`、`indexPage.php` 对头像/图标/跳转链接等配置项做 URL 规范化 + 属性转义，降低恶意协议（`javascript:` 等）与属性注入风险。

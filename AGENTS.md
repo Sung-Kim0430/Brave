@@ -34,6 +34,7 @@ This repository is a Typecho theme and has no build pipeline.
 No automated test suite is configured. Manually validate:
 
 - Comment submission + rendering (`commentPage.php`), with `commentAllowImg` on/off.
+- Comment author output (`commentPage.php`): verify author name/link renders correctly and is sanitized.
 - Love List shortcode (`loveListPage.php`), with `loveListTitleAllowHtml` on/off.
 - Asset loading in both modes: `assetsSource=local` and `assetsSource=cdn` (SRI/CSP enabled by default in CDN mode).
 - Font loading: `fontSource=local` should not request `gfonts.ctfile.com`; `fontSource=remote` should load the Inter CSS.
