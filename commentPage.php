@@ -33,34 +33,36 @@ $comments->alt(' comment-odd', ' comment-even');
 echo $commentClass;
 ?>">
 
-	    <div class="commentlist">
-	        <div class="comment" id="li-<?php $comments->theId(); ?>">
-	            <div id="<?php $comments->theId(); ?>">
-	                <div class="comment-body">
-	                    <div class="comment_author">
-	                        <span class="name"><?php
-                                ob_start();
-                                $comments->author();
-                                $authorHtml = ob_get_clean();
-                                echo App::sanitizeCommentHtml($authorHtml, false);
-                                ?></span>
-	                        <em><?php $comments->date('Y-m-d H:i'); ?></em>
-	                    </div>
-	                    <div class="comment-text">
-	                        <?php
-                            ob_start();
-                            $comments->content();
-                            $commentHtml = ob_get_clean();
-                            $allowImages = isset(Helper::options()->commentAllowImg)
-                                && (string)Helper::options()->commentAllowImg === '1';
-                            echo App::sanitizeCommentHtml($commentHtml, $allowImages);
-                            ?>
-	                    </div>
-	                </div>
-	            </div>
-        </div>
-    </div>
-<?php } ?>
+		    <div class="commentlist">
+		        <div class="comment">
+		            <div id="<?php $comments->theId(); ?>">
+		                <div class="comment-body">
+		                    <div class="comment_author">
+		                        <span class="name"><?php
+	                                ob_start();
+	                                $comments->author();
+	                                $authorHtml = ob_get_clean();
+	                                echo App::sanitizeCommentHtml($authorHtml, false);
+	                                ?></span>
+		                        <em><?php $comments->date('Y-m-d H:i'); ?></em>
+		                    </div>
+		                    <div class="comment-text">
+		                        <?php
+	                            ob_start();
+	                            $comments->content();
+	                            $commentHtml = ob_get_clean();
+	                            $allowImages = isset(Helper::options()->commentAllowImg)
+	                                && (string)Helper::options()->commentAllowImg === '1';
+	                            echo App::sanitizeCommentHtml($commentHtml, $allowImages);
+	                            ?>
+		                    </div>
+		                </div>
+		                <?php $comments->threadedComments($options); ?>
+		            </div>
+		        </div>
+		    </div>
+	    </div>
+	<?php } ?>
 <?php if ($this->allow('comment')) : ?>
     <div id="<?php $this->respondId(); ?>" class="respond list-content mx-auto mt-5">
         <div class="list-top">

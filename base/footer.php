@@ -17,30 +17,30 @@
 	<script src="<?php $this->options->themeUrl('/base/vendor/jquery.pjax-2.0.1.min.js'); ?>" type="application/javascript"></script>
 	<script src="<?php $this->options->themeUrl('/base/vendor/nprogress-0.2.0.min.js'); ?>" type="application/javascript"></script>
 <?php endif; ?>
-<script>
-	window.showSiteRuntime = function() {
-        var site_runtime = $("#site_runtime");
-		if (!site_runtime) return;
-		window.setTimeout(window.showSiteRuntime, 1000);
-		start = new Date(<?php echo App::escapeJsString(isset($this->options->lovetime) ? (string)$this->options->lovetime : ''); ?>);
-		now = new Date();
-		T = (now.getTime() - start.getTime());
-		i = 24 * 60 * 60 * 1000;
-		d = T / i;
-		D = Math.floor(d);
-		h = (d - D) * 24;
-		H = Math.floor(h);
-		m = (h - H) * 60;
-		M = Math.floor(m);
-		s = (m - M) * 60
-		S = Math.floor(s);
-		site_runtime.html("<span class=\"bigfontNum\">" + D + "</span> 天 <span class=\"bigfontNum\">" + H + "</span> 小时 <span class=\"bigfontNum\">" + M + "</span> 分钟 <span class=\"bigfontNum\">" + S + "</span> 秒");
-	};
-	showSiteRuntime();
+	<script>
+		window.showSiteRuntime = function() {
+			window.setTimeout(window.showSiteRuntime, 1000);
+	        var site_runtime = $("#site_runtime");
+			if (!site_runtime || !site_runtime.length) return;
+			var start = new Date(<?php echo App::escapeJsString(isset($this->options->lovetime) ? (string)$this->options->lovetime : ''); ?>);
+			var now = new Date();
+			var T = (now.getTime() - start.getTime());
+			var i = 24 * 60 * 60 * 1000;
+			var d = T / i;
+			var D = Math.floor(d);
+			var h = (d - D) * 24;
+			var H = Math.floor(h);
+			var m = (h - H) * 60;
+			var M = Math.floor(m);
+			var s = (m - M) * 60;
+			var S = Math.floor(s);
+			site_runtime.html("<span class=\"bigfontNum\">" + D + "</span> 天 <span class=\"bigfontNum\">" + H + "</span> 小时 <span class=\"bigfontNum\">" + M + "</span> 分钟 <span class=\"bigfontNum\">" + S + "</span> 秒");
+		};
+		window.showSiteRuntime();
 
-    $(document).pjax('a', '#pjax-container', {
-        fragment: '#pjax-container',
-        timeout: 6000
+	    $(document).pjax('a', '#pjax-container', {
+	        fragment: '#pjax-container',
+	        timeout: 6000
     });
     $(document).on('pjax:send', function() {
         NProgress.start();
