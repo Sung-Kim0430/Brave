@@ -464,13 +464,13 @@ function loveListAcc($atts, $content = '')
 
             $out .= '<div class="card">';
             $out .= '<div class="card-header p-1 bg-white" id="heading'.$key.'"><h2 class="mb-0">';
-            $out .= '<span class="btn collapsed ml-auto d-flex align-items-center" type="button" data-toggle="collapse" data-target="#collapse'.$key.'" aria-expanded="false" aria-controls="collapse'.$key.'">';
+            $out .= '<button class="btn collapsed ml-auto d-flex align-items-center" type="button" data-toggle="collapse" data-target="#collapse'.$key.'" aria-expanded="false" aria-controls="collapse'.$key.'">';
             if ($isTodo)
-                $out .= '<img class="statusIcon" src="'.Helper::options()->themeUrl.'/svg/todo.svg">';
+                $out .= '<img class="statusIcon" src="'.Helper::options()->themeUrl.'/svg/todo.svg" alt="">';
             else
-                $out .= '<img class="statusIcon" src="'.Helper::options()->themeUrl.'/svg/ok.svg">';
+                $out .= '<img class="statusIcon" src="'.Helper::options()->themeUrl.'/svg/ok.svg" alt="">';
             $out .= '<strong>'.$safeTitle.'</strong>';
-            $out .= '</span></h2></div>';
+            $out .= '</button></h2></div>';
             $out .= '<div id="collapse'.$key.'" class="collapse" aria-labelledby="heading'.$key.'" data-parent="#loveList">';
             $out .= '<div class="card-body p-0">';
             if ($style !== '') {
