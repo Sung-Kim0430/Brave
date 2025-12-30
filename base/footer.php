@@ -22,7 +22,12 @@
 			window.setTimeout(window.showSiteRuntime, 1000);
 	        var site_runtime = $("#site_runtime");
 			if (!site_runtime || !site_runtime.length) return;
-			var start = new Date(<?php echo App::escapeJsString(isset($this->options->lovetime) ? (string)$this->options->lovetime : ''); ?>);
+			var startStr = <?php echo App::escapeJsString(isset($this->options->lovetime) ? (string)$this->options->lovetime : ''); ?>;
+            var start = new Date(startStr);
+            if (!startStr || isNaN(start.getTime())) {
+                site_runtime.html("Not set");
+                return;
+            }
 			var now = new Date();
 			var T = (now.getTime() - start.getTime());
 			var i = 24 * 60 * 60 * 1000;
