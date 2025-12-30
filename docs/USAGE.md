@@ -26,7 +26,7 @@
 
 - `navsay`：导航栏右侧文字
 - `heroimg`：头部大图链接
-- `lovetime`：恋爱起始日期（示例：`2021/06/26`）
+- `lovetime`：恋爱起始日期（示例：`2021/06/26` 或 `2021-06-26`）
 - `boy` / `girl`：头像链接
 - `boyname` / `girlname`：昵称
 - `loveListPageIcon` / `loveListPageLink`：首页 Love List 卡片图标与链接

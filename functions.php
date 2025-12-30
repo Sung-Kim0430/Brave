@@ -61,7 +61,7 @@ function themeConfig($form)
     $form->addInput($navsay);
     $heroimg = new Text('heroimg', NULL, NULL, _t('头部大图设置'), _t('在这里输入图片链接'));
     $form->addInput($heroimg);
-    $lovetime = new Text('lovetime', NULL, NULL, _t('恋爱起始日期设定'), _t('格式“YYYY/MM/DD”，例“2021/06/26”'));
+    $lovetime = new Text('lovetime', NULL, NULL, _t('恋爱起始日期设定'), _t('格式支持“YYYY/MM/DD”或“YYYY-MM-DD”，例“2021/06/26”'));
     $form->addInput($lovetime);
     $boy = new Text('boy', NULL, NULL, _t('男生头像设置'), _t('在这里输入头像链接'));
     $form->addInput($boy);
