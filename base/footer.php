@@ -63,7 +63,7 @@
 				var startStr = <?php echo App::escapeJsString(isset($this->options->lovetime) ? (string)$this->options->lovetime : ''); ?>;
             var start = window.parseLoveTime(startStr);
             if (!start) {
-                site_runtime.html("Not set");
+                site_runtime.text("未设置");
                 return;
             }
 			var now = new Date();
@@ -81,24 +81,49 @@
 		};
 			window.showSiteRuntime();
 
-	    $(document).pjax('a[href]:not([target]):not([download]):not([data-pjax=\"false\"])', '#pjax-container', {
-	        fragment: '#pjax-container',
-	        timeout: 6000
-    });
-    $(document).on('pjax:send', function() {
-        NProgress.start();
-    });
-    $(document).on('pjax:complete', function() {
-        <?php if ($enableCustomCode) : ?>
-            <?php
-            ob_start();
-            $this->options->pjax回调();
-            $pjaxCallback = ob_get_clean();
-            echo App::escapeInlineScriptSnippet($pjaxCallback);
-            ?>
-        <?php endif; ?>
-        NProgress.done();
-    });
+		    if (window.NProgress) {
+		        NProgress.configure({ showSpinner: false, trickleSpeed: 120 });
+		    }
+
+		    var pjaxLinkSelector = 'a[href]' +
+		        ':not([target])' +
+		        ':not([download])' +
+		        ':not([data-pjax=\"false\"])' +
+		        ':not([href^=\"#\"])' +
+		        ':not([href^=\"mailto:\"])' +
+		        ':not([href^=\"tel:\"])';
+
+		    if (window.jQuery && window.jQuery.pjax) {
+		        $(document).pjax(pjaxLinkSelector, '#pjax-container', {
+		            fragment: '#pjax-container',
+		            timeout: 6000,
+		            scrollTo: 0
+		        });
+		        $(document).on('pjax:send', function() {
+		            $('body').addClass('is-pjax-loading');
+		            if (window.NProgress) NProgress.start();
+		        });
+		        $(document).on('pjax:complete', function() {
+		            $('body').removeClass('is-pjax-loading');
+		            <?php if ($enableCustomCode) : ?>
+		                <?php
+		                ob_start();
+		                $this->options->pjax回调();
+		                $pjaxCallback = ob_get_clean();
+		                echo App::escapeInlineScriptSnippet($pjaxCallback);
+		                ?>
+		            <?php endif; ?>
+		            if (window.NProgress) NProgress.done();
+		        });
+		        $(document).on('pjax:error', function(event, xhr, textStatus, error, options) {
+		            $('body').removeClass('is-pjax-loading');
+		            if (options && options.url) {
+		                window.location.href = options.url;
+		                return false;
+		            }
+		            return true;
+		        });
+		    }
 </script>
 <script src="<?php $this->options->themeUrl('/base/main.js'); ?>"></script>
 <?php $this->footer(); ?>

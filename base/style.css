@@ -87,7 +87,7 @@ ol{
 
 .lover-container {
 	max-width: 500px !important;
-	width: 500px;
+	width: 100%;
 	height: 50vh;
 }
 
@@ -277,12 +277,23 @@ ol{
 .list-text{
 	line-height: 2.2;
 	text-align: center;
+	max-width: 820px;
+	margin-left: auto;
+	margin-right: auto;
 }
 .bigfontNum{
 	font-size: 3.5rem;
 }
 .indexPlate .card{
 	margin-bottom: 1rem;
+	border: 1px solid rgba(0,0,0,.06);
+	border-radius: 14px;
+	transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.indexPlate .card:hover{
+	transform: translateY(-2px);
+	box-shadow: 0 12px 28px rgba(0,0,0,.12);
+	border-color: rgba(0,0,0,.1);
 }
 @media screen and (max-width: 600px){
 	.avatar-img {
@@ -293,7 +304,7 @@ ol{
 	}
 	.lover-container {
 		max-width: 500px !important;
-		width: 500px;
+		width: 100%;
 		height: 35vh;
 	}
 	.waves-area .waves-svg {
@@ -312,13 +323,40 @@ ol{
 	max-width: 100%;
 }
 
+/* PJAX 过渡（轻量淡入淡出，避免突兀切换） */
+#pjax-container {
+	transition: opacity .15s ease;
+}
+body.is-pjax-loading #pjax-container {
+	opacity: .55;
+}
+
+/* Love List 视觉优化 */
+#loveList .card {
+	border: 1px solid rgba(0,0,0,.06);
+	border-radius: 14px;
+	overflow: hidden;
+	box-shadow: 0 10px 22px rgba(0,0,0,.08);
+	margin-bottom: 1rem;
+}
+#loveList .card-header {
+	border-bottom: 0;
+}
+#loveList .btn {
+	width: 100%;
+	padding: .85rem 1rem;
+}
+#loveList .btn strong {
+	font-weight: 600;
+}
+
 /* Make clicks pass-through */
 #nprogress {
 	pointer-events: none;
   }
   
-  #nprogress .bar {
-	background: #29d;
+#nprogress .bar {
+	background: linear-gradient(to right, #ff5162, #673ab7);
   
 	position: fixed;
 	z-index: 1031;
@@ -326,17 +364,17 @@ ol{
 	left: 0;
   
 	width: 100%;
-	height: 2px;
+	height: 3px;
   }
   
   /* Fancy blur effect */
-  #nprogress .peg {
+#nprogress .peg {
 	display: block;
 	position: absolute;
 	right: 0px;
 	width: 100px;
 	height: 100%;
-	box-shadow: 0 0 10px #29d, 0 0 5px #29d;
+	box-shadow: 0 0 10px rgba(103,58,183,.7), 0 0 5px rgba(255,81,98,.7);
 	opacity: 1.0;
   
 	-webkit-transform: rotate(3deg) translate(0px, -4px);
@@ -359,8 +397,8 @@ ol{
 	box-sizing: border-box;
   
 	border: solid 2px transparent;
-	border-top-color: #29d;
-	border-left-color: #29d;
+	border-top-color: #673ab7;
+	border-left-color: #ff5162;
 	border-radius: 50%;
   
 	-webkit-animation: nprogress-spinner 400ms linear infinite;
@@ -385,4 +423,16 @@ ol{
 	0%   { transform: rotate(0deg); }
 	100% { transform: rotate(360deg); }
   }
+
+@media (prefers-reduced-motion: reduce) {
+	.lover:hover .heart {
+		animation: none;
+	}
+	.waves-area .parallax>use {
+		animation: none;
+	}
+	#pjax-container {
+		transition: none;
+	}
+}
   
