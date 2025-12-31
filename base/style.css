@@ -631,6 +631,12 @@ html[data-theme="dark"] #article{
 	text-decoration-thickness: .12em;
 	text-underline-offset: .18em;
 }
+#article .brave-back-link{
+	text-decoration: none;
+}
+#article .brave-back-link:hover{
+	text-decoration: none;
+}
 #article blockquote{
 	margin: 1.1rem 0;
 	padding: .85rem 1rem;
