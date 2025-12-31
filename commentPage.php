@@ -10,6 +10,12 @@ if (!defined('__TYPECHO_ROOT_DIR__')) exit;
 $this->need('base/head.php');
 $this->need('base/nav.php');
 $this->comments()->to($comments);
+$siteUrlRaw = isset(Helper::options()->siteUrl) ? (string)Helper::options()->siteUrl : '/';
+$siteUrlRaw = rtrim($siteUrlRaw, '/') . '/';
+$siteUrl = App::escapeUrlAttribute($siteUrlRaw, true, array('http', 'https'));
+if ($siteUrl === '') {
+    $siteUrl = '/';
+}
 ?>
 <?php function threadedComments($comments, $options)
 {
@@ -66,6 +72,12 @@ $this->comments()->to($comments);
 <?php if ($this->allow('comment')) : ?>
     <div id="<?php $this->respondId(); ?>" class="respond list-content mx-auto mt-5">
         <div class="list-top">
+            <div class="brave-page-actions">
+                <a class="brave-back-link" href="<?php echo $siteUrl; ?>" data-brave-back>
+                    <span class="brave-back-link__icon" aria-hidden="true">←</span>
+                    <span class="brave-back-link__text">返回</span>
+                </a>
+            </div>
             <?php if ($comments->have()) : ?>
                 <h5 class="text-center"><?php $this->commentsNum(_t('尚无祝愿'), _t('仅有一则祝愿'), _t('已收下<span class="bigfontNum"> %d </span>份祝愿')); ?></h5>
                 <?php $comments->listComments(); ?>
@@ -99,7 +111,17 @@ $this->comments()->to($comments);
         </div>
     </div>
 <?php else : ?>
-    <h3><?php _e('留言暂已关闭'); ?></h3>
+    <div class="list-content mx-auto mt-5">
+        <div class="list-top">
+            <div class="brave-page-actions">
+                <a class="brave-back-link" href="<?php echo $siteUrl; ?>" data-brave-back>
+                    <span class="brave-back-link__icon" aria-hidden="true">←</span>
+                    <span class="brave-back-link__text">返回</span>
+                </a>
+            </div>
+            <h3 class="text-center"><?php _e('留言暂已关闭'); ?></h3>
+        </div>
+    </div>
 <?php endif; ?>
 
 <?php $this->need('base/footer.php'); ?>

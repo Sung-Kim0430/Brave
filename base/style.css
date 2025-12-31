@@ -296,6 +296,49 @@ ol{
 html[data-theme="dark"] .quote-divider{
 	background: linear-gradient(to right, transparent, rgba(167,139,250,.40), transparent);
 }
+.brave-page-actions{
+	display: flex;
+	justify-content: flex-start;
+	margin: 0 0 .95rem;
+}
+.brave-back-link{
+	display: inline-flex;
+	align-items: center;
+	gap: .35rem;
+	padding: .42rem .8rem;
+	border-radius: 999px;
+	border: 1px solid rgba(17,24,39,.10);
+	background: rgba(255,255,255,.72);
+	color: var(--brave-text);
+	text-decoration: none;
+	box-shadow: 0 10px 25px rgba(17,24,39,.10);
+	-webkit-backdrop-filter: blur(10px);
+	backdrop-filter: blur(10px);
+	transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+}
+.brave-back-link:hover{
+	color: var(--brave-text);
+	text-decoration: none;
+	transform: translateY(-1px);
+	box-shadow: 0 14px 30px rgba(17,24,39,.14);
+}
+.brave-back-link:active{
+	transform: translateY(0);
+}
+.brave-back-link__icon{
+	font-size: 1.1rem;
+	line-height: 1;
+}
+html[data-theme="dark"] .brave-back-link{
+	background: rgba(17,24,39,.58);
+	border-color: rgba(255,255,255,.14);
+	box-shadow: 0 18px 50px rgba(0,0,0,.42);
+}
+@media screen and (max-width: 600px){
+	.brave-back-link__text{
+		display: none;
+	}
+}
 .bigfontNum{
 	font-size: 3.5rem;
 }

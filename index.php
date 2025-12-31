@@ -8,12 +8,24 @@
  * @link        https://blog.zwying.com
  */
 if (!defined('__TYPECHO_ROOT_DIR__')) exit;
+$siteUrlRaw = isset(Helper::options()->siteUrl) ? (string)Helper::options()->siteUrl : '/';
+$siteUrlRaw = rtrim($siteUrlRaw, '/') . '/';
+$siteUrl = App::escapeUrlAttribute($siteUrlRaw, true, array('http', 'https'));
+if ($siteUrl === '') {
+    $siteUrl = '/';
+}
 $this->need('base/head.php');
 $this->need('base/nav.php');
 ?>
 
 <div class="list-content mx-auto mt-5">
     <div class="list-top">
+        <div class="brave-page-actions">
+            <a class="brave-back-link" href="<?php echo $siteUrl; ?>" data-brave-back>
+                <span class="brave-back-link__icon" aria-hidden="true">←</span>
+                <span class="brave-back-link__text">返回</span>
+            </a>
+        </div>
         <h5 class="list-text page-quote">你要是愿意，我就永远爱你；你要是不愿意，我就永远相思。<br>我活在世上，无非想要明白些道理，遇见些有趣的事。倘能如我所愿，我的一生就算成功。</h5>
         <hr class="quote-divider">
         <?php if ($this->have()) : ?>

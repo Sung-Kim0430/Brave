@@ -117,6 +117,30 @@ if (window.console && window.console.log) {
         bindSystemThemeListener();
     }
 
+    function bindBackLinks() {
+        var links = document.querySelectorAll('[data-brave-back]');
+        if (!links || !links.length) return;
+
+        for (var i = 0; i < links.length; i++) {
+            var link = links[i];
+            if (!link) continue;
+            if (link.dataset.braveBackBound === '1') continue;
+            link.dataset.braveBackBound = '1';
+
+            link.addEventListener('click', function(e) {
+                if (!e) return;
+                if (e.defaultPrevented) return;
+                if (e.button && e.button !== 0) return;
+                if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+
+                if (window.history && window.history.length > 1) {
+                    e.preventDefault();
+                    window.history.back();
+                }
+            });
+        }
+    }
+
     function hashString(str) {
         var h = 5381;
         for (var i = 0; i < str.length; i++) {
@@ -434,6 +458,7 @@ if (window.console && window.console.log) {
     function init() {
         setPageReadyState();
         initTheme();
+        bindBackLinks();
         buildArticleToc();
         enhanceCodeBlocks();
         enhanceArticleImages();

@@ -472,13 +472,12 @@ function loveListAcc($atts, $content = '')
             $out .= '<strong>'.$safeTitle.'</strong>';
             $out .= '</button></h2></div>';
             $out .= '<div id="collapse'.$key.'" class="collapse" aria-labelledby="heading'.$key.'" data-parent="#loveList">';
-            $out .= '<div class="card-body p-0">';
             if ($style !== '') {
+                $out .= '<div class="card-body p-0">';
                 $out .= '<section style="'.htmlspecialchars($style, ENT_QUOTES, 'UTF-8').'"></section>';
-            } else {
-                $out .= '<section></section>';
+                $out .= '</div>';
             }
-            $out .= '</div></div></div>';
+            $out .= '</div></div>';
         }
         $out .= '</div>';
         return $out;
