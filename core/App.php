@@ -14,6 +14,19 @@ class App
         return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
     }
 
+    public static function escapeTextWithBr($value)
+    {
+        $value = (string)$value;
+        $value = str_replace(array("\r\n", "\r"), "\n", $value);
+        $value = trim($value);
+        if ($value === '') {
+            return '';
+        }
+
+        $escaped = self::escapeHtml($value);
+        return str_replace("\n", '<br>', $escaped);
+    }
+
     public static function parseShortCode($content)
     {
         $content = do_shortcode($content);

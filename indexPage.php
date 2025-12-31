@@ -16,16 +16,26 @@ $loveListPageIcon = App::escapeUrlAttribute(isset($this->options->loveListPageIc
 $this->need('base/head.php');
 $this->need('base/nav.php');
 ?>
-<div class="container">
-    <blockquote class="blockquote text-center my-5 py-2">
-        <h5 class="card-title lover-card-title">已相伴</h5>
-        <h5 id="site_runtime"></h5>
-    </blockquote>
-    <div class="row indexPlate">
-        <div class="col-md-4">
-            <a href="<?php echo $blessingPageLink; ?>" class="card ">
-                <div class="card-body">
-                    <div class="row align-items-center">
+	<div class="container">
+	    <blockquote class="blockquote text-center my-5 py-2">
+	        <h5 class="card-title lover-card-title">已相伴</h5>
+	        <h5 id="site_runtime"></h5>
+	    </blockquote>
+	    <?php
+	    $introHomeEnabled = isset($this->options->introHomeEnable) && (string)$this->options->introHomeEnable === '1';
+	    $introHomeTextRaw = isset($this->options->introHomeText) ? (string)$this->options->introHomeText : '';
+	    $introHomeTextRaw = trim($introHomeTextRaw);
+	    $introHomeHtml = ($introHomeEnabled && $introHomeTextRaw !== '') ? App::escapeTextWithBr($introHomeTextRaw) : '';
+	    ?>
+	    <?php if ($introHomeHtml !== '') : ?>
+	        <h5 class="list-text page-quote"><?php echo $introHomeHtml; ?></h5>
+	        <hr class="quote-divider">
+	    <?php endif; ?>
+	    <div class="row indexPlate">
+	        <div class="col-md-4">
+	            <a href="<?php echo $blessingPageLink; ?>" class="card ">
+	                <div class="card-body">
+	                    <div class="row align-items-center">
                         <div class="col-auto">
                             <div class="avatar avatar-md">
                                 <img src="<?php echo $blessingPageIcon; ?>" alt="..." class="avatar-img rounded-circle">

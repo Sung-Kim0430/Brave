@@ -22,7 +22,7 @@
 
 ## 主题设置项
 
-主题设置定义在 `functions.php:21` 的 `themeConfig($form)` 中，常用项如下：
+主题设置定义在 `functions.php` 的 `themeConfig($form)` 中，常用项如下：
 
 - `navsay`：导航栏右侧文字
 - `heroimg`：头部大图链接
@@ -32,6 +32,19 @@
 - `loveListPageIcon` / `loveListPageLink`：首页 Love List 卡片图标与链接
 - `blessingPageIcon` / `blessingPageLink`：首页祝福板卡片图标与链接
 - `timePageIcon`：首页点滴时光图标（链接当前写死为 `/index.php/blog/`，可自行改主题代码或通过路由配置适配）
+
+导言（每页可开关 + 可覆盖文案；纯文本）：
+
+- `introHomeEnable` / `introHomeText`：首页（`indexPage.php`）导言显示与内容
+- `introIndexEnable` / `introIndexText`：点滴时光列表（`index.php`）导言显示与内容；内容留空会回退主题默认导言
+- `introPostEnable` / `introPostText`：点滴时光文章页（`post.php`）导言显示与内容
+- `introCommentEnable` / `introCommentText`：祝福板（`commentPage.php`）导言显示与内容
+- `introLoveListEnable` / `introLoveListText`：恋爱清单（`loveListPage.php`）导言显示与内容；内容留空会回退主题默认导言
+
+说明：
+
+- 导言内容按纯文本处理：会做 HTML 转义；换行会自动转换为 `<br>`。
+- 需要“完全不显示导言”时：把对应 `*Enable` 设为隐藏即可。
 
 安全相关（推荐保持默认）：
 

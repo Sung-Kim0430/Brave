@@ -86,6 +86,111 @@ function themeConfig($form)
     $timePageIcon = new Text('timePageIcon', NULL, NULL, _t('首页点点滴滴图标'), _t('在此输入图标直链，将显示在首页点点滴滴小版块中'));
     $form->addInput($timePageIcon);
 
+    $introHomeEnable = new Radio(
+        'introHomeEnable',
+        array(
+            '0' => _t('隐藏（默认）'),
+            '1' => _t('显示'),
+        ),
+        '0',
+        _t('首页导言显示'),
+        _t('控制主题首页（indexPage.php）导言是否显示。')
+    );
+    $form->addInput($introHomeEnable);
+
+    $introHomeText = new Textarea(
+        'introHomeText',
+        NULL,
+        '',
+        _t('首页导言内容'),
+        _t('支持换行；将自动转换为 <br>。不支持 HTML；留空则不显示。')
+    );
+    $form->addInput($introHomeText);
+
+    $introIndexEnable = new Radio(
+        'introIndexEnable',
+        array(
+            '1' => _t('显示（默认）'),
+            '0' => _t('隐藏'),
+        ),
+        '1',
+        _t('点滴时光（列表）导言显示'),
+        _t('控制点滴时光列表页（index.php）导言是否显示。')
+    );
+    $form->addInput($introIndexEnable);
+
+    $introIndexText = new Textarea(
+        'introIndexText',
+        NULL,
+        "你要是愿意，我就永远爱你；你要是不愿意，我就永远相思。\n我活在世上，无非想要明白些道理，遇见些有趣的事。倘能如我所愿，我的一生就算成功。",
+        _t('点滴时光（列表）导言内容'),
+        _t('支持换行；将自动转换为 <br>。不支持 HTML；留空则使用主题默认导言。')
+    );
+    $form->addInput($introIndexText);
+
+    $introPostEnable = new Radio(
+        'introPostEnable',
+        array(
+            '0' => _t('隐藏（默认）'),
+            '1' => _t('显示'),
+        ),
+        '0',
+        _t('点滴时光（文章页）导言显示'),
+        _t('控制点滴时光文章页（post.php）导言是否显示。')
+    );
+    $form->addInput($introPostEnable);
+
+    $introPostText = new Textarea(
+        'introPostText',
+        NULL,
+        '',
+        _t('点滴时光（文章页）导言内容'),
+        _t('支持换行；将自动转换为 <br>。不支持 HTML；留空则不显示。')
+    );
+    $form->addInput($introPostText);
+
+    $introCommentEnable = new Radio(
+        'introCommentEnable',
+        array(
+            '0' => _t('隐藏（默认）'),
+            '1' => _t('显示'),
+        ),
+        '0',
+        _t('祝福板导言显示'),
+        _t('控制祝福板页面（commentPage.php）导言是否显示。')
+    );
+    $form->addInput($introCommentEnable);
+
+    $introCommentText = new Textarea(
+        'introCommentText',
+        NULL,
+        '写下一句祝愿',
+        _t('祝福板导言内容'),
+        _t('支持换行；将自动转换为 <br>。不支持 HTML；留空则不显示。')
+    );
+    $form->addInput($introCommentText);
+
+    $introLoveListEnable = new Radio(
+        'introLoveListEnable',
+        array(
+            '1' => _t('显示（默认）'),
+            '0' => _t('隐藏'),
+        ),
+        '1',
+        _t('恋爱清单导言显示'),
+        _t('控制恋爱清单页面（loveListPage.php）导言是否显示。')
+    );
+    $form->addInput($introLoveListEnable);
+
+    $introLoveListText = new Textarea(
+        'introLoveListText',
+        NULL,
+        "你要是愿意，我就永远爱你；你要是不愿意，我就永远相思。\n我活在世上，无非想要明白些道理，遇见些有趣的事。倘能如我所愿，我的一生就算成功。\n把这些有趣的事写成恋爱清单，完成一项，就点亮一枚小小的勾。",
+        _t('恋爱清单导言内容'),
+        _t('支持换行；将自动转换为 <br>。不支持 HTML；留空则使用主题默认导言。')
+    );
+    $form->addInput($introLoveListText);
+
     $commentAntiSpam = new Radio(
         'commentAntiSpam',
         array(

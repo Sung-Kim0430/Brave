@@ -18,6 +18,11 @@ $siteUrl = App::escapeUrlAttribute($siteUrlRaw, true, array('http', 'https'));
 if ($siteUrl === '') {
     $siteUrl = '/';
 }
+
+$introCommentEnabled = isset($this->options->introCommentEnable) && (string)$this->options->introCommentEnable === '1';
+$introCommentTextRaw = isset($this->options->introCommentText) ? (string)$this->options->introCommentText : '';
+$introCommentTextRaw = trim($introCommentTextRaw);
+$introCommentHtml = ($introCommentEnabled && $introCommentTextRaw !== '') ? App::escapeTextWithBr($introCommentTextRaw) : '';
 ?>
 <?php function threadedComments($comments, $options)
 {
@@ -73,18 +78,22 @@ if ($siteUrl === '') {
 <?php } ?>
 <?php if ($this->allow('comment')) : ?>
     <div id="<?php $this->respondId(); ?>" class="respond list-content mx-auto mt-5">
-        <div class="list-top">
-            <div class="brave-page-actions">
-                <a class="brave-back-link" href="<?php echo $siteUrl; ?>" data-brave-back>
-                    <span class="brave-back-link__icon" aria-hidden="true">←</span>
-                    <span class="brave-back-link__text">返回</span>
-                </a>
-            </div>
-            <?php if ($comments->have()) : ?>
-                <h5 class="text-center"><?php $this->commentsNum(_t('尚无祝愿'), _t('仅有一则祝愿'), _t('已收下<span class="bigfontNum"> %d </span>份祝愿')); ?></h5>
-                <?php $comments->listComments(); ?>
-                <?php $comments->pageNav('&laquo; 上一页', '下一页 &raquo;'); ?>
-            <?php endif; ?>
+	        <div class="list-top">
+	            <div class="brave-page-actions">
+	                <a class="brave-back-link" href="<?php echo $siteUrl; ?>" data-brave-back>
+	                    <span class="brave-back-link__icon" aria-hidden="true">←</span>
+	                    <span class="brave-back-link__text">返回</span>
+	                </a>
+	            </div>
+	            <?php if ($introCommentHtml !== '') : ?>
+	                <h5 class="list-text page-quote"><?php echo $introCommentHtml; ?></h5>
+	                <hr class="quote-divider">
+	            <?php endif; ?>
+	            <?php if ($comments->have()) : ?>
+	                <h5 class="text-center"><?php $this->commentsNum(_t('尚无祝愿'), _t('仅有一则祝愿'), _t('已收下<span class="bigfontNum"> %d </span>份祝愿')); ?></h5>
+	                <?php $comments->listComments(); ?>
+	                <?php $comments->pageNav('&laquo; 上一页', '下一页 &raquo;'); ?>
+	            <?php endif; ?>
             <form method="post" action="<?php $this->commentUrl() ?>" name="comment-form" id="comment-form" role="form" class="comment-form">
                 <?php if ($this->user->hasLogin()) : ?>
                     <p><?php _e('当前身份: '); ?><a href="<?php $this->options->profileUrl(); ?>"><?php $this->user->screenName(); ?></a>.
@@ -114,16 +123,20 @@ if ($siteUrl === '') {
     </div>
 <?php else : ?>
     <div class="list-content mx-auto mt-5">
-        <div class="list-top">
-            <div class="brave-page-actions">
-                <a class="brave-back-link" href="<?php echo $siteUrl; ?>" data-brave-back>
-                    <span class="brave-back-link__icon" aria-hidden="true">←</span>
-                    <span class="brave-back-link__text">返回</span>
-                </a>
-            </div>
-            <h3 class="text-center"><?php _e('留言暂已关闭'); ?></h3>
-        </div>
-    </div>
-<?php endif; ?>
+	        <div class="list-top">
+	            <div class="brave-page-actions">
+	                <a class="brave-back-link" href="<?php echo $siteUrl; ?>" data-brave-back>
+	                    <span class="brave-back-link__icon" aria-hidden="true">←</span>
+	                    <span class="brave-back-link__text">返回</span>
+	                </a>
+	            </div>
+	            <?php if ($introCommentHtml !== '') : ?>
+	                <h5 class="list-text page-quote"><?php echo $introCommentHtml; ?></h5>
+	                <hr class="quote-divider">
+	            <?php endif; ?>
+	            <h3 class="text-center"><?php _e('留言暂已关闭'); ?></h3>
+	        </div>
+	    </div>
+	<?php endif; ?>
 
 <?php $this->need('base/footer.php'); ?>
