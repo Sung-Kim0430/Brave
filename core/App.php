@@ -1,8 +1,10 @@
 <?php
 if (!defined('__TYPECHO_ROOT_DIR__')) exit;
 /**
- * Author: Veen Zhao
+ * Editor: Sung Kim
+ * Creator: Veen Zhao
  * CreateTime: 2020/9/5 18:26
+ * UpdateTime: 2026/1/1 00:13
  */
 
 class App

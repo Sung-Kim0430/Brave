@@ -4,8 +4,10 @@ if (!defined('__TYPECHO_ROOT_DIR__')) exit;
 /**
  * 祝福板
  * @package custom
- * Author: Veen Zhao
+ * Editor: Sung Kim
+ * Creator: Veen Zhao
  * CreateTime: 2020/9/6 15:38
+ * UpdateTime: 2026/1/1 00:13
  */
 $this->need('base/head.php');
 $this->need('base/nav.php');

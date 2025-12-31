@@ -3,8 +3,10 @@ if (!defined('__TYPECHO_ROOT_DIR__')) exit;
 /**
  * 主题首页
  * @package custom
- * Author: Veen Zhao
+ * Editor: Sung Kim
+ * Creator: Veen Zhao
  * CreateTime: 2021/2/6 22:32
+ * UpdateTime: 2025/12/23 18:55
  */
 $blessingPageLink = App::escapeUrlAttribute(isset($this->options->blessingPageLink) ? (string)$this->options->blessingPageLink : '', true, array('http', 'https'));
 $blessingPageIcon = App::escapeUrlAttribute(isset($this->options->blessingPageIcon) ? (string)$this->options->blessingPageIcon : '', true, array('http', 'https'));

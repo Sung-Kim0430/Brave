@@ -3,9 +3,11 @@
 /**
  * 勇敢爱 - Typecho情侣主题
  * @package     Brave
- * @author      Veen Zhao
+ * @author      Sung Kim
+ * @creator     Veen Zhao
  * @version     1.2
  * @link        https://blog.zwying.com
+ * @update      2026/1/1 00:13
  */
 if (!defined('__TYPECHO_ROOT_DIR__')) exit;
 $siteUrlRaw = isset(Helper::options()->siteUrl) ? (string)Helper::options()->siteUrl : '/';

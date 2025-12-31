@@ -4,8 +4,10 @@ if (!defined('__TYPECHO_ROOT_DIR__')) exit;
  * Love List
  * @package custom
  *
- * Author: Veen Zhao
+ * Editor: Sung Kim
+ * Creator: Veen Zhao
  * CreateTime: 2020/9/4 22:37
+ * UpdateTime: 2026/1/1 00:13
  * Love list page
  */
 
