@@ -458,6 +458,7 @@ a:hover{
 	z-index: 1020;
 	background: rgba(17,24,39,.32) !important;
 	border-bottom: 1px solid rgba(255,255,255,.14);
+	border-radius: 0 0 var(--brave-radius) var(--brave-radius);
 	-webkit-backdrop-filter: blur(12px) saturate(140%);
 	backdrop-filter: blur(12px) saturate(140%);
 }
@@ -531,14 +532,14 @@ html[data-theme="dark"] .brave-theme-toggle{
 }
 
 
-/* 首页“已相伴”区域：卡片化 */
+/* 首页“已相伴”区域：移除卡片框 */
 blockquote.blockquote{
-	background: var(--brave-card-bg);
-	border: 1px solid var(--brave-card-border);
-	border-radius: var(--brave-radius);
-	box-shadow: var(--brave-shadow);
-	-webkit-backdrop-filter: blur(10px);
-	backdrop-filter: blur(10px);
+	background: transparent;
+	border: 0;
+	border-radius: 0;
+	box-shadow: none;
+	-webkit-backdrop-filter: none;
+	backdrop-filter: none;
 }
 
 /* 内容容器统一卡片风格 */
