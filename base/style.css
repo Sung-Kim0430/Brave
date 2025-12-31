@@ -281,6 +281,21 @@ ol{
 	margin-left: auto;
 	margin-right: auto;
 }
+.page-quote{
+	font-size: 1.05rem;
+	font-weight: 400;
+	color: var(--brave-muted);
+}
+.quote-divider{
+	border: 0;
+	height: 1px;
+	margin: 1.05rem auto 1.15rem;
+	max-width: 560px;
+	background: linear-gradient(to right, transparent, rgba(103,58,183,.35), transparent);
+}
+html[data-theme="dark"] .quote-divider{
+	background: linear-gradient(to right, transparent, rgba(167,139,250,.40), transparent);
+}
 .bigfontNum{
 	font-size: 3.5rem;
 }
@@ -337,6 +352,17 @@ ol{
 	--brave-radius: 18px;
 }
 
+html[data-theme="dark"]{
+	--brave-brand-1: #fb7185;
+	--brave-brand-2: #a78bfa;
+	--brave-bg: #060714;
+	--brave-text: #e5e7eb;
+	--brave-muted: rgba(229,231,235,.72);
+	--brave-card-bg: rgba(17,24,39,.74);
+	--brave-card-border: rgba(255,255,255,.10);
+	--brave-shadow: 0 22px 70px rgba(0,0,0,.55);
+}
+
 body{
 	color: var(--brave-text);
 	background:
@@ -347,6 +373,14 @@ body{
 	min-height: 100vh;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
+}
+
+html[data-theme="dark"] body{
+	background:
+		radial-gradient(1200px circle at 20% -10%, rgba(167,139,250,.18), transparent 60%),
+		radial-gradient(900px circle at 110% 10%, rgba(251,113,133,.14), transparent 55%),
+		radial-gradient(900px circle at 50% 110%, rgba(99,102,241,.10), transparent 55%),
+		var(--brave-bg);
 }
 
 html{
@@ -384,6 +418,49 @@ a:hover{
 	-webkit-backdrop-filter: blur(12px) saturate(140%);
 	backdrop-filter: blur(12px) saturate(140%);
 }
+.brave-theme-toggle{
+	width: 40px;
+	height: 34px;
+	border-radius: 999px;
+	border: 1px solid rgba(255,255,255,.18);
+	background: rgba(255,255,255,.12);
+	color: rgba(255,255,255,.92);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	line-height: 1;
+	cursor: pointer;
+	-webkit-backdrop-filter: blur(10px);
+	backdrop-filter: blur(10px);
+	transition: transform .12s ease, background .12s ease;
+}
+.brave-theme-toggle:hover{
+	transform: translateY(-1px);
+	background: rgba(255,255,255,.18);
+}
+.brave-theme-toggle:active{
+	transform: translateY(0);
+}
+.brave-theme-toggle__icon{
+	display: block;
+}
+.brave-theme-toggle__icon--sun{
+	display: none;
+}
+.brave-theme-toggle__icon--moon{
+	display: block;
+}
+html[data-theme="dark"] .brave-theme-toggle__icon--sun{
+	display: block;
+}
+html[data-theme="dark"] .brave-theme-toggle__icon--moon{
+	display: none;
+}
+html[data-theme="dark"] .brave-theme-toggle{
+	background: rgba(0,0,0,.18);
+	border-color: rgba(255,255,255,.14);
+}
 .navbar .navbar-brand{
 	font-weight: 700;
 	letter-spacing: .2px;
@@ -402,7 +479,7 @@ a:hover{
 	border-radius: var(--brave-radius);
 	border: 1px solid rgba(255,255,255,.16);
 	background: rgba(255,255,255,.08);
-	padding-top: 1.25rem;
+	padding-top: 1.75rem;
 	-webkit-backdrop-filter: blur(10px);
 	backdrop-filter: blur(10px);
 }
@@ -432,6 +509,11 @@ blockquote.blockquote{
 	padding: 1.25rem 1.25rem;
 	-webkit-backdrop-filter: blur(10px);
 	backdrop-filter: blur(10px);
+}
+html[data-theme="dark"] .list-content{
+	background:
+		radial-gradient(900px circle at 10% 0%, rgba(255,255,255,.08), transparent 60%),
+		var(--brave-card-bg);
 }
 @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))){
 	.list-content{
@@ -466,12 +548,20 @@ blockquote.blockquote{
 	-webkit-backdrop-filter: blur(10px);
 	backdrop-filter: blur(10px);
 }
+html[data-theme="dark"] .indexPlate .card{
+	background:
+		radial-gradient(600px circle at 0% 0%, rgba(255,255,255,.08), transparent 55%),
+		rgba(17,24,39,.58);
+}
 
 /* 文章排版：修复全局 p/ol reset 带来的可读性问题 */
 #article{
 	color: rgba(17,24,39,.92);
 	font-size: 16px;
 	line-height: 1.85;
+}
+html[data-theme="dark"] #article{
+	color: rgba(229,231,235,.92);
 }
 #article article h1,
 #article article h2,
@@ -505,6 +595,9 @@ blockquote.blockquote{
 	background: rgba(103,58,183,.06);
 	border-radius: 14px;
 }
+html[data-theme="dark"] #article blockquote{
+	background: rgba(167,139,250,.10);
+}
 #article pre{
 	margin: 1.1rem 0;
 	padding: 1rem 1.1rem;
@@ -517,6 +610,9 @@ blockquote.blockquote{
 	background: rgba(17,24,39,.06);
 	padding: .12em .4em;
 	border-radius: 10px;
+}
+html[data-theme="dark"] #article code{
+	background: rgba(255,255,255,.08);
 }
 #article pre code{
 	background: transparent;
@@ -542,6 +638,10 @@ blockquote.blockquote{
 	border: 1px solid rgba(17,24,39,.10);
 	background: rgba(255,255,255,.72);
 }
+html[data-theme="dark"] #article table{
+	border-color: rgba(255,255,255,.10);
+	background: rgba(17,24,39,.60);
+}
 #article th,
 #article td{
 	padding: .6rem .75rem;
@@ -552,8 +652,14 @@ blockquote.blockquote{
 	background: rgba(103,58,183,.08);
 	font-weight: 700;
 }
+html[data-theme="dark"] #article th{
+	background: rgba(167,139,250,.16);
+}
 #article tr:nth-child(even) td{
 	background: rgba(17,24,39,.02);
+}
+html[data-theme="dark"] #article tr:nth-child(even) td{
+	background: rgba(255,255,255,.04);
 }
 
 #article hr{
@@ -592,12 +698,19 @@ blockquote.blockquote{
 	box-shadow: 0 14px 32px rgba(17,24,39,.10);
 	overflow: hidden;
 }
+html[data-theme="dark"] .article-toc-wrap{
+	background: rgba(17,24,39,.58);
+	border-color: rgba(255,255,255,.10);
+}
 .article-toc-summary{
 	cursor: pointer;
 	padding: .75rem 1rem;
 	font-weight: 700;
 	color: rgba(17,24,39,.92);
 	user-select: none;
+}
+html[data-theme="dark"] .article-toc-summary{
+	color: rgba(229,231,235,.92);
 }
 .article-toc-summary::marker{
 	color: rgba(17,24,39,.55);
@@ -615,6 +728,9 @@ blockquote.blockquote{
 .article-toc-list .toc-link{
 	color: rgba(17,24,39,.84);
 	text-decoration: none;
+}
+html[data-theme="dark"] .article-toc-list .toc-link{
+	color: rgba(229,231,235,.84);
 }
 .article-toc-list .toc-link:hover{
 	color: var(--brave-brand-2);
@@ -739,6 +855,12 @@ body.brave-lightbox-open{
 	text-decoration: none;
 	transition: transform .16s ease, box-shadow .16s ease;
 }
+html[data-theme="dark"] .page-navigator a,
+html[data-theme="dark"] .page-navigator span{
+	background: rgba(17,24,39,.58);
+	border-color: rgba(255,255,255,.12);
+	color: rgba(229,231,235,.88);
+}
 .page-navigator a:hover{
 	transform: translateY(-1px);
 	box-shadow: 0 14px 28px rgba(17,24,39,.12);
@@ -758,6 +880,10 @@ body.brave-lightbox-open{
 	border-radius: 16px;
 	box-shadow: 0 12px 28px rgba(17,24,39,.08);
 	padding: 1rem 1rem;
+}
+html[data-theme="dark"] .commentlist .comment{
+	background: rgba(17,24,39,.58);
+	border-color: rgba(255,255,255,.10);
 }
 .commentlist .comment .comment_author .name{
 	font-weight: 600;
@@ -787,6 +913,14 @@ body.brave-lightbox-open{
 .comment-form .form-control{
 	border-radius: 14px;
 	border-color: rgba(17,24,39,.14);
+}
+html[data-theme="dark"] .comment-form .form-control{
+	background: rgba(17,24,39,.35);
+	border-color: rgba(255,255,255,.14);
+	color: rgba(229,231,235,.92);
+}
+html[data-theme="dark"] .comment-form .form-control::placeholder{
+	color: rgba(229,231,235,.55);
 }
 .comment-form .form-control:focus{
 	border-color: rgba(103,58,183,.45);

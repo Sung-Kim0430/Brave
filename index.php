@@ -14,7 +14,8 @@ $this->need('base/nav.php');
 
 <div class="list-content mx-auto mt-5">
     <div class="list-top">
-        <h5 class="list-text">你要是愿意，我就永远爱你；你要是不愿意，我就永远相思。<br>我活在世上，无非想要明白些道理，遇见些有趣的事。倘能如我所愿，我的一生就算成功。</h5>
+        <h5 class="list-text page-quote">你要是愿意，我就永远爱你；你要是不愿意，我就永远相思。<br>我活在世上，无非想要明白些道理，遇见些有趣的事。倘能如我所愿，我的一生就算成功。</h5>
+        <hr class="quote-divider">
         <?php if ($this->have()) : ?>
             <?php while ($this->next()) : ?>
                 <article class="post post-item text-center">

@@ -12,6 +12,7 @@ $girlAvatar = App::escapeUrlAttribute(isset($this->options->girl) ? (string)$thi
 $boyName = App::escapeHtml(isset($this->options->boyname) ? (string)$this->options->boyname : '');
 $girlName = App::escapeHtml(isset($this->options->girlname) ? (string)$this->options->girlname : '');
 $navSay = App::escapeHtml(isset($this->options->navsay) ? (string)$this->options->navsay : '');
+$enableDarkMode = isset(Helper::options()->enableDarkMode) && (string)Helper::options()->enableDarkMode === '1';
 ?>
 <div class="container-fluid position-relative">
     <nav class="navbar navbar-expand-lg navbar-dark  text-white bg-transparent">
@@ -24,9 +25,20 @@ $navSay = App::escapeHtml(isset($this->options->navsay) ? (string)$this->options
             <div class="collapse navbar-collapse" id="navbarText">
                 <ul class="navbar-nav mr-auto">
                 </ul>
-                <span class="navbar-text">
+                <span class="navbar-text d-inline-flex align-items-center">
                     <?php echo $navSay; ?>
                 </span>
+                <?php if ($enableDarkMode) : ?>
+                    <button type="button" class="brave-theme-toggle ml-2" data-theme-toggle aria-label="切换暗色模式" title="切换暗色模式">
+                        <svg class="brave-theme-toggle__icon brave-theme-toggle__icon--sun" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="4"></circle>
+                            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+                        </svg>
+                        <svg class="brave-theme-toggle__icon brave-theme-toggle__icon--moon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"></path>
+                        </svg>
+                    </button>
+                <?php endif; ?>
             </div>
         </div>
     </nav>

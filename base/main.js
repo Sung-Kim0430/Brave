@@ -4,6 +4,119 @@ if (window.console && window.console.log) {
 }
 
 (function() {
+    var THEME_STORAGE_KEY = 'brave-theme';
+
+    function isDarkModeEnabled() {
+        try {
+            return document.documentElement && document.documentElement.getAttribute('data-darkmode') === '1';
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function safeStorageGet(key) {
+        try {
+            return localStorage.getItem(key);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function safeStorageSet(key, value) {
+        try {
+            localStorage.setItem(key, value);
+        } catch (e) {}
+    }
+
+    function safeStorageRemove(key) {
+        try {
+            localStorage.removeItem(key);
+        } catch (e) {}
+    }
+
+    function getSavedTheme() {
+        var v = safeStorageGet(THEME_STORAGE_KEY);
+        return (v === 'dark' || v === 'light') ? v : null;
+    }
+
+    function getSystemTheme() {
+        var mql = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+        return (mql && mql.matches) ? 'dark' : 'light';
+    }
+
+    function getCurrentTheme() {
+        var t = document.documentElement ? document.documentElement.getAttribute('data-theme') : '';
+        return (t === 'dark' || t === 'light') ? t : null;
+    }
+
+    function applyTheme(theme) {
+        if (!document.documentElement) return;
+        if (theme !== 'dark' && theme !== 'light') return;
+        document.documentElement.setAttribute('data-theme', theme);
+        updateThemeToggle(theme);
+    }
+
+    function updateThemeToggle(theme) {
+        var btn = document.querySelector('[data-theme-toggle]');
+        if (!btn) return;
+
+        btn.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
+        btn.title = '切换暗色模式（Shift+点击跟随系统）';
+    }
+
+    function bindThemeToggle() {
+        var btn = document.querySelector('[data-theme-toggle]');
+        if (!btn) return;
+        if (btn.dataset.braveThemeBound === '1') return;
+        btn.dataset.braveThemeBound = '1';
+
+        btn.addEventListener('click', function(e) {
+            if (!isDarkModeEnabled()) return;
+
+            if (e && e.shiftKey) {
+                safeStorageRemove(THEME_STORAGE_KEY);
+                applyTheme(getSystemTheme());
+                return;
+            }
+
+            var current = getCurrentTheme() || getSystemTheme();
+            var next = (current === 'dark') ? 'light' : 'dark';
+            safeStorageSet(THEME_STORAGE_KEY, next);
+            applyTheme(next);
+        });
+    }
+
+    function bindSystemThemeListener() {
+        if (!window.matchMedia) return;
+        window.BraveTheme = window.BraveTheme || {};
+        if (window.BraveTheme._themeMql) return;
+
+        var mql = window.matchMedia('(prefers-color-scheme: dark)');
+        var handler = function(e) {
+            if (!isDarkModeEnabled()) return;
+            if (getSavedTheme()) return;
+            applyTheme(e.matches ? 'dark' : 'light');
+        };
+
+        if (mql.addEventListener) {
+            mql.addEventListener('change', handler);
+        } else if (mql.addListener) {
+            mql.addListener(handler);
+        }
+
+        window.BraveTheme._themeMql = mql;
+        window.BraveTheme._themeMqlHandler = handler;
+    }
+
+    function initTheme() {
+        if (!isDarkModeEnabled()) return;
+
+        var theme = getCurrentTheme() || getSavedTheme() || getSystemTheme();
+        applyTheme(theme);
+        bindThemeToggle();
+        bindSystemThemeListener();
+    }
+
     function hashString(str) {
         var h = 5381;
         for (var i = 0; i < str.length; i++) {
@@ -16,9 +129,9 @@ if (window.console && window.console.log) {
     function slugify(text) {
         var t = String(text || '').trim().toLowerCase();
         t = t.replace(/\s+/g, '-');
-        t = t.replace(/[^a-z0-9\\-]/g, '');
-        t = t.replace(/\\-+/g, '-');
-        t = t.replace(/^\\-+|\\-+$/g, '');
+        t = t.replace(/[^a-z0-9-]/g, '');
+        t = t.replace(/-+/g, '-');
+        t = t.replace(/^-+|-+$/g, '');
         return t;
     }
 
@@ -320,6 +433,7 @@ if (window.console && window.console.log) {
 
     function init() {
         setPageReadyState();
+        initTheme();
         buildArticleToc();
         enhanceCodeBlocks();
         enhanceArticleImages();

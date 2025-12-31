@@ -167,6 +167,18 @@ function themeConfig($form)
     );
     $form->addInput($fontSource);
 
+    $enableDarkMode = new Radio(
+        'enableDarkMode',
+        array(
+            '0' => _t('关闭（默认）'),
+            '1' => _t('开启'),
+        ),
+        '0',
+        _t('暗色模式开关'),
+        _t('开启后前台显示暗色模式切换按钮：默认跟随系统，可手动切换并用 localStorage 记忆；关闭则不启用暗色模式逻辑。')
+    );
+    $form->addInput($enableDarkMode);
+
     $cdnEnableSRI = new Radio(
         'cdnEnableSRI',
         array(

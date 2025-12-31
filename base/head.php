@@ -10,6 +10,7 @@ $enableCSP = ($assetsSource === 'cdn' && $cdnEnableCSP);
 $fontSource = isset(Helper::options()->fontSource) ? (string)Helper::options()->fontSource : 'local';
 $enableRemoteFont = ($fontSource === 'remote');
 $enableCustomCode = !isset(Helper::options()->enableCustomCode) || (string)Helper::options()->enableCustomCode !== '0';
+$enableDarkMode = isset(Helper::options()->enableDarkMode) && (string)Helper::options()->enableDarkMode === '1';
 
 $cspPolicy = '';
 if ($enableCSP) {
@@ -53,10 +54,26 @@ if ($enableCSP) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="zh-cn">
+<html lang="zh-cn"<?php if ($enableDarkMode) : ?> data-darkmode="1"<?php endif; ?>>
 <head>
     <meta charset="<?php $this->options->charset(); ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <?php if ($enableDarkMode) : ?>
+        <meta name="color-scheme" content="light dark">
+        <script>
+            (function() {
+                try {
+                    var key = 'brave-theme';
+                    var saved = localStorage.getItem(key);
+                    var mql = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+                    var theme = (saved === 'dark' || saved === 'light')
+                        ? saved
+                        : (mql && mql.matches ? 'dark' : 'light');
+                    document.documentElement.setAttribute('data-theme', theme);
+                } catch (e) {}
+            })();
+        </script>
+    <?php endif; ?>
     <title><?php $this->archiveTitle(array(
             'category' => _t('「%s」里的篇章'),
             'search' => _t('含「%s」的篇章'),

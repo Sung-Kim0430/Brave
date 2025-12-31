@@ -42,6 +42,7 @@
 - `loveListTitleAllowHtml`：Love List 标题是否允许少量 HTML（兼容模式）
 - `assetsSource`：静态资源加载方式（默认本地，减少 CDN 供应链风险）
 - `fontSource`：字体加载方式（默认本地/系统字体；在线字体会引入第三方字体链接）
+- `enableDarkMode`：暗色模式开关（默认关闭）；开启后导航栏出现切换按钮：默认跟随系统，可手动切换并用 localStorage 记忆（`brave-theme`；Shift+点击恢复跟随系统）
 - `cdnEnableSRI`：CDN 模式下是否为外链资源启用 SRI（默认开启）
 - `cdnEnableCSP`：CDN 模式下是否启用 CSP（默认开启）
 - `cspPolicy`：自定义 CSP 策略（可选；留空使用主题内置默认）
