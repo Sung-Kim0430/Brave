@@ -19,7 +19,7 @@
 This repository is a Typecho theme and has no build pipeline.
 
 - Install locally: copy the theme directory to `usr/themes/Brave/`, then enable it in Typecho Admin → Appearance.
-- Verify settings: Admin → Theme Settings (notably `assetsSource`, `fontSource`, `enableCustomCode`, comment security options, and CSP/SRI toggles).
+- Verify settings: Admin → Theme Settings (notably `assetsSource`, `fontSource`, `enableDarkMode`, `enableCustomCode`, comment security options, and CSP/SRI toggles).
 - After edits: refresh pages and clear Typecho/cache-plugin caches if applicable.
 
 ## Coding Style & Naming Conventions
@@ -28,6 +28,7 @@ This repository is a Typecho theme and has no build pipeline.
 - Preserve the `__TYPECHO_ROOT_DIR__` guard pattern in PHP entry templates/partials.
 - Treat all user-controlled output as unsafe by default:
   - Prefer `core/App.php` helpers (e.g. `escapeUrlAttribute`, `buildBackgroundImageStyle`, `escapeJsString`, `sanitizeCommentHtml`) over direct string concatenation.
+- File header metadata (if present): keep original `CreateTime`, set primary author as `Editor: Sung Kim`, keep original author as `Creator: Veen Zhao`, and update `UpdateTime` based on Git history.
 
 ## Testing Guidelines
 
@@ -36,6 +37,9 @@ No automated test suite is configured. Manually validate:
 - Comment submission + rendering (`commentPage.php`), with `commentAllowImg` on/off.
 - Comment author output (`commentPage.php`): verify author name/link renders correctly and is sanitized.
 - Love List shortcode (`loveListPage.php`), with `loveListTitleAllowHtml` on/off.
+- Love List items without `img`: expanding should not render an empty placeholder box.
+- Dark mode (`enableDarkMode=1`): follow system by default, manual toggle works, and `localStorage['brave-theme']` overrides; `enableDarkMode=0` should not output the toggle or theme logic.
+- Back button: verify it exists on list/detail pages (e.g. `index.php`, `post.php`, `loveListPage.php`, `commentPage.php`) and behaves as “history back when possible, fallback to href otherwise”.
 - Asset loading in both modes: `assetsSource=local` and `assetsSource=cdn` (SRI/CSP enabled by default in CDN mode).
 - Font loading: `fontSource=local` should not request `gfonts.ctfile.com`; `fontSource=remote` should load the Inter CSS.
 - Custom code gating: `enableCustomCode=0` should suppress `头部自定义/Css自定义/底部自定义/pjax回调` output without breaking layout.
