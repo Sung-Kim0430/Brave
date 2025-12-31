@@ -402,6 +402,7 @@ a:hover{
 	border-radius: var(--brave-radius);
 	border: 1px solid rgba(255,255,255,.16);
 	background: rgba(255,255,255,.08);
+	padding-top: 1.25rem;
 	-webkit-backdrop-filter: blur(10px);
 	backdrop-filter: blur(10px);
 }
