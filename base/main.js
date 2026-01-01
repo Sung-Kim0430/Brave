@@ -185,6 +185,10 @@ if (window.console && window.console.log) {
     }
 
     function removeExistingToc() {
+        if (window.BraveTheme && window.BraveTheme._tocObserver) {
+            try { window.BraveTheme._tocObserver.disconnect(); } catch (e) {}
+            window.BraveTheme._tocObserver = null;
+        }
         var existing = document.getElementById('brave-article-toc');
         if (existing && existing.parentNode) {
             existing.parentNode.removeChild(existing);
@@ -192,12 +196,12 @@ if (window.console && window.console.log) {
     }
 
     function buildArticleToc() {
+        removeExistingToc();
         var root = getArticleRoot();
         if (!root) return;
 
         var headings = root.querySelectorAll('h1, h2, h3, h4');
         if (!headings || !headings.length) {
-            removeExistingToc();
             return;
         }
 
@@ -217,11 +221,8 @@ if (window.console && window.console.log) {
         }
 
         if (!items.length) {
-            removeExistingToc();
             return;
         }
-
-        removeExistingToc();
 
         var tocWrap = document.createElement('details');
         tocWrap.id = 'brave-article-toc';

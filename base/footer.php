@@ -56,30 +56,51 @@
 				return null;
 			};
 
-			window.showSiteRuntime = function() {
-				window.setTimeout(window.showSiteRuntime, 1000);
-	        var site_runtime = $("#site_runtime");
-				if (!site_runtime || !site_runtime.length) return;
-				var startStr = <?php echo App::escapeJsString(isset($this->options->lovetime) ? (string)$this->options->lovetime : ''); ?>;
-            var start = window.parseLoveTime(startStr);
-            if (!start) {
-                site_runtime.text("未设置");
-                return;
-            }
-			var now = new Date();
-			var T = (now.getTime() - start.getTime());
-			var i = 24 * 60 * 60 * 1000;
-			var d = T / i;
-			var D = Math.floor(d);
-			var h = (d - D) * 24;
-			var H = Math.floor(h);
-			var m = (h - H) * 60;
-			var M = Math.floor(m);
-			var s = (m - M) * 60;
-			var S = Math.floor(s);
-			site_runtime.html("<span class=\"bigfontNum\">" + D + "</span> 天 <span class=\"bigfontNum\">" + H + "</span> 小时 <span class=\"bigfontNum\">" + M + "</span> 分钟 <span class=\"bigfontNum\">" + S + "</span> 秒");
-		};
-			window.showSiteRuntime();
+				(function() {
+					var startStr = <?php echo App::escapeJsString(isset($this->options->lovetime) ? (string)$this->options->lovetime : ''); ?>;
+					var start = window.parseLoveTime(startStr);
+
+					window.showSiteRuntime = function() {
+						var site_runtime = $("#site_runtime");
+						if (!site_runtime || !site_runtime.length) return false;
+						if (!start) {
+							site_runtime.text("未设置");
+							return false;
+						}
+
+						var now = new Date();
+						var T = (now.getTime() - start.getTime());
+						var i = 24 * 60 * 60 * 1000;
+						var d = T / i;
+						var D = Math.floor(d);
+						var h = (d - D) * 24;
+						var H = Math.floor(h);
+						var m = (h - H) * 60;
+						var M = Math.floor(m);
+						var s = (m - M) * 60;
+						var S = Math.floor(s);
+						site_runtime.html("<span class=\"bigfontNum\">" + D + "</span> 天 <span class=\"bigfontNum\">" + H + "</span> 小时 <span class=\"bigfontNum\">" + M + "</span> 分钟 <span class=\"bigfontNum\">" + S + "</span> 秒");
+						return true;
+					};
+
+					window.BraveTheme = window.BraveTheme || {};
+					window.BraveTheme.ensureSiteRuntimeTicker = function() {
+						try {
+							if (window.BraveTheme._siteRuntimeTimer) {
+								window.clearInterval(window.BraveTheme._siteRuntimeTimer);
+								window.BraveTheme._siteRuntimeTimer = null;
+							}
+						} catch (e) {}
+
+						if (window.showSiteRuntime && window.showSiteRuntime()) {
+							try {
+								window.BraveTheme._siteRuntimeTimer = window.setInterval(window.showSiteRuntime, 1000);
+							} catch (e) {}
+						}
+					};
+
+					window.BraveTheme.ensureSiteRuntimeTicker();
+				})();
 
 		    if (window.NProgress) {
 		        NProgress.configure({ showSpinner: false, trickleSpeed: 120 });
@@ -103,12 +124,15 @@
 		            $('body').addClass('is-pjax-loading');
 		            if (window.NProgress) NProgress.start();
 		        });
-		        $(document).on('pjax:complete', function() {
-		            $('body').removeClass('is-pjax-loading');
-		            <?php if ($enableCustomCode) : ?>
-		                <?php
-		                ob_start();
-		                $this->options->pjax回调();
+			        $(document).on('pjax:complete', function() {
+			            $('body').removeClass('is-pjax-loading');
+			            if (window.BraveTheme && window.BraveTheme.ensureSiteRuntimeTicker) {
+			                window.BraveTheme.ensureSiteRuntimeTicker();
+			            }
+			            <?php if ($enableCustomCode) : ?>
+			                <?php
+			                ob_start();
+			                $this->options->pjax回调();
 		                $pjaxCallback = ob_get_clean();
 		                echo App::escapeInlineScriptSnippet($pjaxCallback);
 		                ?>

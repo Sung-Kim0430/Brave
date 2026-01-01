@@ -995,21 +995,27 @@ body.is-pjax-loading #pjax-container {
 	opacity: .55;
 }
 
-/* Love List 视觉优化 */
-#loveList .card {
-	border: 1px solid rgba(0,0,0,.06);
-	border-radius: 14px;
-	overflow: hidden;
-	box-shadow: 0 10px 22px rgba(0,0,0,.08);
-	margin-bottom: 1rem;
-}
-#loveList .card-header {
-	border-bottom: 0;
-}
-#loveList .btn {
-	width: 100%;
-	padding: .85rem 1rem;
-}
+	/* Love List 视觉优化 */
+	#loveList .card {
+		border: 1px solid var(--brave-card-border);
+		border-radius: 14px;
+		overflow: hidden;
+		background: var(--brave-card-bg);
+		box-shadow: 0 10px 22px rgba(17,24,39,.10);
+		margin-bottom: 1rem;
+	}
+	html[data-theme="dark"] #loveList .card{
+		box-shadow: 0 18px 55px rgba(0,0,0,.45);
+	}
+	#loveList .card-header {
+		border-bottom: 0;
+		background: transparent;
+	}
+	#loveList .btn {
+		width: 100%;
+		padding: .85rem 1rem;
+		color: var(--brave-text);
+	}
 #loveList .btn strong {
 	font-weight: 600;
 }
