@@ -38,6 +38,7 @@ No automated test suite is configured. Manually validate:
 - Comment author output (`commentPage.php`): verify author name/link renders correctly and is sanitized.
 - Love List shortcode (`loveListPage.php`), with `loveListTitleAllowHtml` on/off.
 - Love List items without `img`: expanding should not render an empty placeholder box.
+- Missing avatars/icons: verify when `boy/girl` or homepage card icons are empty, the UI renders a placeholder instead of a broken image.
 - Dark mode (`enableDarkMode=1`): follow system by default, manual toggle works, and `localStorage['brave-theme']` overrides; `enableDarkMode=0` should not output the toggle or theme logic.
 - Back button: verify it exists on list/detail pages (e.g. `index.php`, `post.php`, `loveListPage.php`, `commentPage.php`) and behaves as “history back when possible, fallback to href otherwise”.
 - Page intro text: verify show/hide and override works per page; newlines become `<br>` and HTML is escaped; for list/loveList pages empty text falls back to the theme default intro.

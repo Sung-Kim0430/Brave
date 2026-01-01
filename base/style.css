@@ -91,18 +91,19 @@ ol{
 	height: 50vh;
 }
 
-.lover-background {
-	position: absolute;
-	width: 100%;
-	height: 100%;
-	left: 0;
-	top: 0;
-	z-index: -1;
-	object-fit: cover;
-	background-position-x: center;
-	background-position-y: center;
-	background-size: cover;
-}
+	.lover-background {
+		position: absolute;
+		width: 100%;
+		height: 100%;
+		left: 0;
+		top: 0;
+		z-index: -1;
+		object-fit: cover;
+		background-color: #111827;
+		background-position-x: center;
+		background-position-y: center;
+		background-size: cover;
+	}
 
 .lover-background:before {
 	content: "";
@@ -199,10 +200,26 @@ ol{
 	-webkit-text-fill-color: transparent;
 }
 
-.avatar-md img{
-	width: 65px;
-	height: 65px;
-}
+	.avatar-md img{
+		width: 65px;
+		height: 65px;
+	}
+	.avatar-md .brave-card-icon-fallback{
+		width: 65px;
+		height: 65px;
+		border-radius: 50%;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		font-weight: 700;
+		font-size: 1.35rem;
+		color: rgba(255,255,255,.92);
+		background: linear-gradient(135deg, #ff5162, #673ab7);
+		background: linear-gradient(135deg, var(--brave-brand-1, #ff5162), var(--brave-brand-2, #673ab7));
+		border: 2px solid rgba(255,255,255,.35);
+		box-shadow: 0 10px 20px rgba(17,24,39,.16);
+		user-select: none;
+	}
 
 #loveList,.list-content{
 	max-width: 650px;
@@ -527,9 +544,26 @@ html[data-theme="dark"] .brave-theme-toggle{
 	-webkit-backdrop-filter: blur(10px);
 	backdrop-filter: blur(10px);
 }
-.avatar-img{
-	box-shadow: 0 18px 35px rgba(0,0,0,.25);
-}
+	.avatar-img{
+		box-shadow: 0 18px 35px rgba(0,0,0,.25);
+	}
+	.brave-avatar-fallback{
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-weight: 700;
+		font-size: 2.2rem;
+		color: rgba(255,255,255,.92);
+		background: linear-gradient(135deg, #ff5162, #673ab7);
+		background: linear-gradient(135deg, var(--brave-brand-1), var(--brave-brand-2));
+		letter-spacing: .02em;
+		user-select: none;
+	}
+	@media screen and (max-width: 600px){
+		.brave-avatar-fallback{
+			font-size: 1.35rem;
+		}
+	}
 
 
 /* 首页“已相伴”区域：移除卡片框 */

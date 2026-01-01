@@ -33,6 +33,10 @@
 - `blessingPageIcon` / `blessingPageLink`：首页祝福板卡片图标与链接
 - `timePageIcon`：首页点滴时光图标（链接当前写死为 `/index.php/blog/`，可自行改主题代码或通过路由配置适配）
 
+提示：
+
+- 如果未设置头像/图标链接（留空或填入非法协议），主题会自动显示内置占位样式，避免出现“破图/空白”。
+
 导言（每页可开关 + 可覆盖文案；纯文本）：
 
 - `introHomeEnable` / `introHomeText`：首页（`indexPage.php`）导言显示与内容

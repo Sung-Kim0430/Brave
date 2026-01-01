@@ -7,10 +7,21 @@ if ($siteUrl === '') {
 }
 
 $heroStyle = App::buildBackgroundImageStyle(isset($this->options->heroimg) ? (string)$this->options->heroimg : '');
-$boyAvatar = App::escapeUrlAttribute(isset($this->options->boy) ? (string)$this->options->boy : '', true, array('http', 'https'));
-$girlAvatar = App::escapeUrlAttribute(isset($this->options->girl) ? (string)$this->options->girl : '', true, array('http', 'https'));
-$boyName = App::escapeHtml(isset($this->options->boyname) ? (string)$this->options->boyname : '');
-$girlName = App::escapeHtml(isset($this->options->girlname) ? (string)$this->options->girlname : '');
+$boyAvatarRaw = isset($this->options->boy) ? trim((string)$this->options->boy) : '';
+$girlAvatarRaw = isset($this->options->girl) ? trim((string)$this->options->girl) : '';
+$boyAvatar = App::escapeUrlAttribute($boyAvatarRaw, true, array('http', 'https'));
+$girlAvatar = App::escapeUrlAttribute($girlAvatarRaw, true, array('http', 'https'));
+
+$boyNameRaw = isset($this->options->boyname) ? trim((string)$this->options->boyname) : '';
+$girlNameRaw = isset($this->options->girlname) ? trim((string)$this->options->girlname) : '';
+$boyName = App::escapeHtml($boyNameRaw);
+$girlName = App::escapeHtml($girlNameRaw);
+
+$boyInitial = ($boyNameRaw === '') ? '他' : (function_exists('mb_substr') ? mb_substr($boyNameRaw, 0, 1, 'UTF-8') : '?');
+$girlInitial = ($girlNameRaw === '') ? '她' : (function_exists('mb_substr') ? mb_substr($girlNameRaw, 0, 1, 'UTF-8') : '?');
+$boyInitial = App::escapeHtml($boyInitial);
+$girlInitial = App::escapeHtml($girlInitial);
+
 $navSay = App::escapeHtml(isset($this->options->navsay) ? (string)$this->options->navsay : '');
 $enableDarkMode = isset(Helper::options()->enableDarkMode) && (string)Helper::options()->enableDarkMode === '1';
 ?>
@@ -44,27 +55,35 @@ $enableDarkMode = isset(Helper::options()->enableDarkMode) && (string)Helper::op
     </nav>
     <section class="lover-background" <?php if ($heroStyle !== '') : ?>style="<?php echo htmlspecialchars($heroStyle, ENT_QUOTES, 'UTF-8'); ?>"<?php endif; ?>></section>
     <section class="container lover-container d-flex flex-column align-content-center justify-content-center">
-        <div class="row align-items-center pb-5 lover">
-            <div class="col">
-                <div class="d-flex flex-column">
-                    <img class="mx-auto avatar-img rounded-circle" src="<?php echo $boyAvatar; ?>"
-                         alt="<?php echo $boyName; ?>">
-                    <h4 class="mx-auto text-white pt-2"><?php echo $boyName; ?></h4>
-                </div>
-            </div>
+	        <div class="row align-items-center pb-5 lover">
+	            <div class="col">
+	                <div class="d-flex flex-column">
+	                    <?php if ($boyAvatar !== '') : ?>
+	                        <img class="mx-auto avatar-img rounded-circle" src="<?php echo $boyAvatar; ?>"
+	                             alt="<?php echo ($boyName !== '') ? $boyName : '头像'; ?>">
+	                    <?php else : ?>
+	                        <div class="mx-auto avatar-img rounded-circle brave-avatar-fallback" role="img" aria-label="<?php echo ($boyName !== '') ? $boyName : '头像'; ?>"><?php echo $boyInitial; ?></div>
+	                    <?php endif; ?>
+	                    <h4 class="mx-auto text-white pt-2"><?php echo $boyName; ?></h4>
+	                </div>
+	            </div>
             <div class="col">
                 <div class="d-flex justify-content-center">
                     <div class="heart"></div>
                 </div>
             </div>
-            <div class="col">
-                <div class="d-flex flex-column">
-                    <img class="mx-auto avatar-img rounded-circle" src="<?php echo $girlAvatar; ?>"
-                         alt="<?php echo $girlName; ?>">
-                    <h4 class="mx-auto text-white pt-2"><?php echo $girlName; ?></h4>
-                </div>
-            </div>
-        </div>
+	            <div class="col">
+	                <div class="d-flex flex-column">
+	                    <?php if ($girlAvatar !== '') : ?>
+	                        <img class="mx-auto avatar-img rounded-circle" src="<?php echo $girlAvatar; ?>"
+	                             alt="<?php echo ($girlName !== '') ? $girlName : '头像'; ?>">
+	                    <?php else : ?>
+	                        <div class="mx-auto avatar-img rounded-circle brave-avatar-fallback" role="img" aria-label="<?php echo ($girlName !== '') ? $girlName : '头像'; ?>"><?php echo $girlInitial; ?></div>
+	                    <?php endif; ?>
+	                    <h4 class="mx-auto text-white pt-2"><?php echo $girlName; ?></h4>
+	                </div>
+	            </div>
+	        </div>
     </section>
     <section class="main-hero-waves-area waves-area">
         <svg class="waves-svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
