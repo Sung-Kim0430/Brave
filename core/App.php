@@ -4,11 +4,13 @@ if (!defined('__TYPECHO_ROOT_DIR__')) exit;
  * Editor: Sung Kim
  * Creator: Veen Zhao
  * CreateTime: 2020/9/5 18:26
- * UpdateTime: 2026/1/1 00:54
+ * UpdateTime: 2026/1/16 09:07
  */
 
 class App
 {
+    private static $shortcodesLoaded = false;
+
     public static function escapeHtml($value)
     {
         return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
@@ -29,8 +31,41 @@ class App
 
     public static function parseShortCode($content)
     {
-        $content = do_shortcode($content);
-        return $content;
+        $content = (string)$content;
+
+        // Avoid loading the shortcode engine when no shortcode delimiters exist.
+        if (strpos($content, '[') === false) {
+            return $content;
+        }
+
+        self::ensureShortcodesLoaded();
+
+        if (!function_exists('do_shortcode')) {
+            return $content;
+        }
+
+        return do_shortcode($content);
+    }
+
+    public static function ensureShortcodesLoaded()
+    {
+        if (self::$shortcodesLoaded) {
+            return;
+        }
+
+        if (!function_exists('do_shortcode')) {
+            $shortcodeFile = __DIR__ . '/shortcodes.php';
+            if (is_file($shortcodeFile)) {
+                require_once($shortcodeFile);
+            }
+        }
+
+        // Register theme shortcodes (idempotent).
+        if (function_exists('add_shortcode')) {
+            add_shortcode('loveList', 'loveListAcc');
+        }
+
+        self::$shortcodesLoaded = true;
     }
 
     public static function avatarQQ($ctx)
@@ -423,6 +458,16 @@ class App
         return self::sanitizeHtmlFragment($html, $allowedTags, $allowedAttrsByTag);
     }
 
+    public static function sanitizeCommentAuthorHtml($html)
+    {
+        $allowedTags = array('a');
+        $allowedAttrsByTag = array(
+            'a' => array('href', 'title', 'rel', 'target'),
+        );
+
+        return self::sanitizeHtmlFragment($html, $allowedTags, $allowedAttrsByTag);
+    }
+
     public static function sanitizeLoveListTitle($title, $allowHtml = false)
     {
         $title = (string)$title;
@@ -447,18 +492,22 @@ function loveListAcc($atts, $content = '')
         for ($i = 0; $i < count($matches[0]); $i++) {
             $matches[3][$i] = shortcode_parse_atts($matches[3][$i]);
         }
-        $out = '<div class="accordion mx-auto mt-5" id="loveList">';
+	        $out = '<div class="accordion mx-auto mt-5" id="loveList">';
 
-        $allowTitleHtml = false;
-        $options = Helper::options();
-        if (isset($options->loveListTitleAllowHtml) && (string)$options->loveListTitleAllowHtml === '1') {
-            $allowTitleHtml = true;
-        }
+	        $allowTitleHtml = false;
+	        $options = Helper::options();
+	        $themeUrlRaw = isset($options->themeUrl) ? (string)$options->themeUrl : '';
+	        $themeUrlRaw = rtrim($themeUrlRaw, '/');
+	        $todoIcon = App::escapeUrlAttribute($themeUrlRaw . '/svg/todo.svg', true, array('http', 'https'));
+	        $okIcon = App::escapeUrlAttribute($themeUrlRaw . '/svg/ok.svg', true, array('http', 'https'));
+	        if (isset($options->loveListTitleAllowHtml) && (string)$options->loveListTitleAllowHtml === '1') {
+	            $allowTitleHtml = true;
+	        }
 
-        foreach ($matches[3] as $key => $value){
-            if (!is_array($value)) {
-                $value = array();
-            }
+	        foreach ($matches[3] as $key => $value){
+	            if (!is_array($value)) {
+	                $value = array();
+	            }
 
             $status = isset($value['status']) ? (string)$value['status'] : '0';
             $isTodo = ($status === '0');
@@ -477,16 +526,16 @@ function loveListAcc($atts, $content = '')
                 }
             }
 
-            $out .= '<div class="card">';
-	            $out .= '<div class="card-header p-1" id="heading'.$key.'"><h2 class="mb-0">';
-            $out .= '<button class="btn collapsed ml-auto d-flex align-items-center" type="button" data-toggle="collapse" data-target="#collapse'.$key.'" aria-expanded="false" aria-controls="collapse'.$key.'">';
-            if ($isTodo)
-                $out .= '<img class="statusIcon" src="'.Helper::options()->themeUrl.'/svg/todo.svg" alt="">';
-            else
-                $out .= '<img class="statusIcon" src="'.Helper::options()->themeUrl.'/svg/ok.svg" alt="">';
-            $out .= '<strong>'.$safeTitle.'</strong>';
-            $out .= '</button></h2></div>';
-            $out .= '<div id="collapse'.$key.'" class="collapse" aria-labelledby="heading'.$key.'" data-parent="#loveList">';
+	            $out .= '<div class="card">';
+		            $out .= '<div class="card-header p-1" id="heading'.$key.'"><h2 class="mb-0">';
+	            $out .= '<button class="btn collapsed ml-auto d-flex align-items-center" type="button" data-toggle="collapse" data-target="#collapse'.$key.'" aria-expanded="false" aria-controls="collapse'.$key.'">';
+	            $statusIcon = $isTodo ? $todoIcon : $okIcon;
+	            if ($statusIcon !== '') {
+	                $out .= '<img class="statusIcon" src="' . $statusIcon . '" alt="">';
+	            }
+	            $out .= '<strong>'.$safeTitle.'</strong>';
+	            $out .= '</button></h2></div>';
+	            $out .= '<div id="collapse'.$key.'" class="collapse" aria-labelledby="heading'.$key.'" data-parent="#loveList">';
             if ($style !== '') {
                 $out .= '<div class="card-body p-0">';
                 $out .= '<section style="'.htmlspecialchars($style, ENT_QUOTES, 'UTF-8').'"></section>';
@@ -494,8 +543,10 @@ function loveListAcc($atts, $content = '')
             }
             $out .= '</div></div>';
         }
-        $out .= '</div>';
-        return $out;
-    }
-}
-add_shortcode('loveList', 'loveListAcc');
+	        $out .= '</div>';
+	        return $out;
+	    }
+	}
+	if (function_exists('add_shortcode')) {
+	    add_shortcode('loveList', 'loveListAcc');
+	}

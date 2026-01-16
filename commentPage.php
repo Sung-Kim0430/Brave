@@ -7,7 +7,7 @@ if (!defined('__TYPECHO_ROOT_DIR__')) exit;
  * Editor: Sung Kim
  * Creator: Veen Zhao
  * CreateTime: 2020/9/6 15:38
- * UpdateTime: 2026/1/1 00:54
+ * UpdateTime: 2026/1/16 09:07
  */
 $this->need('base/head.php');
 $this->need('base/nav.php');
@@ -34,7 +34,6 @@ $introCommentHtml = ($introCommentEnabled && $introCommentTextRaw !== '') ? App:
             $commentClass .= ' comment-by-user';
         }
     }
-    $commentLevelClass = $comments->levels > 0 ? ' comment-child' : ' comment-parent';
 ?>
     <div id="li-<?php $comments->theId(); ?>" class=" comment-body<?php if ($comments->levels > 0) {
         echo ' comment-child';
@@ -55,7 +54,7 @@ $introCommentHtml = ($introCommentEnabled && $introCommentTextRaw !== '') ? App:
                                 ob_start();
                                 $comments->author();
                                 $authorHtml = ob_get_clean();
-                                echo App::sanitizeCommentHtml($authorHtml, false);
+                                echo App::sanitizeCommentAuthorHtml($authorHtml);
                                 ?></span>
                             <em><?php $comments->date('Y-m-d H:i'); ?></em>
                         </div>

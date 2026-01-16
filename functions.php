@@ -3,7 +3,6 @@ use Typecho\Widget\Helper\Form\Element\Text;
 use Typecho\Widget\Helper\Form\Element\Textarea;
 use Typecho\Widget\Helper\Form\Element\Radio;
 if (!defined('__TYPECHO_ROOT_DIR__')) exit;
-require_once("core/shortcodes.php");
 require_once("core/App.php");
 function themeInit($archive = null)
 {

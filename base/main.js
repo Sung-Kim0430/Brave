@@ -338,13 +338,13 @@ if (window.console && window.console.log) {
         var root = getArticleRoot();
         if (!root) return;
 
-        var pres = root.querySelectorAll('pre');
-        for (var i = 0; i < pres.length; i++) {
-            var pre = pres[i];
-            if (pre.closest('.brave-codeblock')) continue;
+	        var pres = root.querySelectorAll('pre');
+	        for (var i = 0; i < pres.length; i++) {
+	            var pre = pres[i];
+	            if ((pre.closest && pre.closest('.brave-codeblock')) || (pre.parentNode && pre.parentNode.classList && pre.parentNode.classList.contains('brave-codeblock'))) continue;
 
-            var wrapper = document.createElement('div');
-            wrapper.className = 'brave-codeblock';
+	            var wrapper = document.createElement('div');
+	            wrapper.className = 'brave-codeblock';
 
             var btn = document.createElement('button');
             btn.type = 'button';
