@@ -1,9 +1,15 @@
 <?php if (!defined('__TYPECHO_ROOT_DIR__')) exit; ?>
 </div>
-<div class="p-5 text-center ">
-	<h6>©<?php $this->options->title() ?></h6>
-	<p class="h6"> Powered by <a href="https://typecho.org" target="_blank" rel="noopener noreferrer">Typecho</a> and <a href="https://github.com/Sung-Kim0430/Brave" target="_blank" rel="noopener noreferrer">Brave-Theme</a></p>
-</div>
+<footer class="brave-footer">
+	<div class="brave-footer-content">
+		<p class="brave-footer-copyright">©<?php $this->options->title() ?></p>
+		<p class="brave-footer-powered">
+			Powered by <a href="https://typecho.org" target="_blank" rel="noopener noreferrer">Typecho</a> 
+			<span class="brave-footer-divider">·</span> 
+			<a href="https://github.com/Sung-Kim0430/Brave" target="_blank" rel="noopener noreferrer">Brave Theme</a>
+		</p>
+	</div>
+</footer>
 <?php $assetsSource = (isset(Helper::options()->assetsSource) ? (string)Helper::options()->assetsSource : 'local'); ?>
 <?php $cdnEnableSRI = !isset(Helper::options()->cdnEnableSRI) || (string)Helper::options()->cdnEnableSRI !== '0'; ?>
 <?php $enableSRI = ($assetsSource === 'cdn' && $cdnEnableSRI); ?>
