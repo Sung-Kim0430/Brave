@@ -516,29 +516,21 @@ function loveListAcc($atts, $content = '')
             $safeTitle = App::sanitizeLoveListTitle($rawTitle, $allowTitleHtml);
 
             $rawImg = isset($value['img']) ? (string)$value['img'] : '';
-            $style = '';
-            if ($rawImg !== '') {
-                $safeImg = App::normalizeUrl($rawImg, true, array('http', 'https'));
-                if ($safeImg !== '') {
-                    $safeImg = str_replace(array("\\", "\r", "\n"), array("\\\\", '', ''), $safeImg);
-                    $safeImg = str_replace("'", "\\'", $safeImg);
-                    $style = "background-image: url('{$safeImg}')";
-                }
-            }
+            $imgStyle = App::buildBackgroundImageStyle($rawImg);
 
-	            $out .= '<div class="card">';
-		            $out .= '<div class="card-header p-1" id="heading'.$key.'"><h2 class="mb-0">';
-	            $out .= '<button class="btn collapsed ml-auto d-flex align-items-center" type="button" data-toggle="collapse" data-target="#collapse'.$key.'" aria-expanded="false" aria-controls="collapse'.$key.'">';
-	            $statusIcon = $isTodo ? $todoIcon : $okIcon;
-	            if ($statusIcon !== '') {
-	                $out .= '<img class="statusIcon" src="' . $statusIcon . '" alt="">';
-	            }
-	            $out .= '<strong>'.$safeTitle.'</strong>';
-	            $out .= '</button></h2></div>';
-	            $out .= '<div id="collapse'.$key.'" class="collapse" aria-labelledby="heading'.$key.'" data-parent="#loveList">';
-            if ($style !== '') {
+            $out .= '<div class="card">';
+            $out .= '<div class="card-header p-1" id="heading'.$key.'"><h2 class="mb-0">';
+            $out .= '<button class="btn collapsed ml-auto d-flex align-items-center" type="button" data-toggle="collapse" data-target="#collapse'.$key.'" aria-expanded="false" aria-controls="collapse'.$key.'">';
+            $statusIcon = $isTodo ? $todoIcon : $okIcon;
+            if ($statusIcon !== '') {
+                $out .= '<img class="statusIcon" src="' . $statusIcon . '" alt="">';
+            }
+            $out .= '<strong>'.$safeTitle.'</strong>';
+            $out .= '</button></h2></div>';
+            $out .= '<div id="collapse'.$key.'" class="collapse" aria-labelledby="heading'.$key.'" data-parent="#loveList">';
+            if ($imgStyle !== '') {
                 $out .= '<div class="card-body p-0">';
-                $out .= '<section style="'.htmlspecialchars($style, ENT_QUOTES, 'UTF-8').'"></section>';
+                $out .= '<section style="'.htmlspecialchars($imgStyle, ENT_QUOTES, 'UTF-8').'"></section>';
                 $out .= '</div>';
             }
             $out .= '</div></div>';

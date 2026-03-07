@@ -47,9 +47,11 @@ if ($enableCSP) {
     }
 
     // Prefer response headers over meta tags when possible.
+    $cspHeaderSent = false;
     if ($cspPolicy !== '' && !headers_sent()) {
         $cspHeader = preg_replace('/[\\x00-\\x1F\\x7F]+/', ' ', $cspPolicy);
         header('Content-Security-Policy: ' . $cspHeader);
+        $cspHeaderSent = true;
     }
 }
 ?>
@@ -87,7 +89,7 @@ if ($enableCSP) {
               rel="stylesheet">
     <?php endif; ?>
 
-    <?php if ($enableCSP) : ?>
+    <?php if ($enableCSP && !$cspHeaderSent) : ?>
         <meta http-equiv="Content-Security-Policy" content="<?php echo htmlspecialchars($cspPolicy, ENT_QUOTES, 'UTF-8'); ?>">
     <?php endif; ?>
 

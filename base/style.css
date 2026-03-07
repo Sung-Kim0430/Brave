@@ -447,6 +447,13 @@ html{
 	scroll-behavior: smooth;
 }
 
+html,
+html *,
+html *::before,
+html *::after{
+	transition: background-color .18s ease, color .12s ease, border-color .12s ease, box-shadow .18s ease;
+}
+
 ::selection{
 	background: rgba(103,58,183,.22);
 }
@@ -1142,6 +1149,12 @@ body.is-pjax-loading #pjax-container {
   }
 
 @media (prefers-reduced-motion: reduce) {
+	html,
+	html *,
+	html *::before,
+	html *::after{
+		transition: none;
+	}
 	.lover:hover .heart {
 		animation: none;
 	}

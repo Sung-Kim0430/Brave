@@ -31,7 +31,7 @@
 					var y = parseInt(datePieces[0], 10);
 					var m = parseInt(datePieces[1], 10);
 					var d = parseInt(datePieces[2], 10);
-					if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+					if (!isNaN(y) && !isNaN(m) && !isNaN(d) && y >= 1 && y <= 9999 && m >= 1 && m <= 12 && d >= 1 && d <= 31) {
 						var hh = 0;
 						var mm = 0;
 						var ss = 0;
@@ -40,9 +40,9 @@
 							hh = parseInt(timePieces[0] || '0', 10);
 							mm = parseInt(timePieces[1] || '0', 10);
 							ss = parseInt(timePieces[2] || '0', 10);
-							if (isNaN(hh)) hh = 0;
-							if (isNaN(mm)) mm = 0;
-							if (isNaN(ss)) ss = 0;
+							if (isNaN(hh) || hh < 0 || hh > 23) hh = 0;
+							if (isNaN(mm) || mm < 0 || mm > 59) mm = 0;
+							if (isNaN(ss) || ss < 0 || ss > 59) ss = 0;
 						}
 
 						var dt = new Date(y, m - 1, d, hh, mm, ss);
