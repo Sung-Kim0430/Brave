@@ -24,6 +24,56 @@ function loadParseLoveTime(overrides = {}) {
   return context.window.parseLoveTime;
 }
 
+function runFooterRuntime(loveTimeValue) {
+  const footer = read('base/footer.php');
+  const scriptMatch = footer.match(/<script>([\s\S]*?)<\/script>\s*<script src=/);
+  assert.ok(scriptMatch, 'footer inline script should exist');
+
+  let script = scriptMatch[1];
+  script = script.replace(/<\?php echo App::escapeJsString[\s\S]*?\?>/g, JSON.stringify(loveTimeValue));
+  script = script.replace(/<\?php[\s\S]*?\?>/g, '');
+
+  const runtimeNode = {
+    textContent: '',
+    firstChild: null,
+    appendChild(node) {
+      this.textContent += node.textContent || '';
+    },
+    removeChild() {
+      this.firstChild = null;
+    },
+  };
+
+  const context = {
+    Date,
+    Math,
+    Number,
+    String,
+    isNaN,
+    window: {
+      clearInterval() {},
+      setInterval() {
+        return 1;
+      },
+    },
+    document: {
+      body: { classList: { add() {}, remove() {} } },
+      createElement() {
+        return { className: '', textContent: '' };
+      },
+      createTextNode(text) {
+        return { textContent: text };
+      },
+      getElementById(id) {
+        return id === 'site_runtime' ? runtimeNode : null;
+      },
+    },
+  };
+
+  vm.runInNewContext(script, context);
+  return runtimeNode.textContent;
+}
+
 test('custom code is explicit opt-in and custom CSS stays inside head', () => {
   const head = read('base/head.php');
   const footer = read('base/footer.php');
@@ -116,6 +166,11 @@ test('love time parsing does not fallback parse malformed configured dates', () 
 
   assert.equal(parseLoveTime('2021-02-03abc'), null);
   assert.equal(dateCalls.length, 0);
+});
+
+test('runtime counter distinguishes missing and invalid love time config', () => {
+  assert.equal(runFooterRuntime(''), '未设置');
+  assert.equal(runFooterRuntime('2021-02-03abc'), '日期无效');
 });
 
 test('shared helpers centralize option flags, site urls, intros, and safe card links', () => {

@@ -76,6 +76,7 @@
 
 				(function() {
 					var startStr = <?php echo App::escapeJsString(App::optionValue('lovetime', '')); ?>;
+					var hasStartValue = String(startStr || '').trim() !== '';
 					var start = window.parseLoveTime(startStr);
 
 					function clearRuntimeNode(node) {
@@ -96,7 +97,7 @@
 						var siteRuntime = document.getElementById('site_runtime');
 						if (!siteRuntime) return false;
 						if (!start) {
-							siteRuntime.textContent = "未设置";
+							siteRuntime.textContent = hasStartValue ? "日期无效" : "未设置";
 							return false;
 						}
 
