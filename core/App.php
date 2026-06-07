@@ -4,7 +4,7 @@ if (!defined('__TYPECHO_ROOT_DIR__')) exit;
  * Editor: Sung Kim
  * Creator: Veen Zhao
  * CreateTime: 2020/9/5 18:26
- * UpdateTime: 2026/6/7 23:05
+ * UpdateTime: 2026/6/8
  */
 
 class App
@@ -44,13 +44,44 @@ class App
             return (bool)$default;
         }
 
-        return (string)$options->{$name} === '1';
+        $value = (string)$options->{$name};
+        if ($value === '1') {
+            return true;
+        }
+        if ($value === '0') {
+            return false;
+        }
+
+        return (bool)$default;
     }
 
     public static function optionChoice($name, $default, $allowed)
     {
         $value = self::optionValue($name, $default);
         return in_array($value, $allowed, true) ? $value : $default;
+    }
+
+    public static function optionIntRange($name, $default, $min, $max)
+    {
+        $min = (int)$min;
+        $max = (int)$max;
+        if ($max < $min) {
+            $tmp = $min;
+            $min = $max;
+            $max = $tmp;
+        }
+
+        $value = self::optionValue($name, $default);
+        $value = is_numeric($value) ? (int)$value : (int)$default;
+
+        if ($value < $min) {
+            return $min;
+        }
+        if ($value > $max) {
+            return $max;
+        }
+
+        return $value;
     }
 
     public static function siteUrl($appendSlash = true)
@@ -83,6 +114,10 @@ class App
         $safeUrl = self::escapeUrlAttribute($url, true, array('http', 'https'));
         if ($safeUrl !== '') {
             return $safeUrl;
+        }
+
+        if ((string)$fallback === '') {
+            return '';
         }
 
         $safeFallback = self::escapeUrlAttribute($fallback, true, array('http', 'https'));
@@ -413,6 +448,10 @@ class App
             foreach ($toRemove as $name) {
                 $element->removeAttribute($name);
             }
+        }
+
+        if ($tag === 'img' && !$element->hasAttribute('src')) {
+            $removeElement = true;
         }
 
         if ($removeElement) {

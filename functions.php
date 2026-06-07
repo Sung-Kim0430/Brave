@@ -9,47 +9,26 @@ function themeInit($archive = null)
     $options = Helper::options();
 
     // 评论安全相关：提供可配置开关（默认偏安全，但尽量避免影响原有可用性）。
-    $commentAntiSpam = true;
-    if (isset($options->commentAntiSpam) && (string)$options->commentAntiSpam === '0') {
-        $commentAntiSpam = false;
-    }
-
+    $commentAntiSpam = App::optionFlag('commentAntiSpam', true);
     // Referer 检查默认开启；若站点代理/隐私策略导致评论失败，可在后台关闭。
-    $commentCheckReferer = true;
-    if (isset($options->commentCheckReferer) && (string)$options->commentCheckReferer === '0') {
-        $commentCheckReferer = false;
-    }
+    $commentCheckReferer = App::optionFlag('commentCheckReferer', true);
+    $commentMaxNestingLevels = App::optionIntRange('commentMaxNestingLevels', 10, 1, 10);
+    $allowCommentImg = App::optionFlag('commentAllowImg', false);
 
-    $commentMaxNestingLevels = 10;
-    if (isset($options->commentMaxNestingLevels) && is_numeric($options->commentMaxNestingLevels)) {
-        $commentMaxNestingLevels = (int)$options->commentMaxNestingLevels;
-    }
-    if ($commentMaxNestingLevels < 1) {
-        $commentMaxNestingLevels = 1;
-    }
-    if ($commentMaxNestingLevels > 10) {
-        $commentMaxNestingLevels = 10;
-    }
-
-    Helper::options()->commentsAntiSpam = $commentAntiSpam;
-    Helper::options()->commentsCheckReferer = $commentCheckReferer;
-    Helper::options()->commentsRequireURL = false;
-    Helper::options()->commentsMaxNestingLevels = (string)$commentMaxNestingLevels;
-    Helper::options()->commentsPageDisplay = 'first'; //强制评论第一页
-    Helper::options()->commentsOrder = 'DESC'; //将最新的评论展示在前
-
-    $allowCommentImg = false;
-    if (isset($options->commentAllowImg) && (string)$options->commentAllowImg === '1') {
-        $allowCommentImg = true;
-    }
+    $options->commentsAntiSpam = $commentAntiSpam;
+    $options->commentsCheckReferer = $commentCheckReferer;
+    $options->commentsRequireURL = false;
+    $options->commentsMaxNestingLevels = (string)$commentMaxNestingLevels;
+    $options->commentsPageDisplay = 'first'; //强制评论第一页
+    $options->commentsOrder = 'DESC'; //将最新的评论展示在前
 
     // 仅放行评论中必要的基础标签与属性（额外净化在模板输出阶段处理）。
     $allowedTags = '<a href="" title="" rel="" target=""> <code> <pre> <del> <strong> <em> <blockquote> <p> <br> <ul> <ol> <li> <hr>';
     if ($allowCommentImg) {
         $allowedTags .= ' <img src="" alt="" title="" class="">';
     }
-    Helper::options()->commentsHTMLTagAllowed = $allowedTags;
-    Helper::options()->commentsMarkdown = true;
+    $options->commentsHTMLTagAllowed = $allowedTags;
+    $options->commentsMarkdown = true;
 }
 /**
  * 主题后台设置
@@ -60,7 +39,7 @@ function themeConfig($form)
     $form->addInput($navsay);
     $heroimg = new Text('heroimg', NULL, NULL, _t('头部大图设置'), _t('在这里输入图片链接'));
     $form->addInput($heroimg);
-    $lovetime = new Text('lovetime', NULL, NULL, _t('恋爱起始日期设定'), _t('格式支持“YYYY/MM/DD”或“YYYY-MM-DD”，例“2021/06/26”'));
+    $lovetime = new Text('lovetime', NULL, NULL, _t('恋爱起始日期设定'), _t('格式支持“YYYY/MM/DD”或“YYYY-MM-DD”，可追加“HH:mm[:ss]”，例“2021/06/26 08:30”'));
     $form->addInput($lovetime);
     $boy = new Text('boy', NULL, NULL, _t('男生头像设置'), _t('在这里输入头像链接'));
     $form->addInput($boy);

@@ -6,14 +6,16 @@ if (!defined('__TYPECHO_ROOT_DIR__')) exit;
  * Editor: Sung Kim
  * Creator: Veen Zhao
  * CreateTime: 2021/2/6 22:32
- * UpdateTime: 2026/1/1 00:54
+ * UpdateTime: 2026/6/8
  */
 $siteUrl = App::siteUrl(true);
-$blessingPageHref = App::safeCardLink(App::optionValue('blessingPageLink', ''), '#');
+$blessingPageHref = App::safeCardLink(App::optionValue('blessingPageLink', ''), '');
+$blessingPageAvailable = ($blessingPageHref !== '');
 $blessingPageIcon = App::escapeUrlAttribute(App::optionValue('blessingPageIcon', ''), true, array('http', 'https'));
 $timePageHref = App::safeCardLink(App::optionValue('timePageLink', ''), $siteUrl . 'blog/');
 $timePageIcon = App::escapeUrlAttribute(App::optionValue('timePageIcon', ''), true, array('http', 'https'));
-$loveListPageHref = App::safeCardLink(App::optionValue('loveListPageLink', ''), '#');
+$loveListPageHref = App::safeCardLink(App::optionValue('loveListPageLink', ''), '');
+$loveListPageAvailable = ($loveListPageHref !== '');
 $loveListPageIcon = App::escapeUrlAttribute(App::optionValue('loveListPageIcon', ''), true, array('http', 'https'));
 $this->need('base/head.php');
 $this->need('base/nav.php');
@@ -35,7 +37,11 @@ $this->need('base/nav.php');
 	    <?php endif; ?>
 		    <div class="row indexPlate">
 		        <div class="col-md-4">
-		            <a href="<?php echo $blessingPageHref; ?>" class="card ">
+	            <?php if ($blessingPageAvailable) : ?>
+	            <a href="<?php echo $blessingPageHref; ?>" class="card ">
+	            <?php else : ?>
+	            <div class="card brave-card-disabled" role="group" aria-disabled="true" aria-label="祝愿墙链接未配置">
+	            <?php endif; ?>
 		                <div class="card-body">
 		                    <div class="row align-items-center">
 	                        <div class="col-auto">
@@ -53,7 +59,7 @@ $this->need('base/nav.php');
                         </div>
                     </div>
                 </div>
-            </a>
+            <?php if ($blessingPageAvailable) : ?></a><?php else : ?></div><?php endif; ?>
         </div>
 		        <div class="col-md-4">
 		            <a href="<?php echo $timePageHref; ?>" class="card">
@@ -77,7 +83,11 @@ $this->need('base/nav.php');
             </a>
         </div>
 	        <div class="col-md-4">
+		            <?php if ($loveListPageAvailable) : ?>
 		            <a href="<?php echo $loveListPageHref; ?>" class="card ">
+		            <?php else : ?>
+		            <div class="card brave-card-disabled" role="group" aria-disabled="true" aria-label="恋爱清单链接未配置">
+		            <?php endif; ?>
 	                <div class="card-body">
 	                    <div class="row align-items-center">
 	                        <div class="col-auto">
@@ -95,7 +105,7 @@ $this->need('base/nav.php');
                         </div>
                     </div>
                 </div>
-            </a>
+            <?php if ($loveListPageAvailable) : ?></a><?php else : ?></div><?php endif; ?>
         </div>
     </div>
 </div>

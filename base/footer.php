@@ -29,41 +29,42 @@
 				var str = String(value).trim();
 				if (!str) return null;
 
-				var parts = str.split(/\s+/);
-				var datePart = parts[0] || '';
-				var timePart = parts[1] || '';
-				var datePieces = datePart.split(/[\/-]/);
-				if (datePieces.length >= 3) {
-					var y = parseInt(datePieces[0], 10);
-					var m = parseInt(datePieces[1], 10);
-					var d = parseInt(datePieces[2], 10);
-					if (!isNaN(y) && !isNaN(m) && !isNaN(d) && y >= 1 && y <= 9999 && m >= 1 && m <= 12 && d >= 1 && d <= 31) {
-						var hh = 0;
-						var mm = 0;
-						var ss = 0;
-						if (timePart) {
-							var timePieces = timePart.split(':');
-							hh = parseInt(timePieces[0] || '0', 10);
-							mm = parseInt(timePieces[1] || '0', 10);
-							ss = parseInt(timePieces[2] || '0', 10);
-							if (isNaN(hh) || hh < 0 || hh > 23) hh = 0;
-							if (isNaN(mm) || mm < 0 || mm > 59) mm = 0;
-							if (isNaN(ss) || ss < 0 || ss > 59) ss = 0;
-						}
+				var configuredDate = /^(\d{1,4})[\/-](\d{1,2})[\/-](\d{1,2})(?:[\sT]+(\d{1,2})(?::(\d{1,2})(?::(\d{1,2}))?)?)?$/.exec(str);
+				if (configuredDate) {
+					var y = Number(configuredDate[1]);
+					var m = Number(configuredDate[2]);
+					var d = Number(configuredDate[3]);
+					var hh = configuredDate[4] !== undefined ? Number(configuredDate[4]) : 0;
+					var mm = configuredDate[5] !== undefined ? Number(configuredDate[5]) : 0;
+					var ss = configuredDate[6] !== undefined ? Number(configuredDate[6]) : 0;
 
-						var dt = new Date(y, m - 1, d, hh, mm, ss);
-						if (
-							!isNaN(dt.getTime()) &&
-							dt.getFullYear() === y &&
-							dt.getMonth() === m - 1 &&
-							dt.getDate() === d &&
-							dt.getHours() === hh &&
-							dt.getMinutes() === mm &&
-							dt.getSeconds() === ss
-						) {
-							return dt;
-						}
+					if (
+						y < 1 || y > 9999 ||
+						m < 1 || m > 12 ||
+						d < 1 || d > 31 ||
+						hh < 0 || hh > 23 ||
+						mm < 0 || mm > 59 ||
+						ss < 0 || ss > 59
+					) {
+						return null;
 					}
+
+					var dt = new Date(y, m - 1, d, hh, mm, ss);
+					if (
+						!isNaN(dt.getTime()) &&
+						dt.getFullYear() === y &&
+						dt.getMonth() === m - 1 &&
+						dt.getDate() === d &&
+						dt.getHours() === hh &&
+						dt.getMinutes() === mm &&
+						dt.getSeconds() === ss
+					) {
+						return dt;
+					}
+					return null;
+				}
+
+				if (/^\d{1,4}[\/-]\d{1,2}[\/-]/.test(str)) {
 					return null;
 				}
 

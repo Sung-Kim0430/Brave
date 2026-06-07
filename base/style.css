@@ -567,6 +567,15 @@ html[data-theme="dark"] .brave-theme-toggle__icon--moon{
 	box-shadow: var(--brave-shadow-md);
 	border-color: var(--brave-brand-2);
 }
+.indexPlate .brave-card-disabled{
+	cursor: default;
+	opacity: .64;
+}
+.indexPlate .brave-card-disabled:hover{
+	transform: none;
+	box-shadow: none;
+	border-color: var(--brave-card-border);
+}
 
 /* 文章排版 */
 #article{

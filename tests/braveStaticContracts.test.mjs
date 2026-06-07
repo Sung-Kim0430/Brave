@@ -3,11 +3,25 @@ import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import test from 'node:test';
+import vm from 'node:vm';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 
 function read(relativePath) {
   return readFileSync(path.join(root, relativePath), 'utf8');
+}
+
+function loadParseLoveTime(overrides = {}) {
+  const footer = read('base/footer.php');
+  const start = footer.indexOf('window.parseLoveTime = function(value) {');
+  const end = footer.indexOf('(function() {', start);
+  assert.notEqual(start, -1, 'parseLoveTime definition should exist');
+  assert.notEqual(end, -1, 'parseLoveTime definition should end before runtime bootstrap');
+
+  const context = { window: {}, ...overrides };
+  vm.runInNewContext(footer.slice(start, end), context);
+  assert.equal(typeof context.window.parseLoveTime, 'function');
+  return context.window.parseLoveTime;
 }
 
 test('custom code is explicit opt-in and custom CSS stays inside head', () => {
@@ -48,6 +62,20 @@ test('home cards use configurable safe links instead of empty hrefs or hard-code
   assert.doesNotMatch(indexPage, /href="<\?php echo \$loveListPageLink; \?>"/);
 });
 
+test('optional home cards render disabled instead of inert hash links', () => {
+  const app = read('core/App.php');
+  const indexPage = read('indexPage.php');
+  const style = read('base/style.css');
+
+  assert.match(app, /if\s*\(\(string\)\$fallback\s*===\s*''\)/);
+  assert.match(indexPage, /App::safeCardLink\(App::optionValue\('blessingPageLink',\s*''\),\s*''\)/);
+  assert.match(indexPage, /App::safeCardLink\(App::optionValue\('loveListPageLink',\s*''\),\s*''\)/);
+  assert.match(indexPage, /\$blessingPageAvailable\s*=\s*\(\$blessingPageHref\s*!==\s*''\)/);
+  assert.match(indexPage, /\$loveListPageAvailable\s*=\s*\(\$loveListPageHref\s*!==\s*''\)/);
+  assert.match(indexPage, /brave-card-disabled/);
+  assert.match(style, /\.brave-card-disabled/);
+});
+
 test('love time parsing rejects impossible calendar dates instead of normalizing them', () => {
   const footer = read('base/footer.php');
 
@@ -56,13 +84,60 @@ test('love time parsing rejects impossible calendar dates instead of normalizing
   assert.match(footer, /dt\.getDate\(\)\s*===\s*d/);
 });
 
+test('love time parsing rejects malformed configured date and time values', () => {
+  const parseLoveTime = loadParseLoveTime();
+
+  assert.equal(parseLoveTime('2021-02-03abc'), null);
+  assert.equal(parseLoveTime('2021-06-26 24:00:00'), null);
+  assert.equal(parseLoveTime('2021-06-26 12:60:00'), null);
+  assert.equal(parseLoveTime('2021-06-26 12:00:60'), null);
+
+  const leapDay = parseLoveTime('2024-02-29 12:30:45');
+  assert.equal(leapDay && Number.isNaN(leapDay.getTime()), false);
+});
+
+test('love time parsing does not fallback parse malformed configured dates', () => {
+  const nativeDate = Date;
+  const dateCalls = [];
+  function LenientDate(...args) {
+    dateCalls.push(args);
+    if (args.length === 1 && typeof args[0] === 'string') {
+      return new nativeDate(2000, 0, 1);
+    }
+    return new nativeDate(...args);
+  }
+
+  const parseLoveTime = loadParseLoveTime({
+    Date: LenientDate,
+    Number,
+    String,
+    isNaN,
+  });
+
+  assert.equal(parseLoveTime('2021-02-03abc'), null);
+  assert.equal(dateCalls.length, 0);
+});
+
 test('shared helpers centralize option flags, site urls, intros, and safe card links', () => {
   const app = read('core/App.php');
 
   assert.match(app, /public static function optionFlag/);
+  assert.match(app, /return\s+\(bool\)\$default/);
+  assert.match(app, /public static function optionIntRange/);
   assert.match(app, /public static function siteUrl/);
   assert.match(app, /public static function pageIntroHtml/);
   assert.match(app, /public static function safeCardLink/);
+});
+
+test('theme init uses shared option helpers for comment safety defaults', () => {
+  const functions = read('functions.php');
+
+  assert.match(functions, /App::optionFlag\('commentAntiSpam',\s*true\)/);
+  assert.match(functions, /App::optionFlag\('commentCheckReferer',\s*true\)/);
+  assert.match(functions, /App::optionIntRange\('commentMaxNestingLevels',\s*10,\s*1,\s*10\)/);
+  assert.match(functions, /App::optionFlag\('commentAllowImg',\s*false\)/);
+  assert.doesNotMatch(functions, /isset\(\$options->commentAntiSpam\)/);
+  assert.doesNotMatch(functions, /isset\(\$options->commentMaxNestingLevels\)/);
 });
 
 test('documentation matches current security and link settings', () => {
@@ -104,9 +179,16 @@ test('Love List generated DOM ids are scoped per shortcode instance', () => {
 test('comment nesting is capped to the documented safe maximum', () => {
   const functions = read('functions.php');
 
-  assert.match(functions, /\$commentMaxNestingLevels\s*>\s*10/);
+  assert.match(functions, /App::optionIntRange\('commentMaxNestingLevels',\s*10,\s*1,\s*10\)/);
   assert.doesNotMatch(functions, /\$commentMaxNestingLevels\s*>\s*50/);
   assert.match(functions, /已在代码中限制最大为 10/);
+});
+
+test('comment sanitizer drops image tags without a safe src', () => {
+  const app = read('core/App.php');
+
+  assert.match(app, /if\s*\(\$tag\s*===\s*'img'\s*&&\s*!\$element->hasAttribute\('src'\)\)/);
+  assert.match(app, /\$removeElement\s*=\s*true/);
 });
 
 test('front-end lightbox avoids raw HTML injection surfaces and data URI link promotion', () => {
