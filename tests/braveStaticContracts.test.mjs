@@ -101,6 +101,62 @@ test('CSP is available in local mode and no longer tied only to CDN mode', () =>
   assert.match(functions, /'enableCSP'/);
 });
 
+test('document title escapes archive and site title text locally', () => {
+  const head = read('base/head.php');
+
+  assert.doesNotMatch(head, /<title>\s*<\?php\s+\$this->archiveTitle/);
+  assert.doesNotMatch(head, /<\?php\s+\$this->options->title\(\);\s*\?>/);
+  assert.match(head, /ob_start\(\);\s*\$this->archiveTitle/);
+  assert.match(head, /\$archiveTitleText\s*=\s*ob_get_clean\(\)/);
+  assert.match(head, /App::escapeHtml\(\$archiveTitleText\)/);
+  assert.match(head, /App::escapeHtml\(App::optionValue\('title',\s*''\)\)/);
+});
+
+test('theme-owned site title text nodes are escaped locally', () => {
+  const nav = read('base/nav.php');
+  const footer = read('base/footer.php');
+
+  assert.doesNotMatch(nav, /\$this->options->title\(\)/);
+  assert.doesNotMatch(footer, /\$this->options->title\(\)/);
+  assert.match(nav, /App::escapeHtml\(App::optionValue\('title',\s*''\)\)/);
+  assert.match(footer, /App::escapeHtml\(App::optionValue\('title',\s*''\)\)/);
+});
+
+test('logged-in comment identity output is escaped locally', () => {
+  const commentPage = read('commentPage.php');
+
+  assert.doesNotMatch(commentPage, /\$this->user->screenName\(\)/);
+  assert.doesNotMatch(commentPage, /\$this->options->profileUrl\(\)/);
+  assert.doesNotMatch(commentPage, /\$this->options->logoutUrl\(\)/);
+  assert.match(commentPage, /App::escapeHtml\(\$this->user->screenName\)/);
+  assert.match(commentPage, /App::safeCardLink\(App::optionValue\('profileUrl',\s*''\),\s*'#'\)/);
+  assert.match(commentPage, /App::safeCardLink\(App::optionValue\('logoutUrl',\s*''\),\s*'#'\)/);
+});
+
+test('comment form action and respond id use local escaping helpers', () => {
+  const commentPage = read('commentPage.php');
+
+  assert.doesNotMatch(commentPage, /\$this->respondId\(\)/);
+  assert.doesNotMatch(commentPage, /\$this->commentUrl\(\)/);
+  assert.match(commentPage, /App::escapeHtml\(\$this->respondId\)/);
+  assert.match(commentPage, /App::escapeUrlAttribute\(\$this->commentUrl,\s*true,\s*array\('http',\s*'https'\)\)/);
+});
+
+test('post titles and list permalinks use local escaping helpers', () => {
+  const index = read('index.php');
+  const post = read('post.php');
+
+  assert.doesNotMatch(index, /href="<\?php\s+\$this->permalink\(\)/);
+  assert.doesNotMatch(index, />\s*<\?php\s+\$this->title\(\)\s*\?>\s*<\/a>/);
+  assert.doesNotMatch(post, /「<\?php\s+\$this->title\(\)\s*\?>」/);
+  assert.match(index, /ob_start\(\);\s*\$this->permalink\(\);\s*\$postPermalinkText\s*=\s*ob_get_clean\(\)/);
+  assert.match(index, /App::escapeUrlAttribute\(\$postPermalinkText,\s*true,\s*array\('http',\s*'https'\)\)/);
+  assert.match(index, /ob_start\(\);\s*\$this->title\(\);\s*\$postTitleText\s*=\s*ob_get_clean\(\)/);
+  assert.match(index, /App::escapeHtml\(\$postTitleText\)/);
+  assert.match(post, /ob_start\(\);\s*\$this->title\(\);\s*\$postTitleText\s*=\s*ob_get_clean\(\)/);
+  assert.match(post, /App::escapeHtml\(\$postTitleText\)/);
+});
+
 test('home cards use configurable safe links instead of empty hrefs or hard-coded blog path', () => {
   const indexPage = read('indexPage.php');
   const functions = read('functions.php');

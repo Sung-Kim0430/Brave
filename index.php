@@ -36,8 +36,18 @@ $this->need('base/nav.php');
 	        <?php endif; ?>
 	        <?php if ($this->have()) : ?>
 	            <?php while ($this->next()) : ?>
+	                <?php
+	                ob_start();
+	                $this->permalink();
+	                $postPermalinkText = ob_get_clean();
+	                $postPermalink = App::escapeUrlAttribute($postPermalinkText, true, array('http', 'https'));
+	                ob_start();
+	                $this->title();
+	                $postTitleText = ob_get_clean();
+	                $postTitle = App::escapeHtml($postTitleText);
+	                ?>
 	                <article class="post post-item text-center">
-	                    <h4 class="post-title" itemprop="name headline"><a class=" list-wbc" itemprop="url" href="<?php $this->permalink() ?>"><?php $this->title() ?></a></h4>
+	                    <h4 class="post-title" itemprop="name headline"><a class=" list-wbc" itemprop="url" href="<?php echo $postPermalink; ?>"><?php echo $postTitle; ?></a></h4>
 	                    <time datetime="<?php $this->date('c'); ?>" itemprop="datePublished"><?php $this->date('Y-m-d'); ?></time>
 	                </article>
             <?php endwhile; ?>

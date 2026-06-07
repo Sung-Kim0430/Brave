@@ -1,8 +1,9 @@
 <?php if (!defined('__TYPECHO_ROOT_DIR__')) exit; ?>
+<?php $siteTitle = App::escapeHtml(App::optionValue('title', '')); ?>
 </div>
 <footer class="brave-footer">
 	<div class="brave-footer-content">
-		<p class="brave-footer-copyright">©<?php $this->options->title() ?></p>
+		<p class="brave-footer-copyright">©<?php echo $siteTitle; ?></p>
 		<p class="brave-footer-powered">
 			Powered by <a href="https://typecho.org" target="_blank" rel="noopener noreferrer">Typecho</a> 
 			<span class="brave-footer-divider">·</span> 

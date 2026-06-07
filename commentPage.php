@@ -18,6 +18,8 @@ $introCommentHtml = App::pageIntroHtml(
     App::optionFlag('introCommentEnable', false),
     App::optionValue('introCommentText', '')
 );
+$commentRespondId = App::escapeHtml($this->respondId);
+$commentFormAction = App::escapeUrlAttribute($this->commentUrl, true, array('http', 'https'));
 ?>
 <?php function threadedComments($comments, $options)
 {
@@ -87,11 +89,16 @@ $introCommentHtml = App::pageIntroHtml(
             <?php $comments->pageNav('&laquo; 上一页', '下一页 &raquo;'); ?>
         <?php endif; ?>
         <?php if ($this->allow('comment')) : ?>
-            <div id="<?php $this->respondId(); ?>" class="respond">
-                <form method="post" action="<?php $this->commentUrl() ?>" name="comment-form" id="comment-form" role="form" class="comment-form">
+            <div id="<?php echo $commentRespondId; ?>" class="respond">
+                <form method="post" action="<?php echo $commentFormAction; ?>" name="comment-form" id="comment-form" role="form" class="comment-form">
                     <?php if ($this->user->hasLogin()) : ?>
-                        <p><?php _e('当前身份: '); ?><a href="<?php $this->options->profileUrl(); ?>"><?php $this->user->screenName(); ?></a>.
-                            <a href="<?php $this->options->logoutUrl(); ?>" title="Logout"><?php _e('退出登录'); ?> &raquo;</a>
+                        <?php
+                        $profileUrl = App::safeCardLink(App::optionValue('profileUrl', ''), '#');
+                        $logoutUrl = App::safeCardLink(App::optionValue('logoutUrl', ''), '#');
+                        $screenName = App::escapeHtml($this->user->screenName);
+                        ?>
+                        <p><?php _e('当前身份: '); ?><a href="<?php echo $profileUrl; ?>"><?php echo $screenName; ?></a>.
+                            <a href="<?php echo $logoutUrl; ?>" title="Logout"><?php _e('退出登录'); ?> &raquo;</a>
                         </p>
                     <?php else : ?>
                         <div class="form-row">

@@ -75,12 +75,17 @@ if ($enableCSP) {
             })();
         </script>
     <?php endif; ?>
-    <title><?php $this->archiveTitle(array(
-            'category' => _t('「%s」里的篇章'),
-            'search' => _t('含「%s」的篇章'),
-            'tag' => _t('关于「%s」的篇章'),
-            'author' => _t('出自 %s 的篇章')
-        ), '', ' - '); ?><?php $this->options->title(); ?></title>
+    <?php
+    ob_start();
+    $this->archiveTitle(array(
+        'category' => _t('「%s」里的篇章'),
+        'search' => _t('含「%s」的篇章'),
+        'tag' => _t('关于「%s」的篇章'),
+        'author' => _t('出自 %s 的篇章')
+    ), '', ' - ');
+    $archiveTitleText = ob_get_clean();
+    ?>
+    <title><?php echo App::escapeHtml($archiveTitleText); ?><?php echo App::escapeHtml(App::optionValue('title', '')); ?></title>
 	    <?php $this->header(); ?>
     <link rel="stylesheet" href="<?php $this->options->themeUrl('/base/style.css'); ?>">
     <?php if ($enableRemoteFont) : ?>

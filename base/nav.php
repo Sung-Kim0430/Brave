@@ -19,12 +19,13 @@ $boyInitial = App::escapeHtml($boyInitial);
 $girlInitial = App::escapeHtml($girlInitial);
 
 $navSay = App::escapeHtml(App::optionValue('navsay', ''));
+$siteTitle = App::escapeHtml(App::optionValue('title', ''));
 $enableDarkMode = App::optionFlag('enableDarkMode', false);
 ?>
 <div class="container-fluid position-relative">
     <nav class="navbar navbar-expand-lg navbar-dark  text-white bg-transparent">
         <div class="container">
-            <a class="navbar-brand" href="<?php echo $siteUrl; ?>"><?php $this->options->title() ?></a>
+            <a class="navbar-brand" href="<?php echo $siteUrl; ?>"><?php echo $siteTitle; ?></a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarText"
                     aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>

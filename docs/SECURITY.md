@@ -16,12 +16,16 @@
 
 - 评论输出净化（祝福板）：`commentPage.php` 对评论内容进行二次净化（白名单标签 + URL 协议校验 + 移除事件属性），并提供 `commentAllowImg` 开关来控制是否允许评论图片；图片开启时仍会移除缺少安全 `src` 的 `<img>`。
 - 评论作者输出净化（祝福板）：`commentPage.php` 对 `$comments->author()` 的输出做更严格的白名单净化（仅允许 `<a>`），降低作者名/作者链接在不同 Typecho 版本与配置下带来的 XSS/排版注入风险。
+- 登录态评论表单输出加固：`commentPage.php` 对当前登录用户昵称使用文本转义，并对资料/退出链接使用安全 URL 规范化。
+- 评论表单属性输出加固：`commentPage.php` 对回复框 `id` 与评论提交 `action` 使用本地上下文转义，避免直接依赖 Typecho 的 echo 型辅助方法。
 - HTML 解析防护：`core/App.php` 的 DOM 解析（用于评论/少量 HTML 白名单净化）显式禁用外部实体/网络访问（`LIBXML_NONET`），作为防御性措施避免潜在 XXE/意外外联。
 - Love List 输出加固：`core/App.php` 对 `[item]` 的 `status/img/title` 做了 `isset` 检查与上下文转义，并提供 `loveListTitleAllowHtml` 兼容开关（仅允许少量标签）。
 - Love List 状态解析收紧：仅 `status="1"` 视为已完成，其余缺省或异常值都按未完成渲染，避免异常输入被误判为完成态。
 - Love List 图片 URL 统一使用 `buildBackgroundImageStyle()` 方法进行转义，确保 CSS 注入防护一致性。
 - 主题设置 URL 输出加固：`base/nav.php`、`indexPage.php` 对头像/图标/跳转链接等配置项做 URL 规范化 + 属性转义，降低恶意协议（`javascript:` 等）与属性注入风险；在危险协议与显式 scheme 校验后，允许 `blog/` 这类普通相对站内路径。
 - 页面导言输出加固：各页面导言相关配置项仅按纯文本渲染（HTML 转义 + 换行转 `<br>`），避免通过导言字段注入脚本。
+- 标题文本输出加固：`base/head.php` 会捕获 Typecho 的归档/搜索标题片段，并与站点标题一起按 `<title>` 纯文本上下文转义输出；导航栏与页脚中的站点标题也使用主题本地转义，避免依赖不同 Typecho 版本的内部过滤行为。
+- 文章列表/详情标题输出加固：`index.php`、`post.php` 对文章标题按纯文本输出转义，列表页文章链接也经过安全 URL 规范化。
 - 主题安全开关默认值处理：`core/App.php` 的配置开关 helper 仅接受明确的 `1/0`，异常值回退到调用处声明的默认值；评论嵌套层数使用统一范围 helper 限制在 1~10。
 - JS 字符串输出加固：`base/footer.php` 的 `lovetime` 使用安全的 JS 字符串编码输出，避免配置被注入导致脚本语法错误或意外执行。
 - 前端 DOM 输出加固：`base/main.js` 的图片预览层与 `base/footer.php` 的运行时计数组件均使用 `createElement` / `textContent` 构建，避免新增一方 `innerHTML` / jQuery `.html()` 注入面。
