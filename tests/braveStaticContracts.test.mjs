@@ -168,6 +168,18 @@ test('home cards use configurable safe links instead of empty hrefs or hard-code
   assert.doesNotMatch(indexPage, /href="<\?php echo \$loveListPageLink; \?>"/);
 });
 
+test('custom page templates bootstrap App helper before using shared helpers', () => {
+  for (const file of ['indexPage.php', 'loveListPage.php', 'commentPage.php']) {
+    const template = read(file);
+    const helperLoad = template.indexOf("require_once __DIR__ . '/core/App.php'");
+    const firstAppUse = template.indexOf('App::');
+
+    assert.notEqual(firstAppUse, -1, `${file} should use App helper contracts`);
+    assert.notEqual(helperLoad, -1, `${file} must not assume themeInit loaded App first`);
+    assert.ok(helperLoad < firstAppUse, `${file} helper load must happen before the first App:: call`);
+  }
+});
+
 test('optional home cards render disabled instead of inert hash links', () => {
   const app = read('core/App.php');
   const indexPage = read('indexPage.php');

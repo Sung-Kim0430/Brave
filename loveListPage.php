@@ -1,5 +1,8 @@
 <?php
 if (!defined('__TYPECHO_ROOT_DIR__')) exit;
+if (!class_exists('App', false)) {
+    require_once __DIR__ . '/core/App.php';
+}
 /**
  * Love List
  * @package custom
