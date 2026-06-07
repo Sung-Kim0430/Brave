@@ -246,6 +246,22 @@ test('comment sanitizer drops image tags without a safe src', () => {
   assert.match(app, /\$removeElement\s*=\s*true/);
 });
 
+test('blessing board shows existing comments even when new comments are closed', () => {
+  const commentPage = read('commentPage.php');
+  const allowGate = commentPage.indexOf("$this->allow('comment')");
+  const listComments = commentPage.indexOf('$comments->listComments()');
+  const commentForm = commentPage.indexOf('<form method="post"');
+  const closedMessage = commentPage.indexOf('留言暂已关闭');
+
+  assert.notEqual(allowGate, -1);
+  assert.notEqual(listComments, -1);
+  assert.notEqual(commentForm, -1);
+  assert.notEqual(closedMessage, -1);
+  assert.ok(listComments < allowGate, 'existing comments should render before the new-comment gate');
+  assert.ok(commentForm > allowGate, 'comment form should remain gated by allow(comment)');
+  assert.ok(closedMessage > allowGate, 'closed message should remain in the closed branch');
+});
+
 test('front-end lightbox avoids raw HTML injection surfaces and data URI link promotion', () => {
   const main = read('base/main.js');
 

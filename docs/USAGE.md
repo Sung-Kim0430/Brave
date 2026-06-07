@@ -57,6 +57,7 @@
 - `commentAntiSpam`：评论反垃圾开关；开启可降低垃圾评论风险
 - `commentCheckReferer`：评论 Referer 检查；默认开启，若代理/隐私策略导致评论失败可切换为兼容关闭
 - `commentMaxNestingLevels`：评论最大嵌套层数（建议 3~10）
+- 祝福板关闭新评论时，已有祝愿仍会展示，仅隐藏提交表单并显示关闭提示
 - `loveListTitleAllowHtml`：Love List 标题是否允许少量 HTML（兼容模式）
 - `assetsSource`：静态资源加载方式（默认本地，减少 CDN 供应链风险）
 - `fontSource`：字体加载方式（默认本地/系统字体；在线字体会引入第三方字体链接）
