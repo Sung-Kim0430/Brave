@@ -1,11 +1,6 @@
 <?php
 if (!defined('__TYPECHO_ROOT_DIR__')) exit;
-$siteUrlRaw = isset(Helper::options()->siteUrl) ? (string)Helper::options()->siteUrl : '/';
-$siteUrlRaw = rtrim($siteUrlRaw, '/') . '/';
-$blogUrl = App::escapeUrlAttribute($siteUrlRaw . 'blog/', true, array('http', 'https'));
-if ($blogUrl === '') {
-    $blogUrl = '/index.php/blog/';
-}
+$blogUrl = App::safeCardLink(App::optionValue('timePageLink', ''), App::siteUrl(true) . 'blog/');
 $this->need('base/head.php');
 $this->need('base/nav.php');
 ?>
@@ -19,10 +14,10 @@ $this->need('base/nav.php');
 	                </a>
 	            </div>
 	            <?php
-	            $introPostEnabled = isset($this->options->introPostEnable) && (string)$this->options->introPostEnable === '1';
-	            $introPostTextRaw = isset($this->options->introPostText) ? (string)$this->options->introPostText : '';
-	            $introPostTextRaw = trim($introPostTextRaw);
-	            $introPostHtml = ($introPostEnabled && $introPostTextRaw !== '') ? App::escapeTextWithBr($introPostTextRaw) : '';
+		            $introPostHtml = App::pageIntroHtml(
+		                App::optionFlag('introPostEnable', false),
+		                App::optionValue('introPostText', '')
+		            );
 	            ?>
 	            <?php if ($introPostHtml !== '') : ?>
 	                <h5 class="list-text page-quote"><?php echo $introPostHtml; ?></h5>

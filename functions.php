@@ -14,10 +14,10 @@ function themeInit($archive = null)
         $commentAntiSpam = false;
     }
 
-    // Referer 检查在部分站点/代理/隐私策略下可能导致无法评论，因此默认关闭，提供手动开启。
-    $commentCheckReferer = false;
-    if (isset($options->commentCheckReferer) && (string)$options->commentCheckReferer === '1') {
-        $commentCheckReferer = true;
+    // Referer 检查默认开启；若站点代理/隐私策略导致评论失败，可在后台关闭。
+    $commentCheckReferer = true;
+    if (isset($options->commentCheckReferer) && (string)$options->commentCheckReferer === '0') {
+        $commentCheckReferer = false;
     }
 
     $commentMaxNestingLevels = 10;
@@ -27,8 +27,8 @@ function themeInit($archive = null)
     if ($commentMaxNestingLevels < 1) {
         $commentMaxNestingLevels = 1;
     }
-    if ($commentMaxNestingLevels > 50) {
-        $commentMaxNestingLevels = 50;
+    if ($commentMaxNestingLevels > 10) {
+        $commentMaxNestingLevels = 10;
     }
 
     Helper::options()->commentsAntiSpam = $commentAntiSpam;
@@ -84,6 +84,8 @@ function themeConfig($form)
 
     $timePageIcon = new Text('timePageIcon', NULL, NULL, _t('首页点点滴滴图标'), _t('在此输入图标直链，将显示在首页点点滴滴小版块中'));
     $form->addInput($timePageIcon);
+    $timePageLink = new Text('timePageLink', NULL, NULL, _t('点滴时光页面链接'), _t('在此输入点滴时光页面链接；留空时默认指向站点 blog/ 路径。'));
+    $form->addInput($timePageLink);
 
     $introHomeEnable = new Radio(
         'introHomeEnable',
@@ -205,12 +207,12 @@ function themeConfig($form)
     $commentCheckReferer = new Radio(
         'commentCheckReferer',
         array(
-            '0' => _t('关闭（默认）'),
-            '1' => _t('开启（更安全）'),
+            '1' => _t('开启（推荐）'),
+            '0' => _t('关闭（兼容）'),
         ),
-        '0',
+        '1',
         _t('评论 Referer 检查'),
-        _t('开启可减少跨站投递评论；但在部分 HTTPS/代理/隐私策略下可能导致无法评论。')
+        _t('开启可减少跨站投递评论；若部分 HTTPS/代理/隐私策略导致无法评论，可切换为兼容关闭。')
     );
     $form->addInput($commentCheckReferer);
 
@@ -219,7 +221,7 @@ function themeConfig($form)
         NULL,
         '10',
         _t('评论最大嵌套层数'),
-        _t('建议 3~10；过大可能被滥用导致性能问题（已在代码中限制最大为 50）。')
+        _t('建议 3~10；过大可能被滥用导致性能问题（已在代码中限制最大为 10）。')
     );
     $form->addInput($commentMaxNestingLevels);
 
@@ -295,34 +297,34 @@ function themeConfig($form)
     );
     $form->addInput($cdnEnableSRI);
 
-    $cdnEnableCSP = new Radio(
-        'cdnEnableCSP',
+    $enableCSP = new Radio(
+        'enableCSP',
         array(
             '1' => _t('开启（默认）'),
             '0' => _t('关闭'),
         ),
         '1',
-        _t('CDN 模式启用 CSP'),
-        _t('仅在静态资源加载方式为「CDN」时生效；开启后会在 <head> 输出 CSP（Content-Security-Policy）以降低 XSS/供应链风险。若使用了额外外链脚本，可通过自定义策略放行或关闭。')
+        _t('启用 CSP'),
+        _t('开启后会在 <head> 输出 CSP（Content-Security-Policy）以降低 XSS/供应链风险；CDN/远程字体模式会自动追加必要域名。若使用了额外外链脚本，可通过自定义策略放行或关闭。')
     );
-    $form->addInput($cdnEnableCSP);
+    $form->addInput($enableCSP);
 
     $cspPolicy = new Textarea(
         'cspPolicy',
         NULL,
         NULL,
         _t('自定义 CSP 策略（可选）'),
-        _t('留空则使用主题内置默认策略；仅在「CDN 模式 + 启用 CSP」时生效。示例：default-src \'self\'; script-src \'self\' \'unsafe-inline\' https://cdn.staticfile.org;')
+        _t('留空则使用主题内置默认策略；仅在「启用 CSP」时生效。示例：default-src \'self\'; script-src \'self\' \'unsafe-inline\' https://cdn.staticfile.org;')
     );
     $form->addInput($cspPolicy);
 
     $enableCustomCode = new Radio(
         'enableCustomCode',
         array(
+            '0' => _t('关闭（推荐）'),
             '1' => _t('开启（兼容）'),
-            '0' => _t('关闭（更安全）'),
         ),
-        '1',
+        '0',
         _t('输出自定义 HTML/CSS/JS'),
         _t('控制是否在前台输出「头部自定义 / Css自定义 / 底部自定义 / pjax回调」等高权限字段；关闭可降低被误用或后台被劫持后的风险。')
     );

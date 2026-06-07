@@ -13,7 +13,6 @@
   - `indexPage.php`
   - `loveListPage.php`
   - `core/App.php`
-  - `core/shortcodes.php`
 
 - 评论输出净化（祝福板）：`commentPage.php` 对评论内容进行二次净化（白名单标签 + URL 协议校验 + 移除事件属性），并提供 `commentAllowImg` 开关来控制是否允许评论图片。
 - 评论作者输出净化（祝福板）：`commentPage.php` 对 `$comments->author()` 的输出做更严格的白名单净化（仅允许 `<a>`），降低作者名/作者链接在不同 Typecho 版本与配置下带来的 XSS/排版注入风险。
@@ -25,8 +24,7 @@
 - JS 字符串输出加固：`base/footer.php` 的 `lovetime` 使用安全的 JS 字符串编码输出，避免配置被注入导致脚本语法错误或意外执行。
 - 日期解析边界检查：`base/footer.php` 的 `parseLoveTime()` 函数增加年月日时分秒的有效范围校验，避免极端值导致的异常。
 - CSP 输出优化：`base/head.php` 优先通过 HTTP header 发送 CSP，仅在 header 发送失败时回退到 meta 标签，避免重复输出。
-- Shortcodes 安全降级：`core/shortcodes.php` 在缺失 `wp_kses_*` 依赖时跳过 HTML 标签/属性内部短代码解析，避免 fatal 并减少属性注入风险。
-- Shortcodes 按需加载：`core/shortcodes.php` 仅在需要解析短代码（例如 `loveListPage.php` 调用 `App::parseShortCode()`）时加载，减少常规页面常驻开销。
+- Love List 短代码解析：`core/App.php` 使用主题专用解析器，仅处理 `[loveList]` 内的 `[item]`，避免引入通用短代码兼容层的额外复杂度与属性注入面。
 - SVG 外链 DTD 清理：`svg/*.svg` 移除 `<!DOCTYPE ...>` 外链声明，减少浏览器/解析器尝试加载外部 DTD 的风险与额外请求。
 
 ## 高权限配置项的风险提示
@@ -34,6 +32,7 @@
 主题设置中包含可直接输出 HTML/CSS/JS 的字段（见 `functions.php` 的 `themeConfig($form)`）：
 
 - 可通过 `enableCustomCode` 关闭这些字段在前台的输出（更安全；不需要自定义代码时建议关闭）。
+- `enableCustomCode` 默认关闭；需要统计代码或自定义脚本时应由可信管理员显式开启。
 
 - `头部自定义`：输出到 `<head>` 内
 - `Css自定义`：输出到 `<style>` 内
@@ -44,7 +43,7 @@
 
 补充说明：
 
-- `Css自定义` 与 `pjax回调` 会做“关闭标签”序列的最小处理（例如 `</style>` / `</script>`），降低意外打断页面结构导致的注入风险；但它们仍属于高权限能力，不应开放给不可信账号。
+- `Css自定义` 与 `pjax回调` 会做“关闭标签”序列的最小处理（例如 `</style>` / `</script>`），降低意外打断页面结构导致的注入风险；这不是 CSS/JS 净化，它们仍属于高权限能力，不应开放给不可信账号。
 
 ## 供应链风险（CDN）
 
@@ -53,7 +52,7 @@
 - 本地（默认）：从主题目录 `base/vendor/` 加载 jQuery / Bootstrap / pjax / nprogress，降低供应链风险。
 - CDN（兼容）：继续从第三方 CDN 加载资源（见 `base/head.php`、`base/footer.php`）。
   - 默认启用 `cdnEnableSRI`：为外链脚本/样式添加 `integrity`（SRI）校验与 `crossorigin="anonymous"`。
-  - 默认启用 `cdnEnableCSP`：启用 CSP（Content-Security-Policy）；主题会尽量通过响应头发送 CSP，并在无法设置响应头时回退为 `<meta http-equiv>`。
+  - 默认启用 `enableCSP`：启用 CSP（Content-Security-Policy）；本地/CDN 资源模式均生效，主题会尽量通过响应头发送 CSP，并在无法设置响应头时回退为 `<meta http-equiv>`。
   - 可选配置 `cspPolicy`：自定义 CSP 策略（留空使用主题内置默认策略）。
 
 字体与外链：

@@ -10,12 +10,7 @@
  * @update      2026/1/1 00:54
  */
 if (!defined('__TYPECHO_ROOT_DIR__')) exit;
-$siteUrlRaw = isset(Helper::options()->siteUrl) ? (string)Helper::options()->siteUrl : '/';
-$siteUrlRaw = rtrim($siteUrlRaw, '/') . '/';
-$siteUrl = App::escapeUrlAttribute($siteUrlRaw, true, array('http', 'https'));
-if ($siteUrl === '') {
-    $siteUrl = '/';
-}
+$siteUrl = App::siteUrl(true);
 $this->need('base/head.php');
 $this->need('base/nav.php');
 ?>
@@ -29,13 +24,11 @@ $this->need('base/nav.php');
 	            </a>
 	        </div>
 	        <?php
-	        $introIndexEnabled = !isset($this->options->introIndexEnable) || (string)$this->options->introIndexEnable === '1';
-	        $introIndexTextRaw = isset($this->options->introIndexText) ? (string)$this->options->introIndexText : '';
-	        $introIndexTextRaw = trim($introIndexTextRaw);
-	        if ($introIndexTextRaw === '') {
-	            $introIndexTextRaw = "你要是愿意，我就永远爱你；你要是不愿意，我就永远相思。\n我活在世上，无非想要明白些道理，遇见些有趣的事。倘能如我所愿，我的一生就算成功。";
-	        }
-	        $introIndexHtml = App::escapeTextWithBr($introIndexTextRaw);
+	        $introIndexHtml = App::pageIntroHtml(
+	            App::optionFlag('introIndexEnable', true),
+	            App::optionValue('introIndexText', ''),
+	            "你要是愿意，我就永远爱你；你要是不愿意，我就永远相思。\n我活在世上，无非想要明白些道理，遇见些有趣的事。倘能如我所愿，我的一生就算成功。"
+	        );
 	        ?>
 	        <?php if ($introIndexEnabled && $introIndexHtml !== '') : ?>
 	            <h5 class="list-text page-quote"><?php echo $introIndexHtml; ?></h5>

@@ -31,7 +31,7 @@
 - `boyname` / `girlname`：昵称
 - `loveListPageIcon` / `loveListPageLink`：首页 Love List 卡片图标与链接
 - `blessingPageIcon` / `blessingPageLink`：首页祝福板卡片图标与链接
-- `timePageIcon`：首页点滴时光图标（链接当前写死为 `/index.php/blog/`，可自行改主题代码或通过路由配置适配）
+- `timePageIcon` / `timePageLink`：首页点滴时光图标与链接；链接留空时默认指向站点 `blog/` 路径
 
 提示：
 
@@ -54,19 +54,19 @@
 
 - `commentAllowImg`：评论允许图片开关；关闭可减少追踪像素与外链风险
 - `commentAntiSpam`：评论反垃圾开关；开启可降低垃圾评论风险
-- `commentCheckReferer`：评论 Referer 检查；更安全但可能导致部分环境无法评论
+- `commentCheckReferer`：评论 Referer 检查；默认开启，若代理/隐私策略导致评论失败可切换为兼容关闭
 - `commentMaxNestingLevels`：评论最大嵌套层数（建议 3~10）
 - `loveListTitleAllowHtml`：Love List 标题是否允许少量 HTML（兼容模式）
 - `assetsSource`：静态资源加载方式（默认本地，减少 CDN 供应链风险）
 - `fontSource`：字体加载方式（默认本地/系统字体；在线字体会引入第三方字体链接）
 - `enableDarkMode`：暗色模式开关（默认关闭）；开启后导航栏出现切换按钮：默认跟随系统，可手动切换并用 localStorage 记忆（`brave-theme`；Shift+点击恢复跟随系统）
 - `cdnEnableSRI`：CDN 模式下是否为外链资源启用 SRI（默认开启）
-- `cdnEnableCSP`：CDN 模式下是否启用 CSP（默认开启）
+- `enableCSP`：是否启用 CSP（默认开启；本地/CDN 资源模式均生效）
 - `cspPolicy`：自定义 CSP 策略（可选；留空使用主题内置默认）
 
 高级项（具备脚本/样式执行能力，请谨慎授权）：
 
-- `enableCustomCode`：是否在前台输出下述自定义 HTML/CSS/JS 字段（默认开启；关闭更安全）
+- `enableCustomCode`：是否在前台输出下述自定义 HTML/CSS/JS 字段（默认关闭；需要统计代码或自定义脚本时再开启）
 - `头部自定义`：输出到 `base/head.php` 的 `<head>` 内
 - `Css自定义`：输出到 `base/head.php` 的 `<style>` 内
 - `底部自定义`：输出到 `base/footer.php` 的 `</body>` 之前
@@ -74,7 +74,7 @@
 
 ## Love List 短代码
 
-短代码在 `core/App.php` 的 `loveListAcc()` 中实现（调用 `add_shortcode('loveList', ...)` 注册）。
+短代码在 `core/App.php` 的 `App::parseShortCode()` 中由主题专用解析器处理。
 
 格式示例（在文章/页面内容里使用）：
 

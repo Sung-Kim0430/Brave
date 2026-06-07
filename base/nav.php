@@ -1,19 +1,15 @@
 <?php if (!defined('__TYPECHO_ROOT_DIR__')) exit; ?>
 <?php
-$siteUrl = isset(Helper::options()->siteUrl) ? (string)Helper::options()->siteUrl : '/';
-$siteUrl = App::escapeUrlAttribute($siteUrl, true, array('http', 'https'));
-if ($siteUrl === '') {
-    $siteUrl = '/';
-}
+$siteUrl = App::siteUrl(false);
 
-$heroStyle = App::buildBackgroundImageStyle(isset($this->options->heroimg) ? (string)$this->options->heroimg : '');
-$boyAvatarRaw = isset($this->options->boy) ? trim((string)$this->options->boy) : '';
-$girlAvatarRaw = isset($this->options->girl) ? trim((string)$this->options->girl) : '';
+$heroStyle = App::buildBackgroundImageStyle(App::optionValue('heroimg', ''));
+$boyAvatarRaw = trim(App::optionValue('boy', ''));
+$girlAvatarRaw = trim(App::optionValue('girl', ''));
 $boyAvatar = App::escapeUrlAttribute($boyAvatarRaw, true, array('http', 'https'));
 $girlAvatar = App::escapeUrlAttribute($girlAvatarRaw, true, array('http', 'https'));
 
-$boyNameRaw = isset($this->options->boyname) ? trim((string)$this->options->boyname) : '';
-$girlNameRaw = isset($this->options->girlname) ? trim((string)$this->options->girlname) : '';
+$boyNameRaw = trim(App::optionValue('boyname', ''));
+$girlNameRaw = trim(App::optionValue('girlname', ''));
 $boyName = App::escapeHtml($boyNameRaw);
 $girlName = App::escapeHtml($girlNameRaw);
 
@@ -22,8 +18,8 @@ $girlInitial = ($girlNameRaw === '') ? '她' : (function_exists('mb_substr') ? m
 $boyInitial = App::escapeHtml($boyInitial);
 $girlInitial = App::escapeHtml($girlInitial);
 
-$navSay = App::escapeHtml(isset($this->options->navsay) ? (string)$this->options->navsay : '');
-$enableDarkMode = isset(Helper::options()->enableDarkMode) && (string)Helper::options()->enableDarkMode === '1';
+$navSay = App::escapeHtml(App::optionValue('navsay', ''));
+$enableDarkMode = App::optionFlag('enableDarkMode', false);
 ?>
 <div class="container-fluid position-relative">
     <nav class="navbar navbar-expand-lg navbar-dark  text-white bg-transparent">

@@ -10,10 +10,10 @@
 		</p>
 	</div>
 </footer>
-<?php $assetsSource = (isset(Helper::options()->assetsSource) ? (string)Helper::options()->assetsSource : 'local'); ?>
-<?php $cdnEnableSRI = !isset(Helper::options()->cdnEnableSRI) || (string)Helper::options()->cdnEnableSRI !== '0'; ?>
+<?php $assetsSource = App::optionChoice('assetsSource', 'local', array('local', 'cdn')); ?>
+<?php $cdnEnableSRI = App::optionFlag('cdnEnableSRI', true); ?>
 <?php $enableSRI = ($assetsSource === 'cdn' && $cdnEnableSRI); ?>
-<?php $enableCustomCode = !isset(Helper::options()->enableCustomCode) || (string)Helper::options()->enableCustomCode !== '0'; ?>
+<?php $enableCustomCode = App::optionFlag('enableCustomCode', false); ?>
 <?php if ($assetsSource === 'cdn') : ?>
 	<script src="https://cdn.staticfile.org/jquery.pjax/2.0.1/jquery.pjax.min.js" type="application/javascript"
 	        <?php if ($enableSRI) : ?>integrity="sha384-VLg3MPOy+5T9leB7r4BBB56zHq4/e0We8vujbAvJwp3xNDhj3b7Fg6+jOVs6bym1" crossorigin="anonymous"<?php endif; ?>></script>
@@ -52,8 +52,19 @@
 						}
 
 						var dt = new Date(y, m - 1, d, hh, mm, ss);
-						if (!isNaN(dt.getTime())) return dt;
+						if (
+							!isNaN(dt.getTime()) &&
+							dt.getFullYear() === y &&
+							dt.getMonth() === m - 1 &&
+							dt.getDate() === d &&
+							dt.getHours() === hh &&
+							dt.getMinutes() === mm &&
+							dt.getSeconds() === ss
+						) {
+							return dt;
+						}
 					}
+					return null;
 				}
 
 				var fallback = new Date(str);
@@ -63,7 +74,7 @@
 			};
 
 				(function() {
-					var startStr = <?php echo App::escapeJsString(isset($this->options->lovetime) ? (string)$this->options->lovetime : ''); ?>;
+					var startStr = <?php echo App::escapeJsString(App::optionValue('lovetime', '')); ?>;
 					var start = window.parseLoveTime(startStr);
 
 					window.showSiteRuntime = function() {
@@ -76,6 +87,11 @@
 
 						var now = new Date();
 						var T = (now.getTime() - start.getTime());
+						if (T < 0) {
+							site_runtime.text("未开始");
+							return true;
+						}
+
 						var i = 24 * 60 * 60 * 1000;
 						var d = T / i;
 						var D = Math.floor(d);
@@ -140,7 +156,7 @@
 			                ob_start();
 			                $this->options->pjax回调();
 		                $pjaxCallback = ob_get_clean();
-		                echo App::escapeInlineScriptSnippet($pjaxCallback);
+			                echo App::guardInlineScriptSnippet($pjaxCallback);
 		                ?>
 		            <?php endif; ?>
 		            if (window.NProgress) NProgress.done();

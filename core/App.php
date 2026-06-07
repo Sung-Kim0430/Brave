@@ -9,8 +9,6 @@ if (!defined('__TYPECHO_ROOT_DIR__')) exit;
 
 class App
 {
-    private static $shortcodesLoaded = false;
-
     public static function escapeHtml($value)
     {
         return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
@@ -29,64 +27,156 @@ class App
         return str_replace("\n", '<br>', $escaped);
     }
 
+    public static function optionValue($name, $default = '')
+    {
+        $options = Helper::options();
+        if (isset($options->{$name})) {
+            return (string)$options->{$name};
+        }
+
+        return (string)$default;
+    }
+
+    public static function optionFlag($name, $default = false)
+    {
+        $options = Helper::options();
+        if (!isset($options->{$name})) {
+            return (bool)$default;
+        }
+
+        return (string)$options->{$name} === '1';
+    }
+
+    public static function optionChoice($name, $default, $allowed)
+    {
+        $value = self::optionValue($name, $default);
+        return in_array($value, $allowed, true) ? $value : $default;
+    }
+
+    public static function siteUrl($appendSlash = true)
+    {
+        $raw = self::optionValue('siteUrl', '/');
+        if ($appendSlash) {
+            $raw = rtrim($raw, '/') . '/';
+        }
+
+        $safe = self::escapeUrlAttribute($raw, true, array('http', 'https'));
+        return ($safe !== '') ? $safe : '/';
+    }
+
+    public static function pageIntroHtml($enabled, $text, $fallback = '')
+    {
+        if (!$enabled) {
+            return '';
+        }
+
+        $value = trim((string)$text);
+        if ($value === '') {
+            $value = trim((string)$fallback);
+        }
+
+        return self::escapeTextWithBr($value);
+    }
+
+    public static function safeCardLink($url, $fallback = '#')
+    {
+        $safeUrl = self::escapeUrlAttribute($url, true, array('http', 'https'));
+        if ($safeUrl !== '') {
+            return $safeUrl;
+        }
+
+        $safeFallback = self::escapeUrlAttribute($fallback, true, array('http', 'https'));
+        return ($safeFallback !== '') ? $safeFallback : '#';
+    }
+
     public static function parseShortCode($content)
     {
         $content = (string)$content;
 
-        // Avoid loading the shortcode engine when no shortcode delimiters exist.
-        if (strpos($content, '[') === false) {
+        if (stripos($content, '[loveList') === false) {
             return $content;
         }
 
-        self::ensureShortcodesLoaded();
+        $listIndex = 0;
+        $parsed = preg_replace_callback(
+            '/\[loveList\b[^\]]*\]([\s\S]*?)\[\/loveList\]/i',
+            function ($matches) use (&$listIndex) {
+                return self::renderLoveListShortcode(isset($matches[1]) ? $matches[1] : '', $listIndex++);
+            },
+            $content
+        );
 
-        if (!function_exists('do_shortcode')) {
-            return $content;
-        }
-
-        return do_shortcode($content);
+        return is_string($parsed) ? $parsed : $content;
     }
 
-    public static function ensureShortcodesLoaded()
+    private static function parseLoveListAttributes($text)
     {
-        if (self::$shortcodesLoaded) {
-            return;
+        $attrs = array();
+        $text = (string)$text;
+        if ($text === '') {
+            return $attrs;
         }
 
-        if (!function_exists('do_shortcode')) {
-            $shortcodeFile = __DIR__ . '/shortcodes.php';
-            if (is_file($shortcodeFile)) {
-                require_once($shortcodeFile);
-            }
-        }
-
-        // Register theme shortcodes (idempotent).
-        if (function_exists('add_shortcode')) {
-            add_shortcode('loveList', 'loveListAcc');
-        }
-
-        self::$shortcodesLoaded = true;
-    }
-
-    public static function avatarQQ($ctx)
-    {
-        if ($ctx) {
-            if (strpos($ctx, "@qq.com") !== false) {
-                $email = str_replace('@qq.com', '', $ctx);
-                if (is_numeric($email)) {
-                    return "//q1.qlogo.cn/g?b=qq&nk=" . $email . "&";
-                } else {
-                    $str = $email . '@qq.com';
-                    $email = md5($str);
-                    return "//sdn.geekzu.org/avatar/" . $email . "?";
+        if (preg_match_all('/([A-Za-z0-9_-]+)\s*=\s*(?:"([^"]*)"|\'([^\']*)\'|([^\s"\']+))/u', $text, $matches, PREG_SET_ORDER)) {
+            foreach ($matches as $match) {
+                $name = strtolower($match[1]);
+                if (isset($match[2]) && $match[2] !== '') {
+                    $attrs[$name] = stripcslashes($match[2]);
+                } elseif (isset($match[3]) && $match[3] !== '') {
+                    $attrs[$name] = stripcslashes($match[3]);
+                } elseif (isset($match[4])) {
+                    $attrs[$name] = stripcslashes($match[4]);
                 }
-            } else {
-                $email = md5($ctx);
-                return "//sdn.geekzu.org/avatar/" . $email . "?";
             }
-        } else {
-            return "//sdn.geekzu.org/avatar/null?";
         }
+
+        return $attrs;
+    }
+
+    private static function renderLoveListShortcode($content, $listIndex)
+    {
+        $content = (string)$content;
+        if (!preg_match_all('/\[item\b([^\]]*?)(?:\/\]|\]([\s\S]*?)\[\/item\])/i', $content, $items, PREG_SET_ORDER)) {
+            return $content;
+        }
+
+        $themeUrlRaw = rtrim(self::optionValue('themeUrl', ''), '/');
+        $todoIcon = self::escapeUrlAttribute($themeUrlRaw . '/svg/todo.svg', true, array('http', 'https'));
+        $okIcon = self::escapeUrlAttribute($themeUrlRaw . '/svg/ok.svg', true, array('http', 'https'));
+        $allowTitleHtml = self::optionFlag('loveListTitleAllowHtml', false);
+
+        $out = '<div class="accordion mx-auto mt-5" id="loveList' . $listIndex . '">';
+        foreach ($items as $key => $item) {
+            $attrs = self::parseLoveListAttributes(isset($item[1]) ? $item[1] : '');
+            $status = isset($attrs['status']) ? (string)$attrs['status'] : '0';
+            $isTodo = ($status === '0');
+
+            $rawTitle = isset($item[2]) ? (string)$item[2] : '';
+            $safeTitle = self::sanitizeLoveListTitle($rawTitle, $allowTitleHtml);
+
+            $rawImg = isset($attrs['img']) ? (string)$attrs['img'] : '';
+            $imgStyle = self::buildBackgroundImageStyle($rawImg);
+
+            $out .= '<div class="card">';
+            $out .= '<div class="card-header p-1" id="heading'.$listIndex.'-'.$key.'"><h2 class="mb-0">';
+            $out .= '<button class="btn collapsed ml-auto d-flex align-items-center" type="button" data-toggle="collapse" data-target="#collapse'.$listIndex.'-'.$key.'" aria-expanded="false" aria-controls="collapse'.$listIndex.'-'.$key.'">';
+            $statusIcon = $isTodo ? $todoIcon : $okIcon;
+            if ($statusIcon !== '') {
+                $out .= '<img class="statusIcon" src="' . $statusIcon . '" alt="">';
+            }
+            $out .= '<strong>'.$safeTitle.'</strong>';
+            $out .= '</button></h2></div>';
+            $out .= '<div id="collapse'.$listIndex.'-'.$key.'" class="collapse" aria-labelledby="heading'.$listIndex.'-'.$key.'" data-parent="#loveList'.$listIndex.'">';
+            if ($imgStyle !== '') {
+                $out .= '<div class="card-body p-0">';
+                $out .= '<section style="'.htmlspecialchars($imgStyle, ENT_QUOTES, 'UTF-8').'"></section>';
+                $out .= '</div>';
+            }
+            $out .= '</div></div>';
+        }
+        $out .= '</div>';
+
+        return $out;
     }
 
     public static function normalizeUrl($url, $allowRelative, $allowedSchemes)
@@ -170,18 +260,28 @@ class App
         return ($json !== false) ? $json : '""';
     }
 
-    public static function escapeInlineScriptSnippet($js)
+    public static function guardInlineScriptSnippet($js)
     {
         $js = (string)$js;
-        // Prevent closing the <script> element early (e.g. via </script> inside user-provided snippets).
+        // This only prevents closing the script element early; it is not a JavaScript sanitizer.
         return str_ireplace('</script', '<\\/script', $js);
+    }
+
+    public static function escapeInlineScriptSnippet($js)
+    {
+        return self::guardInlineScriptSnippet($js);
+    }
+
+    public static function guardInlineStyleSnippet($css)
+    {
+        $css = (string)$css;
+        // This only prevents closing the style element early; it is not a CSS sanitizer.
+        return str_ireplace('</style', '<\\/style', $css);
     }
 
     public static function escapeInlineStyleSnippet($css)
     {
-        $css = (string)$css;
-        // Prevent closing the <style> element early (e.g. via </style> inside user-provided snippets).
-        return str_ireplace('</style', '<\\/style', $css);
+        return self::guardInlineStyleSnippet($css);
     }
 
     private static function normalizeClassList($class)
@@ -483,62 +583,3 @@ class App
         );
     }
 }
-
-function loveListAcc($atts, $content = '')
-{
-    if (!preg_match_all("/(.?)\[(item)\b(.*?)(?:(\/))?\](?:(.+?)\[\/item\])?(.?)/s", $content, $matches)) {
-        return do_shortcode($content);
-    } else {
-        for ($i = 0; $i < count($matches[0]); $i++) {
-            $matches[3][$i] = shortcode_parse_atts($matches[3][$i]);
-        }
-	        $out = '<div class="accordion mx-auto mt-5" id="loveList">';
-
-	        $allowTitleHtml = false;
-	        $options = Helper::options();
-	        $themeUrlRaw = isset($options->themeUrl) ? (string)$options->themeUrl : '';
-	        $themeUrlRaw = rtrim($themeUrlRaw, '/');
-	        $todoIcon = App::escapeUrlAttribute($themeUrlRaw . '/svg/todo.svg', true, array('http', 'https'));
-	        $okIcon = App::escapeUrlAttribute($themeUrlRaw . '/svg/ok.svg', true, array('http', 'https'));
-	        if (isset($options->loveListTitleAllowHtml) && (string)$options->loveListTitleAllowHtml === '1') {
-	            $allowTitleHtml = true;
-	        }
-
-	        foreach ($matches[3] as $key => $value){
-	            if (!is_array($value)) {
-	                $value = array();
-	            }
-
-            $status = isset($value['status']) ? (string)$value['status'] : '0';
-            $isTodo = ($status === '0');
-
-            $rawTitle = isset($matches[5][$key]) ? (string)$matches[5][$key] : '';
-            $safeTitle = App::sanitizeLoveListTitle($rawTitle, $allowTitleHtml);
-
-            $rawImg = isset($value['img']) ? (string)$value['img'] : '';
-            $imgStyle = App::buildBackgroundImageStyle($rawImg);
-
-            $out .= '<div class="card">';
-            $out .= '<div class="card-header p-1" id="heading'.$key.'"><h2 class="mb-0">';
-            $out .= '<button class="btn collapsed ml-auto d-flex align-items-center" type="button" data-toggle="collapse" data-target="#collapse'.$key.'" aria-expanded="false" aria-controls="collapse'.$key.'">';
-            $statusIcon = $isTodo ? $todoIcon : $okIcon;
-            if ($statusIcon !== '') {
-                $out .= '<img class="statusIcon" src="' . $statusIcon . '" alt="">';
-            }
-            $out .= '<strong>'.$safeTitle.'</strong>';
-            $out .= '</button></h2></div>';
-            $out .= '<div id="collapse'.$key.'" class="collapse" aria-labelledby="heading'.$key.'" data-parent="#loveList">';
-            if ($imgStyle !== '') {
-                $out .= '<div class="card-body p-0">';
-                $out .= '<section style="'.htmlspecialchars($imgStyle, ENT_QUOTES, 'UTF-8').'"></section>';
-                $out .= '</div>';
-            }
-            $out .= '</div></div>';
-        }
-	        $out .= '</div>';
-	        return $out;
-	    }
-	}
-	if (function_exists('add_shortcode')) {
-	    add_shortcode('loveList', 'loveListAcc');
-	}

@@ -36,7 +36,7 @@ Since this is a PHP theme for Typecho, there is no "build" process.
     - Always use `App::escapeHtml`, `App::escapeUrlAttribute`, etc., for outputting user data.
     - Maintain CSP compatibility in `base/head.php`.
     - Do not use `window.onload` or inline scripts without checking CSP compliance.
-- **Shortcodes:** Custom shortcode logic is in `core/shortcodes.php`. Use the `[loveList]` syntax for the checklist page.
+- **Shortcodes:** Love List shortcode logic is handled by `App::parseShortCode()` in `core/App.php`. Use the `[loveList]` syntax for the checklist page.
 
 **Key Files:**
 - `functions.php`: Defines theme configuration options (Typecho admin settings).

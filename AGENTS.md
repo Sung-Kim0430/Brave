@@ -4,8 +4,7 @@
 
 - `functions.php`: Theme init + admin settings; loads core utilities and controls security-related defaults.
 - `core/`: Theme logic helpers.
-  - `core/App.php`: Output sanitizers and the Love List shortcode renderer.
-  - `core/shortcodes.php`: Shortcode engine (WordPress-derived with Typecho-safe fallbacks).
+  - `core/App.php`: Output sanitizers, shared option helpers, and the focused Love List shortcode renderer.
 - Templates:
   - `index.php`, `post.php`: Main list/post templates.
   - `indexPage.php`, `loveListPage.php`, `commentPage.php`: Custom page templates.

@@ -8,11 +8,13 @@ if (!defined('__TYPECHO_ROOT_DIR__')) exit;
  * CreateTime: 2021/2/6 22:32
  * UpdateTime: 2026/1/1 00:54
  */
-$blessingPageLink = App::escapeUrlAttribute(isset($this->options->blessingPageLink) ? (string)$this->options->blessingPageLink : '', true, array('http', 'https'));
-$blessingPageIcon = App::escapeUrlAttribute(isset($this->options->blessingPageIcon) ? (string)$this->options->blessingPageIcon : '', true, array('http', 'https'));
-$timePageIcon = App::escapeUrlAttribute(isset($this->options->timePageIcon) ? (string)$this->options->timePageIcon : '', true, array('http', 'https'));
-$loveListPageLink = App::escapeUrlAttribute(isset($this->options->loveListPageLink) ? (string)$this->options->loveListPageLink : '', true, array('http', 'https'));
-$loveListPageIcon = App::escapeUrlAttribute(isset($this->options->loveListPageIcon) ? (string)$this->options->loveListPageIcon : '', true, array('http', 'https'));
+$siteUrl = App::siteUrl(true);
+$blessingPageHref = App::safeCardLink(App::optionValue('blessingPageLink', ''), '#');
+$blessingPageIcon = App::escapeUrlAttribute(App::optionValue('blessingPageIcon', ''), true, array('http', 'https'));
+$timePageHref = App::safeCardLink(App::optionValue('timePageLink', ''), $siteUrl . 'blog/');
+$timePageIcon = App::escapeUrlAttribute(App::optionValue('timePageIcon', ''), true, array('http', 'https'));
+$loveListPageHref = App::safeCardLink(App::optionValue('loveListPageLink', ''), '#');
+$loveListPageIcon = App::escapeUrlAttribute(App::optionValue('loveListPageIcon', ''), true, array('http', 'https'));
 $this->need('base/head.php');
 $this->need('base/nav.php');
 ?>
@@ -22,18 +24,18 @@ $this->need('base/nav.php');
 	        <h5 id="site_runtime"></h5>
 	    </blockquote>
 	    <?php
-	    $introHomeEnabled = isset($this->options->introHomeEnable) && (string)$this->options->introHomeEnable === '1';
-	    $introHomeTextRaw = isset($this->options->introHomeText) ? (string)$this->options->introHomeText : '';
-	    $introHomeTextRaw = trim($introHomeTextRaw);
-	    $introHomeHtml = ($introHomeEnabled && $introHomeTextRaw !== '') ? App::escapeTextWithBr($introHomeTextRaw) : '';
-	    ?>
+		    $introHomeHtml = App::pageIntroHtml(
+		        App::optionFlag('introHomeEnable', false),
+		        App::optionValue('introHomeText', '')
+		    );
+		    ?>
 	    <?php if ($introHomeHtml !== '') : ?>
 	        <h5 class="list-text page-quote"><?php echo $introHomeHtml; ?></h5>
 	        <hr class="quote-divider">
 	    <?php endif; ?>
 		    <div class="row indexPlate">
 		        <div class="col-md-4">
-		            <a href="<?php echo $blessingPageLink; ?>" class="card ">
+		            <a href="<?php echo $blessingPageHref; ?>" class="card ">
 		                <div class="card-body">
 		                    <div class="row align-items-center">
 	                        <div class="col-auto">
@@ -53,8 +55,8 @@ $this->need('base/nav.php');
                 </div>
             </a>
         </div>
-	        <div class="col-md-4">
-	            <a href="/index.php/blog/" class="card">
+		        <div class="col-md-4">
+		            <a href="<?php echo $timePageHref; ?>" class="card">
 	                <div class="card-body">
 	                    <div class="row align-items-center">
 	                        <div class="col-auto">
@@ -75,7 +77,7 @@ $this->need('base/nav.php');
             </a>
         </div>
 	        <div class="col-md-4">
-	            <a href="<?php echo $loveListPageLink; ?>" class="card ">
+		            <a href="<?php echo $loveListPageHref; ?>" class="card ">
 	                <div class="card-body">
 	                    <div class="row align-items-center">
 	                        <div class="col-auto">

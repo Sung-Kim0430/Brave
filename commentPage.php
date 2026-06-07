@@ -12,17 +12,12 @@ if (!defined('__TYPECHO_ROOT_DIR__')) exit;
 $this->need('base/head.php');
 $this->need('base/nav.php');
 $this->comments()->to($comments);
-$siteUrlRaw = isset(Helper::options()->siteUrl) ? (string)Helper::options()->siteUrl : '/';
-$siteUrlRaw = rtrim($siteUrlRaw, '/') . '/';
-$siteUrl = App::escapeUrlAttribute($siteUrlRaw, true, array('http', 'https'));
-if ($siteUrl === '') {
-    $siteUrl = '/';
-}
+$siteUrl = App::siteUrl(true);
 
-$introCommentEnabled = isset($this->options->introCommentEnable) && (string)$this->options->introCommentEnable === '1';
-$introCommentTextRaw = isset($this->options->introCommentText) ? (string)$this->options->introCommentText : '';
-$introCommentTextRaw = trim($introCommentTextRaw);
-$introCommentHtml = ($introCommentEnabled && $introCommentTextRaw !== '') ? App::escapeTextWithBr($introCommentTextRaw) : '';
+$introCommentHtml = App::pageIntroHtml(
+    App::optionFlag('introCommentEnable', false),
+    App::optionValue('introCommentText', '')
+);
 ?>
 <?php function threadedComments($comments, $options)
 {
@@ -63,8 +58,7 @@ $introCommentHtml = ($introCommentEnabled && $introCommentTextRaw !== '') ? App:
                             ob_start();
                             $comments->content();
                             $commentHtml = ob_get_clean();
-                            $allowImages = isset(Helper::options()->commentAllowImg)
-                                && (string)Helper::options()->commentAllowImg === '1';
+                            $allowImages = App::optionFlag('commentAllowImg', false);
                             echo App::sanitizeCommentHtml($commentHtml, $allowImages);
                             ?>
                         </div>

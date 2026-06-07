@@ -1,20 +1,20 @@
 <?php
 if (!defined('__TYPECHO_ROOT_DIR__')) exit;
 
-$assetsSource = (isset(Helper::options()->assetsSource) ? (string)Helper::options()->assetsSource : 'local');
-$cdnEnableSRI = !isset(Helper::options()->cdnEnableSRI) || (string)Helper::options()->cdnEnableSRI !== '0';
-$cdnEnableCSP = !isset(Helper::options()->cdnEnableCSP) || (string)Helper::options()->cdnEnableCSP !== '0';
+$assetsSource = App::optionChoice('assetsSource', 'local', array('local', 'cdn'));
+$cdnEnableSRI = App::optionFlag('cdnEnableSRI', true);
 $enableSRI = ($assetsSource === 'cdn' && $cdnEnableSRI);
-$enableCSP = ($assetsSource === 'cdn' && $cdnEnableCSP);
+$enableCSP = App::optionFlag('enableCSP', true);
 
-$fontSource = isset(Helper::options()->fontSource) ? (string)Helper::options()->fontSource : 'local';
+$fontSource = App::optionChoice('fontSource', 'local', array('local', 'remote'));
 $enableRemoteFont = ($fontSource === 'remote');
-$enableCustomCode = !isset(Helper::options()->enableCustomCode) || (string)Helper::options()->enableCustomCode !== '0';
-$enableDarkMode = isset(Helper::options()->enableDarkMode) && (string)Helper::options()->enableDarkMode === '1';
+$enableCustomCode = App::optionFlag('enableCustomCode', false);
+$enableDarkMode = App::optionFlag('enableDarkMode', false);
 
 $cspPolicy = '';
+$cspHeaderSent = false;
 if ($enableCSP) {
-    $customCsp = isset(Helper::options()->cspPolicy) ? (string)Helper::options()->cspPolicy : '';
+    $customCsp = App::optionValue('cspPolicy', '');
     $customCsp = trim($customCsp);
     if ($customCsp !== '') {
         $cspPolicy = $customCsp;
@@ -47,7 +47,6 @@ if ($enableCSP) {
     }
 
     // Prefer response headers over meta tags when possible.
-    $cspHeaderSent = false;
     if ($cspPolicy !== '' && !headers_sent()) {
         $cspHeader = preg_replace('/[\\x00-\\x1F\\x7F]+/', ' ', $cspPolicy);
         header('Content-Security-Policy: ' . $cspHeader);
@@ -112,15 +111,15 @@ if ($enableCSP) {
 	    <?php if ($enableCustomCode) : ?>
 		    <?php $this->options->头部自定义(); ?>
 	    <?php endif; ?>
-	</head>
 <?php if ($enableCustomCode) : ?>
 <style>
     <?php
     ob_start();
     $this->options->Css自定义();
     $customCss = ob_get_clean();
-    echo App::escapeInlineStyleSnippet($customCss);
+    echo App::guardInlineStyleSnippet($customCss);
     ?>
 </style>
 <?php endif; ?>
+	</head>
 <body>
