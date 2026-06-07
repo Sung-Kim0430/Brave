@@ -227,38 +227,42 @@ class App
             return '';
         }
 
-        // Normalize for scheme checks: decode entities and remove ASCII control/space chars.
-        $decoded = html_entity_decode($url, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        $decoded = preg_replace('/[\\x00-\\x20]+/', '', $decoded);
+        // Normalize entities once, then use a whitespace-stripped copy for scheme checks.
+        $decodedUrl = html_entity_decode($url, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $decodedUrl = preg_replace('/[\\x00-\\x1F\\x7F]+/', '', $decodedUrl);
+        if ($decodedUrl === '') {
+            return '';
+        }
+        $schemeCheckUrl = preg_replace('/[\\x00-\\x20]+/', '', $decodedUrl);
 
         // Block dangerous schemes even if obfuscated with entities/whitespace.
-        if (preg_match('#^(?:javascript|data|vbscript):#i', $decoded)) {
+        if (preg_match('#^(?:javascript|data|vbscript):#i', $schemeCheckUrl)) {
             return '';
         }
 
         // Allow protocol-relative URLs (e.g. //example.com/a.png).
-        if (strpos($decoded, '//') === 0) {
-            return $url;
+        if (strpos($schemeCheckUrl, '//') === 0) {
+            return $decodedUrl;
         }
 
-        if (preg_match('#^([a-z][a-z0-9+.-]*):#i', $decoded, $m)) {
+        if (preg_match('#^([a-z][a-z0-9+.-]*):#i', $schemeCheckUrl, $m)) {
             $scheme = strtolower($m[1]);
             if (!in_array($scheme, $allowedSchemes, true)) {
                 return '';
             }
-            return $url;
+            return $decodedUrl;
         }
 
         if ($allowRelative) {
-            $firstChar = substr($url, 0, 1);
+            $firstChar = substr($decodedUrl, 0, 1);
             if ($firstChar === '/' || $firstChar === '#') {
-                return $url;
+                return $decodedUrl;
             }
-            if (strpos($url, './') === 0 || strpos($url, '../') === 0) {
-                return $url;
+            if (strpos($decodedUrl, './') === 0 || strpos($decodedUrl, '../') === 0) {
+                return $decodedUrl;
             }
             // Allow ordinary relative URLs such as blog/ after scheme checks.
-            return $url;
+            return $decodedUrl;
         }
 
         return '';

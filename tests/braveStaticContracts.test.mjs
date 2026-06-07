@@ -245,7 +245,16 @@ test('URL normalizer allows ordinary relative paths after scheme validation', ()
 
   assert.match(app, /Block dangerous schemes even if obfuscated/);
   assert.match(app, /Allow ordinary relative URLs such as blog\/ after scheme checks/);
-  assert.match(app, /if\s*\(\$allowRelative\)\s*{[\s\S]*return\s+\$url;[\s\S]*}\s*\n\s*return\s+'';/);
+  assert.match(app, /if\s*\(\$allowRelative\)\s*{[\s\S]*return\s+\$decodedUrl;[\s\S]*}\s*\n\s*return\s+'';/);
+});
+
+test('URL normalizer emits entity-decoded safe URLs before context escaping', () => {
+  const app = read('core/App.php');
+
+  assert.match(app, /\$decodedUrl\s*=\s*html_entity_decode\(\$url,\s*ENT_QUOTES\s*\|\s*ENT_HTML5,\s*'UTF-8'\)/);
+  assert.match(app, /\$schemeCheckUrl\s*=\s*preg_replace\('\/\[\\\\x00-\\\\x20\]\+\/',\s*'',\s*\$decodedUrl\)/);
+  assert.match(app, /return\s+\$decodedUrl;/);
+  assert.doesNotMatch(app, /return\s+\$url;\s*\n\s*}\s*\n\s*return\s+'';/);
 });
 
 test('theme init uses shared option helpers for comment safety defaults', () => {

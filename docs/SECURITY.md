@@ -22,7 +22,7 @@
 - Love List 输出加固：`core/App.php` 对 `[item]` 的 `status/img/title` 做了 `isset` 检查与上下文转义，并提供 `loveListTitleAllowHtml` 兼容开关（仅允许少量标签）。
 - Love List 状态解析收紧：仅 `status="1"` 视为已完成，其余缺省或异常值都按未完成渲染，避免异常输入被误判为完成态。
 - Love List 图片 URL 统一使用 `buildBackgroundImageStyle()` 方法进行转义，确保 CSS 注入防护一致性。
-- 主题设置 URL 输出加固：`base/nav.php`、`indexPage.php` 对头像/图标/跳转链接等配置项做 URL 规范化 + 属性转义，降低恶意协议（`javascript:` 等）与属性注入风险；在危险协议与显式 scheme 校验后，允许 `blog/` 这类普通相对站内路径。
+- 主题设置 URL 输出加固：`base/nav.php`、`indexPage.php` 对头像/图标/跳转链接等配置项做 URL 规范化 + 属性转义，降低恶意协议（`javascript:` 等）与属性注入风险；URL 会先做一次 HTML entity 解码再校验和输出，避免已编码的安全 URL 在最终属性中被二次编码；在危险协议与显式 scheme 校验后，允许 `blog/` 这类普通相对站内路径。
 - 页面导言输出加固：各页面导言相关配置项仅按纯文本渲染（HTML 转义 + 换行转 `<br>`），避免通过导言字段注入脚本。
 - 标题文本输出加固：`base/head.php` 会捕获 Typecho 的归档/搜索标题片段，并与站点标题一起按 `<title>` 纯文本上下文转义输出；导航栏与页脚中的站点标题也使用主题本地转义，避免依赖不同 Typecho 版本的内部过滤行为。
 - 文章列表/详情标题输出加固：`index.php`、`post.php` 对文章标题按纯文本输出转义，列表页文章链接也经过安全 URL 规范化。
