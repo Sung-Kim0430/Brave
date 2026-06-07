@@ -257,6 +257,8 @@ class App
             if (strpos($url, './') === 0 || strpos($url, '../') === 0) {
                 return $url;
             }
+            // Allow ordinary relative URLs such as blog/ after scheme checks.
+            return $url;
         }
 
         return '';

@@ -184,6 +184,14 @@ test('shared helpers centralize option flags, site urls, intros, and safe card l
   assert.match(app, /public static function safeCardLink/);
 });
 
+test('URL normalizer allows ordinary relative paths after scheme validation', () => {
+  const app = read('core/App.php');
+
+  assert.match(app, /Block dangerous schemes even if obfuscated/);
+  assert.match(app, /Allow ordinary relative URLs such as blog\/ after scheme checks/);
+  assert.match(app, /if\s*\(\$allowRelative\)\s*{[\s\S]*return\s+\$url;[\s\S]*}\s*\n\s*return\s+'';/);
+});
+
 test('theme init uses shared option helpers for comment safety defaults', () => {
   const functions = read('functions.php');
 

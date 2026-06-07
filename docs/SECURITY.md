@@ -20,7 +20,7 @@
 - Love List 输出加固：`core/App.php` 对 `[item]` 的 `status/img/title` 做了 `isset` 检查与上下文转义，并提供 `loveListTitleAllowHtml` 兼容开关（仅允许少量标签）。
 - Love List 状态解析收紧：仅 `status="1"` 视为已完成，其余缺省或异常值都按未完成渲染，避免异常输入被误判为完成态。
 - Love List 图片 URL 统一使用 `buildBackgroundImageStyle()` 方法进行转义，确保 CSS 注入防护一致性。
-- 主题设置 URL 输出加固：`base/nav.php`、`indexPage.php` 对头像/图标/跳转链接等配置项做 URL 规范化 + 属性转义，降低恶意协议（`javascript:` 等）与属性注入风险。
+- 主题设置 URL 输出加固：`base/nav.php`、`indexPage.php` 对头像/图标/跳转链接等配置项做 URL 规范化 + 属性转义，降低恶意协议（`javascript:` 等）与属性注入风险；在危险协议与显式 scheme 校验后，允许 `blog/` 这类普通相对站内路径。
 - 页面导言输出加固：各页面导言相关配置项仅按纯文本渲染（HTML 转义 + 换行转 `<br>`），避免通过导言字段注入脚本。
 - 主题安全开关默认值处理：`core/App.php` 的配置开关 helper 仅接受明确的 `1/0`，异常值回退到调用处声明的默认值；评论嵌套层数使用统一范围 helper 限制在 1~10。
 - JS 字符串输出加固：`base/footer.php` 的 `lovetime` 使用安全的 JS 字符串编码输出，避免配置被注入导致脚本语法错误或意外执行。
