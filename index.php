@@ -7,7 +7,7 @@
  * @creator     Veen Zhao
  * @version     1.2
  * @link        https://blog.zwying.com
- * @update      2026/1/1 00:54
+ * @update      2026/6/7 23:05
  */
 if (!defined('__TYPECHO_ROOT_DIR__')) exit;
 $siteUrl = App::siteUrl(true);
@@ -30,7 +30,7 @@ $this->need('base/nav.php');
 	            "你要是愿意，我就永远爱你；你要是不愿意，我就永远相思。\n我活在世上，无非想要明白些道理，遇见些有趣的事。倘能如我所愿，我的一生就算成功。"
 	        );
 	        ?>
-	        <?php if ($introIndexEnabled && $introIndexHtml !== '') : ?>
+	        <?php if ($introIndexHtml !== '') : ?>
 	            <h5 class="list-text page-quote"><?php echo $introIndexHtml; ?></h5>
 	            <hr class="quote-divider">
 	        <?php endif; ?>

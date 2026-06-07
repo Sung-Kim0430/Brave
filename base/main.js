@@ -384,11 +384,25 @@ if (window.console && window.console.log) {
         var overlay = document.createElement('div');
         overlay.id = 'brave-lightbox';
         overlay.className = 'brave-lightbox';
-        overlay.innerHTML =
-            '<div class="brave-lightbox-inner" role="dialog" aria-modal="true">' +
-                '<button type="button" class="brave-lightbox-close" aria-label="关闭">×</button>' +
-                '<img class="brave-lightbox-img" alt="">' +
-            '</div>';
+
+        var inner = document.createElement('div');
+        inner.className = 'brave-lightbox-inner';
+        inner.setAttribute('role', 'dialog');
+        inner.setAttribute('aria-modal', 'true');
+
+        var closeBtn = document.createElement('button');
+        closeBtn.type = 'button';
+        closeBtn.className = 'brave-lightbox-close';
+        closeBtn.setAttribute('aria-label', '关闭');
+        closeBtn.textContent = '×';
+
+        var lightboxImg = document.createElement('img');
+        lightboxImg.className = 'brave-lightbox-img';
+        lightboxImg.alt = '';
+
+        inner.appendChild(closeBtn);
+        inner.appendChild(lightboxImg);
+        overlay.appendChild(inner);
         document.body.appendChild(overlay);
 
         var close = function() {
@@ -399,8 +413,7 @@ if (window.console && window.console.log) {
         overlay.addEventListener('click', function(e) {
             if (e.target === overlay) close();
         });
-        var closeBtn = overlay.querySelector('.brave-lightbox-close');
-        if (closeBtn) closeBtn.addEventListener('click', close);
+        closeBtn.addEventListener('click', close);
 
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') close();
@@ -435,7 +448,7 @@ if (window.console && window.console.log) {
             if (link) {
                 var href = (link.getAttribute('href') || '').trim();
                 // 避免干扰普通链接：仅对“图片链接”启用预览。
-                var isImageLink = /\\.(png|jpe?g|gif|webp|svg)(\\?.*)?$/i.test(href) || href.indexOf('data:image/') === 0;
+                var isImageLink = /\\.(png|jpe?g|gif|webp|svg)(\\?.*)?$/i.test(href);
                 if (!isImageLink) continue;
             }
 

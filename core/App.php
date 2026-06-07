@@ -4,7 +4,7 @@ if (!defined('__TYPECHO_ROOT_DIR__')) exit;
  * Editor: Sung Kim
  * Creator: Veen Zhao
  * CreateTime: 2020/9/5 18:26
- * UpdateTime: 2026/1/16 09:07
+ * UpdateTime: 2026/6/7 23:05
  */
 
 class App
@@ -145,11 +145,11 @@ class App
         $okIcon = self::escapeUrlAttribute($themeUrlRaw . '/svg/ok.svg', true, array('http', 'https'));
         $allowTitleHtml = self::optionFlag('loveListTitleAllowHtml', false);
 
-        $out = '<div class="accordion mx-auto mt-5" id="loveList' . $listIndex . '">';
+        $out = '<div class="accordion mx-auto mt-5 brave-love-list" id="loveList' . $listIndex . '">';
         foreach ($items as $key => $item) {
             $attrs = self::parseLoveListAttributes(isset($item[1]) ? $item[1] : '');
             $status = isset($attrs['status']) ? (string)$attrs['status'] : '0';
-            $isTodo = ($status === '0');
+            $isCompleted = ($status === '1');
 
             $rawTitle = isset($item[2]) ? (string)$item[2] : '';
             $safeTitle = self::sanitizeLoveListTitle($rawTitle, $allowTitleHtml);
@@ -160,7 +160,7 @@ class App
             $out .= '<div class="card">';
             $out .= '<div class="card-header p-1" id="heading'.$listIndex.'-'.$key.'"><h2 class="mb-0">';
             $out .= '<button class="btn collapsed ml-auto d-flex align-items-center" type="button" data-toggle="collapse" data-target="#collapse'.$listIndex.'-'.$key.'" aria-expanded="false" aria-controls="collapse'.$listIndex.'-'.$key.'">';
-            $statusIcon = $isTodo ? $todoIcon : $okIcon;
+            $statusIcon = $isCompleted ? $okIcon : $todoIcon;
             if ($statusIcon !== '') {
                 $out .= '<img class="statusIcon" src="' . $statusIcon . '" alt="">';
             }

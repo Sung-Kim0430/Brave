@@ -18,10 +18,14 @@
 - 评论作者输出净化（祝福板）：`commentPage.php` 对 `$comments->author()` 的输出做更严格的白名单净化（仅允许 `<a>`），降低作者名/作者链接在不同 Typecho 版本与配置下带来的 XSS/排版注入风险。
 - HTML 解析防护：`core/App.php` 的 DOM 解析（用于评论/少量 HTML 白名单净化）显式禁用外部实体/网络访问（`LIBXML_NONET`），作为防御性措施避免潜在 XXE/意外外联。
 - Love List 输出加固：`core/App.php` 对 `[item]` 的 `status/img/title` 做了 `isset` 检查与上下文转义，并提供 `loveListTitleAllowHtml` 兼容开关（仅允许少量标签）。
+- Love List 状态解析收紧：仅 `status="1"` 视为已完成，其余缺省或异常值都按未完成渲染，避免异常输入被误判为完成态。
 - Love List 图片 URL 统一使用 `buildBackgroundImageStyle()` 方法进行转义，确保 CSS 注入防护一致性。
 - 主题设置 URL 输出加固：`base/nav.php`、`indexPage.php` 对头像/图标/跳转链接等配置项做 URL 规范化 + 属性转义，降低恶意协议（`javascript:` 等）与属性注入风险。
 - 页面导言输出加固：各页面导言相关配置项仅按纯文本渲染（HTML 转义 + 换行转 `<br>`），避免通过导言字段注入脚本。
 - JS 字符串输出加固：`base/footer.php` 的 `lovetime` 使用安全的 JS 字符串编码输出，避免配置被注入导致脚本语法错误或意外执行。
+- 前端 DOM 输出加固：`base/main.js` 的图片预览层与 `base/footer.php` 的运行时计数组件均使用 `createElement` / `textContent` 构建，避免新增一方 `innerHTML` / jQuery `.html()` 注入面。
+- 图片预览链接收紧：文章图片预览只接管普通图片文件链接，不再把 `data:image` 链接提升为预览目标。
+- PJAX 失败回退加固：`base/footer.php` 在回退跳转前校验 URL 为同协议、同主机、同端口的 HTTP(S) 地址，避免异常 URL 被直接传给导航 API。
 - 日期解析边界检查：`base/footer.php` 的 `parseLoveTime()` 函数增加年月日时分秒的有效范围校验，避免极端值导致的异常。
 - CSP 输出优化：`base/head.php` 优先通过 HTTP header 发送 CSP，仅在 header 发送失败时回退到 meta 标签，避免重复输出。
 - Love List 短代码解析：`core/App.php` 使用主题专用解析器，仅处理 `[loveList]` 内的 `[item]`，避免引入通用短代码兼容层的额外复杂度与属性注入面。

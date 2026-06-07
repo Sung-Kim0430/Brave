@@ -200,11 +200,11 @@ body{
 	user-select: none;
 }
 
-#loveList,.list-content{
+.brave-love-list,.list-content{
 	max-width: 680px;
 	width: 100%;
 }
-#loveList section{
+.brave-love-list section{
 	display: block;
 	padding-top: 50%;
 	background-position: 50% 50%;
@@ -963,7 +963,7 @@ body.is-pjax-loading #pjax-container {
 }
 
 /* Love List */
-#loveList .card {
+.brave-love-list .card {
 	border: 1px solid var(--brave-card-border);
 	border-radius: var(--brave-radius-lg);
 	overflow: hidden;
@@ -971,24 +971,24 @@ body.is-pjax-loading #pjax-container {
 	box-shadow: var(--brave-shadow-sm);
 	margin-bottom: var(--brave-spacing-md);
 }
-#loveList .card-header {
+.brave-love-list .card-header {
 	border-bottom: 0;
 	background: transparent;
 }
-#loveList .btn {
+.brave-love-list .btn {
 	width: 100%;
 	padding: var(--brave-spacing-md) var(--brave-spacing-lg);
 	color: var(--brave-text);
 	font-weight: 600;
 	transition: all var(--brave-transition-fast);
 }
-#loveList .btn:hover{
+.brave-love-list .btn:hover{
 	background: var(--brave-bg-subtle);
 }
-#loveList section{
+.brave-love-list section{
 	position: relative;
 }
-#loveList section:after{
+.brave-love-list section:after{
 	content: "";
 	position: absolute;
 	left: 0;

@@ -77,18 +77,32 @@
 					var startStr = <?php echo App::escapeJsString(App::optionValue('lovetime', '')); ?>;
 					var start = window.parseLoveTime(startStr);
 
+					function clearRuntimeNode(node) {
+						while (node.firstChild) {
+							node.removeChild(node.firstChild);
+						}
+					}
+
+					function appendRuntimeSegment(node, value, label) {
+						var num = document.createElement('span');
+						num.className = 'bigfontNum';
+						num.textContent = String(value);
+						node.appendChild(num);
+						node.appendChild(document.createTextNode(label));
+					}
+
 					window.showSiteRuntime = function() {
-						var site_runtime = $("#site_runtime");
-						if (!site_runtime || !site_runtime.length) return false;
+						var siteRuntime = document.getElementById('site_runtime');
+						if (!siteRuntime) return false;
 						if (!start) {
-							site_runtime.text("未设置");
+							siteRuntime.textContent = "未设置";
 							return false;
 						}
 
 						var now = new Date();
 						var T = (now.getTime() - start.getTime());
 						if (T < 0) {
-							site_runtime.text("未开始");
+							siteRuntime.textContent = "未开始";
 							return true;
 						}
 
@@ -101,7 +115,11 @@
 						var M = Math.floor(m);
 						var s = (m - M) * 60;
 						var S = Math.floor(s);
-						site_runtime.html("<span class=\"bigfontNum\">" + D + "</span> 天 <span class=\"bigfontNum\">" + H + "</span> 小时 <span class=\"bigfontNum\">" + M + "</span> 分钟 <span class=\"bigfontNum\">" + S + "</span> 秒");
+						clearRuntimeNode(siteRuntime);
+						appendRuntimeSegment(siteRuntime, D, " 天 ");
+						appendRuntimeSegment(siteRuntime, H, " 小时 ");
+						appendRuntimeSegment(siteRuntime, M, " 分钟 ");
+						appendRuntimeSegment(siteRuntime, S, " 秒");
 						return true;
 					};
 
@@ -124,13 +142,24 @@
 					window.BraveTheme.ensureSiteRuntimeTicker();
 				})();
 
-		    if (window.NProgress) {
-		        NProgress.configure({ showSpinner: false, trickleSpeed: 120 });
-		    }
+			    if (window.NProgress) {
+			        NProgress.configure({ showSpinner: false, trickleSpeed: 120 });
+			    }
 
-		    var pjaxLinkSelector = 'a[href]' +
-		        ':not([target])' +
-		        ':not([download])' +
+			    function getSafeSameOriginUrl(url) {
+			        if (!url) return '';
+			        var parser = document.createElement('a');
+			        parser.href = String(url);
+			        if (parser.protocol !== window.location.protocol) return '';
+			        if (parser.hostname !== window.location.hostname) return '';
+			        if (parser.port !== window.location.port) return '';
+			        if (parser.protocol !== 'http:' && parser.protocol !== 'https:') return '';
+			        return parser.href;
+			    }
+
+			    var pjaxLinkSelector = 'a[href]' +
+			        ':not([target])' +
+			        ':not([download])' +
 		        ':not([data-pjax=\"false\"])' +
 		        ':not([href^=\"#\"])' +
 		        ':not([href^=\"mailto:\"])' +
@@ -161,13 +190,14 @@
 		            <?php endif; ?>
 		            if (window.NProgress) NProgress.done();
 		        });
-		        $(document).on('pjax:error', function(event, xhr, textStatus, error, options) {
-		            $('body').removeClass('is-pjax-loading');
-		            if (options && options.url) {
-		                window.location.href = options.url;
-		                return false;
-		            }
-		            return true;
+			        $(document).on('pjax:error', function(event, xhr, textStatus, error, options) {
+			            $('body').removeClass('is-pjax-loading');
+			            var fallbackUrl = getSafeSameOriginUrl(options && options.url);
+			            if (fallbackUrl) {
+			                window.location.assign(fallbackUrl);
+			                return false;
+			            }
+			            return true;
 		        });
 		    }
 </script>

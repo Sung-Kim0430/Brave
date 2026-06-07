@@ -108,3 +108,56 @@ test('comment nesting is capped to the documented safe maximum', () => {
   assert.doesNotMatch(functions, /\$commentMaxNestingLevels\s*>\s*50/);
   assert.match(functions, /已在代码中限制最大为 10/);
 });
+
+test('front-end lightbox avoids raw HTML injection surfaces and data URI link promotion', () => {
+  const main = read('base/main.js');
+
+  assert.doesNotMatch(main, /innerHTML/);
+  assert.doesNotMatch(main, /data:image/);
+  assert.match(main, /document\.createElement\('button'\)/);
+  assert.match(main, /document\.createElement\('img'\)/);
+});
+
+test('page intro display does not depend on undefined template variables', () => {
+  const index = read('index.php');
+  const loveListPage = read('loveListPage.php');
+
+  assert.doesNotMatch(index, /\$introIndexEnabled/);
+  assert.match(index, /if\s*\(\$introIndexHtml\s*!==\s*''\)/);
+  assert.doesNotMatch(loveListPage, /\$introLoveListEnabled/);
+  assert.match(loveListPage, /if\s*\(\$introLoveListHtml\s*!==\s*''\)/);
+});
+
+test('Love List unique DOM ids still receive the shared CSS styling', () => {
+  const app = read('core/App.php');
+  const style = read('base/style.css');
+
+  assert.match(app, /class="accordion mx-auto mt-5 brave-love-list"/);
+  assert.match(style, /\.brave-love-list/);
+  assert.doesNotMatch(style, /#loveList(?:\s|\.|,|:|$)/);
+});
+
+test('Love List status only treats explicit 1 as completed', () => {
+  const app = read('core/App.php');
+
+  assert.match(app, /\$isCompleted\s*=\s*\(\$status\s*===\s*'1'\)/);
+  assert.match(app, /\$statusIcon\s*=\s*\$isCompleted\s*\?\s*\$okIcon\s*:\s*\$todoIcon/);
+  assert.doesNotMatch(app, /\$isTodo\s*=\s*\(\$status\s*===\s*'0'\)/);
+});
+
+test('runtime counter builds styled text without jQuery HTML insertion', () => {
+  const footer = read('base/footer.php');
+
+  assert.doesNotMatch(footer, /\.html\(/);
+  assert.match(footer, /document\.createElement\('span'\)/);
+  assert.match(footer, /document\.createTextNode/);
+});
+
+test('PJAX error fallback only navigates to validated same-origin URLs', () => {
+  const footer = read('base/footer.php');
+
+  assert.match(footer, /function getSafeSameOriginUrl/);
+  assert.match(footer, /fallbackUrl\s*=\s*getSafeSameOriginUrl\(options\s*&&\s*options\.url\)/);
+  assert.match(footer, /window\.location\.assign\(fallbackUrl\)/);
+  assert.doesNotMatch(footer, /window\.location\.href\s*=\s*options\.url/);
+});
