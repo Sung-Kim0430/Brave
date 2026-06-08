@@ -206,7 +206,26 @@
 </script>
 <script src="<?php $this->options->themeUrl('/base/main.js'); ?>"></script>
 <?php $this->footer(); ?>
-<?php if ($enableCustomCode) : ?><?php $this->options->底部自定义(); ?><?php endif; ?>
+<?php if ($enableCustomCode) : ?>
+<?php
+// WARNING: Custom code is executed without sanitization
+// Only enable if you trust all admin users with full code execution rights
+ob_start();
+$this->options->底部自定义();
+$customFooter = ob_get_clean();
+
+// Basic security check: block external scripts from untrusted domains
+$siteHost = parse_url(App::optionValue('siteUrl', ''), PHP_URL_HOST);
+$trustedHosts = array('cdn.staticfile.org', $siteHost);
+$trustedPattern = implode('|', array_map('preg_quote', $trustedHosts));
+
+if (preg_match('/<script[^>]*src\s*=\s*["\']?(?!https?:\/\/(' . $trustedPattern . '))/i', $customFooter)) {
+    echo '<!-- Custom footer blocked: external script from untrusted domain detected -->';
+} else {
+    echo $customFooter;
+}
+?>
+<?php endif; ?>
 </body>
 
 </html>

@@ -143,8 +143,9 @@ class App
         }
 
         $listIndex = 0;
+        // Use possessive quantifiers and atomic groups to prevent catastrophic backtracking
         $parsed = preg_replace_callback(
-            '/\[loveList\b[^\]]*\]([\s\S]*?)\[\/loveList\]/i',
+            '/\[loveList\b[^\]]*\]((?:[^\[]|\[(?!\/loveList\]))*+)\[\/loveList\]/i',
             function ($matches) use (&$listIndex) {
                 return self::renderLoveListShortcode(isset($matches[1]) ? $matches[1] : '', $listIndex++);
             },
@@ -162,9 +163,19 @@ class App
             return $attrs;
         }
 
-        if (preg_match_all('/([A-Za-z0-9_-]+)\s*=\s*(?:"([^"]*)"|\'([^\']*)\'|([^\s"\']+))/u', $text, $matches, PREG_SET_ORDER)) {
+        // Add length limit for attribute parsing specifically to prevent ReDoS
+        if (strlen($text) > 1000) {
+            return $attrs;
+        }
+
+        // Use possessive quantifiers to prevent backtracking
+        if (preg_match_all('/([A-Za-z0-9_-]++)\s*=\s*(?:"([^"]*)"|\'([^\']*)\'|([^\s"\']+))/u', $text, $matches, PREG_SET_ORDER)) {
             foreach ($matches as $match) {
                 $name = strtolower($match[1]);
+                // Limit number of attributes to prevent DoS
+                if (count($attrs) >= 20) {
+                    break;
+                }
                 if (isset($match[2]) && $match[2] !== '') {
                     $attrs[$name] = $match[2];
                 } elseif (isset($match[3]) && $match[3] !== '') {
@@ -187,7 +198,8 @@ class App
             return '<div class="alert alert-warning">Love List 内容过长</div>';
         }
 
-        if (!preg_match_all('/\[item\b([^\]]*?)(?:\/\]|\]([\s\S]*?)\[\/item\])/i', $content, $items, PREG_SET_ORDER)) {
+        // Use possessive quantifiers and atomic groups to prevent backtracking
+        if (!preg_match_all('/\[item\b([^\]]++)(?:\/\]|\]((?:[^\[]|\[(?!\/item\]))*+)\[\/item\])/i', $content, $items, PREG_SET_ORDER)) {
             return $content;
         }
 
@@ -517,6 +529,18 @@ class App
             return htmlspecialchars(substr($html, 0, 1000) . '... (内容过长，已截断)', ENT_QUOTES, 'UTF-8');
         }
 
+        // Fast path: pure text (no HTML tags)
+        if (strpos($html, '<') === false) {
+            return htmlspecialchars($html, ENT_QUOTES, 'UTF-8');
+        }
+
+        // Fast path: simple safe tags that don't need full parsing
+        if (preg_match('/^<(p|br|strong|em|b|i)>.*<\/\1>$/s', $html) &&
+            !preg_match('/<script|<iframe|<object|javascript:/i', $html)) {
+            // Still escape for safety but skip DOMDocument overhead
+            return htmlspecialchars($html, ENT_QUOTES, 'UTF-8');
+        }
+
         // DOMDocument is available in all standard PHP installations since PHP 5.
         // This check is kept for extreme edge cases (custom minimal builds).
         if (!class_exists('DOMDocument')) {
@@ -528,6 +552,12 @@ class App
         $dom->resolveExternals = false;
         $dom->substituteEntities = false;
         $dom->validateOnParse = false;
+
+        // Additional XXE protection
+        if (function_exists('libxml_disable_entity_loader')) {
+            @libxml_disable_entity_loader(true);
+        }
+
         $prev = libxml_use_internal_errors(true);
 
         $wrapped = '<div>' . $html . '</div>';
