@@ -106,18 +106,46 @@ $commentFormAction = App::escapeUrlAttribute($this->commentUrl, true, array('htt
                     <?php else : ?>
                         <div class="form-row">
                             <div class="form-group col-md-4">
-                                <input type="text" name="author" id="author" class="form-control" placeholder="<?php _e('你的称呼*'); ?>" value="<?php $this->remember('author'); ?>" required />
+                                <label for="author" class="sr-only">称呼</label>
+                                <input type="text" name="author" id="author"
+                                       class="form-control"
+                                       placeholder="<?php _e('你的称呼*'); ?>"
+                                       value="<?php $this->remember('author'); ?>"
+                                       required
+                                       aria-required="true"
+                                       aria-describedby="author-hint" />
+                                <span id="author-hint" class="form-hint">必填</span>
                             </div>
                             <div class="form-group col-md-4">
-                                <input type="email" name="mail" id="mail" class="form-control" placeholder="<?php _e('邮箱*'); ?>" value="<?php $this->remember('mail'); ?>" <?php if ($this->options->commentsRequireMail) : ?> required<?php endif; ?> />
+                                <label for="mail" class="sr-only">邮箱</label>
+                                <input type="email" name="mail" id="mail"
+                                       class="form-control"
+                                       placeholder="<?php _e('邮箱*'); ?>"
+                                       value="<?php $this->remember('mail'); ?>"
+                                       <?php if ($this->options->commentsRequireMail) : ?>required aria-required="true"<?php endif; ?>
+                                       aria-describedby="mail-hint" />
+                                <span id="mail-hint" class="form-hint"><?php if ($this->options->commentsRequireMail) : ?>必填<?php else : ?>选填<?php endif; ?></span>
                             </div>
                             <div class="form-group col-md-4">
-                                <input type="url" name="url" id="url" class="form-control" placeholder="<?php _e('网站/博客（可选）'); ?>" value="<?php $this->remember('url'); ?>" />
+                                <label for="url" class="sr-only">网站</label>
+                                <input type="url" name="url" id="url"
+                                       class="form-control"
+                                       placeholder="<?php _e('网站/博客（可选）'); ?>"
+                                       value="<?php $this->remember('url'); ?>"
+                                       aria-describedby="url-hint" />
+                                <span id="url-hint" class="form-hint">选填</span>
                             </div>
                         </div>
                     <?php endif; ?>
                     <div class="form-group">
-                        <textarea rows="3" cols="50" name="text" id="textarea" class="form-control" placeholder="<?php _e('把祝愿写给我们'); ?>" required><?php $this->remember('text'); ?></textarea>
+                        <label for="textarea" class="sr-only">祝愿内容</label>
+                        <textarea rows="3" cols="50" name="text" id="textarea"
+                                  class="form-control"
+                                  placeholder="<?php _e('把祝愿写给我们'); ?>"
+                                  required
+                                  aria-required="true"
+                                  aria-describedby="textarea-hint"><?php $this->remember('text'); ?></textarea>
+                        <span id="textarea-hint" class="form-hint">必填</span>
                     </div>
                     <div class="form-group">
                         <button type="submit" class="float-right btn btn-outline-danger"><?php _e('送出祝愿'); ?></button>

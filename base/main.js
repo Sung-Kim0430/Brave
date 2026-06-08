@@ -60,7 +60,9 @@ if (window.console && window.console.log) {
         var btn = document.querySelector('[data-theme-toggle]');
         if (!btn) return;
 
-        btn.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
+        var isDark = (theme === 'dark');
+        btn.setAttribute('aria-checked', isDark ? 'true' : 'false');
+        btn.setAttribute('aria-label', isDark ? '暗色模式已开启' : '暗色模式已关闭');
         btn.title = '切换暗色模式（Shift+点击跟随系统）';
     }
 
@@ -404,11 +406,12 @@ if (window.console && window.console.log) {
         inner.className = 'brave-lightbox-inner';
         inner.setAttribute('role', 'dialog');
         inner.setAttribute('aria-modal', 'true');
+        inner.setAttribute('aria-label', '图片预览');
 
         var closeBtn = document.createElement('button');
         closeBtn.type = 'button';
         closeBtn.className = 'brave-lightbox-close';
-        closeBtn.setAttribute('aria-label', '关闭');
+        closeBtn.setAttribute('aria-label', '关闭图片预览');
         closeBtn.textContent = '×';
 
         var lightboxImg = document.createElement('img');
@@ -423,6 +426,12 @@ if (window.console && window.console.log) {
         var close = function() {
             overlay.classList.remove('is-open');
             document.body.classList.remove('brave-lightbox-open');
+
+            // 焦点恢复到触发元素
+            if (window.BraveTheme._lightboxTrigger && window.BraveTheme._lightboxTrigger.focus) {
+                window.BraveTheme._lightboxTrigger.focus();
+            }
+            window.BraveTheme._lightboxTrigger = null;
         };
 
         overlay.addEventListener('click', function(e) {
@@ -430,13 +439,29 @@ if (window.console && window.console.log) {
         });
         closeBtn.addEventListener('click', close);
 
-        // Only bind once: check if already bound
-        if (!window.BraveTheme._lightboxEscapeBound) {
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') close();
-            });
-            window.BraveTheme._lightboxEscapeBound = true;
-        }
+        // Tab 焦点陷阱
+        overlay.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                close();
+                return;
+            }
+
+            if (e.key === 'Tab') {
+                var focusableElements = overlay.querySelectorAll('button, [href], [tabindex]:not([tabindex="-1"])');
+                if (focusableElements.length === 0) return;
+
+                var firstFocusable = focusableElements[0];
+                var lastFocusable = focusableElements[focusableElements.length - 1];
+
+                if (e.shiftKey && document.activeElement === firstFocusable) {
+                    e.preventDefault();
+                    lastFocusable.focus();
+                } else if (!e.shiftKey && document.activeElement === lastFocusable) {
+                    e.preventDefault();
+                    firstFocusable.focus();
+                }
+            }
+        });
 
         return overlay;
     }
@@ -445,12 +470,23 @@ if (window.console && window.console.log) {
         if (!src) return;
         var overlay = ensureLightbox();
         var img = overlay.querySelector('.brave-lightbox-img');
+        var closeBtn = overlay.querySelector('.brave-lightbox-close');
         if (!img) return;
+
+        // 保存触发元素用于焦点恢复
+        window.BraveTheme._lightboxTrigger = document.activeElement;
 
         img.src = src;
         img.alt = alt || '';
         overlay.classList.add('is-open');
         document.body.classList.add('brave-lightbox-open');
+
+        // 聚焦到关闭按钮
+        if (closeBtn) {
+            setTimeout(function() {
+                closeBtn.focus();
+            }, 100);
+        }
     }
 
     function enhanceArticleImages() {

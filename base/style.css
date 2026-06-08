@@ -1073,6 +1073,34 @@ body.is-pjax-loading #pjax-container {
 	opacity: 0.5;
 }
 
+/* 无障碍访问辅助样式 */
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0,0,0,0);
+	white-space: nowrap;
+	border: 0;
+}
+
+.form-hint {
+	display: block;
+	font-size: var(--brave-font-xs);
+	color: var(--brave-muted);
+	margin-top: 0.25rem;
+}
+
+.form-control:invalid:not(:placeholder-shown) {
+	border-color: var(--brave-brand-1);
+}
+
+.form-control:valid:not(:placeholder-shown) {
+	border-color: #28a745;
+}
+
 @media (prefers-reduced-motion: reduce) {
 	*{
 		transition: none !important;
