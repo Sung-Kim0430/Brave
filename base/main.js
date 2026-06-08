@@ -447,8 +447,8 @@ if (window.console && window.console.log) {
             var link = (img.closest ? img.closest('a') : null);
             if (link) {
                 var href = (link.getAttribute('href') || '').trim();
-                // 避免干扰普通链接：仅对“图片链接”启用预览。
-                var isImageLink = /\\.(png|jpe?g|gif|webp|svg)(\\?.*)?$/i.test(href);
+                // 避免干扰普通链接：仅对”图片链接”启用预览。
+                var isImageLink = /\.(png|jpe?g|gif|webp|svg)(\?.*)?$/i.test(href);
                 if (!isImageLink) continue;
             }
 

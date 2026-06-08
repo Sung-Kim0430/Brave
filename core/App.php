@@ -156,11 +156,11 @@ class App
             foreach ($matches as $match) {
                 $name = strtolower($match[1]);
                 if (isset($match[2]) && $match[2] !== '') {
-                    $attrs[$name] = stripcslashes($match[2]);
+                    $attrs[$name] = $match[2];
                 } elseif (isset($match[3]) && $match[3] !== '') {
-                    $attrs[$name] = stripcslashes($match[3]);
+                    $attrs[$name] = $match[3];
                 } elseif (isset($match[4])) {
-                    $attrs[$name] = stripcslashes($match[4]);
+                    $attrs[$name] = $match[4];
                 }
             }
         }
@@ -216,11 +216,11 @@ class App
 
     public static function normalizeUrl($url, $allowRelative, $allowedSchemes)
     {
-        if (!is_string($url)) {
+        $url = trim((string)$url);
+        if ($url === '') {
             return '';
         }
 
-        $url = trim($url);
         // Remove ASCII control chars to avoid browser/parser discrepancies.
         $url = preg_replace('/[\\x00-\\x1F\\x7F]+/', '', $url);
         if ($url === '') {
@@ -293,10 +293,7 @@ class App
 
     public static function escapeJsString($value)
     {
-        if (!is_string($value)) {
-            $value = (string)$value;
-        }
-
+        $value = (string)$value;
         $json = json_encode($value, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
         return ($json !== false) ? $json : '""';
     }
@@ -489,8 +486,9 @@ class App
             return '';
         }
 
+        // DOMDocument is available in all standard PHP installations since PHP 5.
+        // This check is kept for extreme edge cases (custom minimal builds).
         if (!class_exists('DOMDocument')) {
-            // Safe fallback: render as plain text.
             return htmlspecialchars($html, ENT_QUOTES, 'UTF-8');
         }
 

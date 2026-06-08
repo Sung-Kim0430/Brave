@@ -10,6 +10,9 @@
  * @update      2026/6/7 23:05
  */
 if (!defined('__TYPECHO_ROOT_DIR__')) exit;
+if (!class_exists('App', false)) {
+    require_once __DIR__ . '/core/App.php';
+}
 $siteUrl = App::siteUrl(true);
 $this->need('base/head.php');
 $this->need('base/nav.php');
