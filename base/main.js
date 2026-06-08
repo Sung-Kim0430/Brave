@@ -130,7 +130,7 @@ if (window.console && window.console.log) {
             link.addEventListener('click', function(e) {
                 if (!e) return;
                 if (e.defaultPrevented) return;
-                if (e.button && e.button !== 0) return;
+                if (e.button != null && e.button !== 0) return;
                 if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
 
                 if (window.history && window.history.length > 1) {
@@ -152,11 +152,19 @@ if (window.console && window.console.log) {
 
     function slugify(text) {
         var t = String(text || '').trim().toLowerCase();
+        // Try to create ASCII-safe slug
         t = t.replace(/\s+/g, '-');
-        t = t.replace(/[^a-z0-9-]/g, '');
-        t = t.replace(/-+/g, '-');
-        t = t.replace(/^-+|-+$/g, '');
-        return t;
+        var ascii = t.replace(/[^a-z0-9-]/g, '');
+        ascii = ascii.replace(/-+/g, '-');
+        ascii = ascii.replace(/^-+|-+$/g, '');
+
+        // If we have a reasonable ASCII slug (3+ chars), use it
+        if (ascii.length >= 3) {
+            return ascii;
+        }
+
+        // For non-ASCII content (e.g., Chinese), return empty to trigger hash fallback
+        return '';
     }
 
     function ensureHeadingId(heading, used) {
@@ -186,8 +194,17 @@ if (window.console && window.console.log) {
 
     function removeExistingToc() {
         if (window.BraveTheme && window.BraveTheme._tocObserver) {
-            try { window.BraveTheme._tocObserver.disconnect(); } catch (e) {}
+            try {
+                // Properly unobserve all nodes before disconnect
+                if (window.BraveTheme._tocObservedNodes) {
+                    for (var i = 0; i < window.BraveTheme._tocObservedNodes.length; i++) {
+                        window.BraveTheme._tocObserver.unobserve(window.BraveTheme._tocObservedNodes[i]);
+                    }
+                }
+                window.BraveTheme._tocObserver.disconnect();
+            } catch (e) {}
             window.BraveTheme._tocObserver = null;
+            window.BraveTheme._tocObservedNodes = null;
         }
         var existing = document.getElementById('brave-article-toc');
         if (existing && existing.parentNode) {
@@ -303,11 +320,12 @@ if (window.console && window.console.log) {
 
             window.BraveTheme = window.BraveTheme || {};
             window.BraveTheme._tocObserver = observer;
+            window.BraveTheme._tocObservedNodes = items.map(function(item) { return item.node; });
         }
     }
 
     function copyTextToClipboard(text) {
-        if (!text && text !== '') return Promise.reject(new Error('empty'));
+        if (text == null || text === '') return Promise.reject(new Error('empty'));
 
         if (navigator.clipboard && window.isSecureContext) {
             return navigator.clipboard.writeText(text);
@@ -354,7 +372,7 @@ if (window.console && window.console.log) {
             (function(preEl, btnEl) {
                 btnEl.addEventListener('click', function() {
                     var codeEl = preEl.querySelector('code');
-                    var text = codeEl ? codeEl.innerText : preEl.innerText;
+                    var text = codeEl ? codeEl.textContent : preEl.textContent;
                     copyTextToClipboard(text).then(function() {
                         btnEl.textContent = '已复制';
                         btnEl.classList.add('is-ok');
@@ -415,9 +433,13 @@ if (window.console && window.console.log) {
         });
         closeBtn.addEventListener('click', close);
 
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') close();
-        });
+        // Only bind once: check if already bound
+        if (!window.BraveTheme._lightboxEscapeBound) {
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') close();
+            });
+            window.BraveTheme._lightboxEscapeBound = true;
+        }
 
         return overlay;
     }
@@ -478,6 +500,15 @@ if (window.console && window.console.log) {
         enhanceArticleImages();
     }
 
+    // Expose reinit function for pjax
+    window.BraveTheme = window.BraveTheme || {};
+    window.BraveTheme.reinitAfterPjax = function() {
+        bindBackLinks();
+        buildArticleToc();
+        enhanceCodeBlocks();
+        enhanceArticleImages();
+    };
+
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {
@@ -486,7 +517,9 @@ if (window.console && window.console.log) {
 
     if (window.jQuery) {
         window.jQuery(document).on('pjax:complete', function() {
-            init();
+            if (window.BraveTheme && window.BraveTheme.reinitAfterPjax) {
+                window.BraveTheme.reinitAfterPjax();
+            }
         });
     }
 })();

@@ -5,6 +5,9 @@ if (!defined('__TYPECHO_ROOT_DIR__')) exit;
  * Creator: Veen Zhao
  * CreateTime: 2020/9/5 18:26
  * UpdateTime: 2026/6/8
+ *
+ * Note: This class depends on Typecho's Helper class, which is autoloaded by the framework.
+ * All methods assume Typecho environment is properly initialized.
  */
 
 class App
@@ -52,6 +55,7 @@ class App
             return false;
         }
 
+        // For safety, only return true for explicit '1', otherwise return default
         return (bool)$default;
     }
 
@@ -132,6 +136,11 @@ class App
             return $content;
         }
 
+        // Protect against ReDoS: limit content length for shortcode parsing
+        if (strlen($content) > 100000) {
+            return $content;
+        }
+
         $listIndex = 0;
         $parsed = preg_replace_callback(
             '/\[loveList\b[^\]]*\]([\s\S]*?)\[\/loveList\]/i',
@@ -171,8 +180,19 @@ class App
     private static function renderLoveListShortcode($content, $listIndex)
     {
         $content = (string)$content;
+
+        // Protect against ReDoS: limit item count and content length
+        if (strlen($content) > 50000) {
+            return '<div class="alert alert-warning">Love List 内容过长</div>';
+        }
+
         if (!preg_match_all('/\[item\b([^\]]*?)(?:\/\]|\]([\s\S]*?)\[\/item\])/i', $content, $items, PREG_SET_ORDER)) {
             return $content;
+        }
+
+        // Limit number of items to prevent excessive rendering
+        if (count($items) > 200) {
+            return '<div class="alert alert-warning">Love List 项目过多（最多200项）</div>';
         }
 
         $themeUrlRaw = rtrim(self::optionValue('themeUrl', ''), '/');
@@ -240,8 +260,13 @@ class App
             return '';
         }
 
-        // Allow protocol-relative URLs (e.g. //example.com/a.png).
+        // Allow protocol-relative URLs (e.g. //example.com/a.png), but verify they don't contain dangerous schemes.
         if (strpos($schemeCheckUrl, '//') === 0) {
+            // Check that protocol-relative URL doesn't embed dangerous schemes after //
+            $afterSlashes = substr($schemeCheckUrl, 2);
+            if (preg_match('#^(?:javascript|data|vbscript):#i', $afterSlashes)) {
+                return '';
+            }
             return $decodedUrl;
         }
 
@@ -484,6 +509,11 @@ class App
         $html = (string)$html;
         if ($html === '') {
             return '';
+        }
+
+        // Protect against DoS: limit HTML length to prevent memory exhaustion
+        if (strlen($html) > 50000) {
+            return htmlspecialchars(substr($html, 0, 1000) . '... (内容过长，已截断)', ENT_QUOTES, 'UTF-8');
         }
 
         // DOMDocument is available in all standard PHP installations since PHP 5.

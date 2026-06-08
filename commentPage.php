@@ -96,8 +96,9 @@ $commentFormAction = App::escapeUrlAttribute($this->commentUrl, true, array('htt
                 <form method="post" action="<?php echo $commentFormAction; ?>" name="comment-form" id="comment-form" role="form" class="comment-form">
                     <?php if ($this->user->hasLogin()) : ?>
                         <?php
-                        $profileUrl = App::safeCardLink(App::optionValue('profileUrl', ''), '#');
-                        $logoutUrl = App::safeCardLink(App::optionValue('logoutUrl', ''), '#');
+                        // Use Typecho's built-in URLs instead of undefined options
+                        $profileUrl = $this->options->profileUrl ? App::escapeUrlAttribute($this->options->profileUrl, true, array('http', 'https')) : '#';
+                        $logoutUrl = $this->options->logoutUrl ? App::escapeUrlAttribute($this->options->logoutUrl, true, array('http', 'https')) : '#';
                         $screenName = App::escapeHtml($this->user->screenName);
                         ?>
                         <p><?php _e('当前身份: '); ?><a href="<?php echo $profileUrl; ?>"><?php echo $screenName; ?></a>.
