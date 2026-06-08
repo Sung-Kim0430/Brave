@@ -292,10 +292,13 @@ if (window.console && window.console.log) {
             var setActive = function(id) {
                 var links = tocWrap.querySelectorAll('.toc-item');
                 for (var k = 0; k < links.length; k++) {
+                    var link = links[k].querySelector('.toc-link');
                     if (links[k].getAttribute('data-target') === id) {
                         links[k].classList.add('is-active');
+                        if (link) link.setAttribute('aria-current', 'location');
                     } else {
                         links[k].classList.remove('is-active');
+                        if (link) link.removeAttribute('aria-current');
                     }
                 }
             };
