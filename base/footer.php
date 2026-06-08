@@ -176,10 +176,22 @@
 		        });
 		        $(document).on('pjax:send', function() {
 		            $('body').addClass('is-pjax-loading');
+		            // Announce loading state to screen readers
+		            var statusEl = document.getElementById('pjax-status');
+		            if (statusEl) statusEl.textContent = '正在加载页面...';
 		            if (window.NProgress) NProgress.start();
 		        });
 			        $(document).on('pjax:complete', function() {
 			            $('body').removeClass('is-pjax-loading');
+			            // Announce completion to screen readers
+			            var statusEl = document.getElementById('pjax-status');
+			            if (statusEl) {
+			                statusEl.textContent = '页面加载完成';
+			                // Clear after 3 seconds to avoid clutter
+			                setTimeout(function() {
+			                    statusEl.textContent = '';
+			                }, 3000);
+			            }
 			            if (window.BraveTheme && window.BraveTheme.ensureSiteRuntimeTicker) {
 			                window.BraveTheme.ensureSiteRuntimeTicker();
 			            }
@@ -195,6 +207,9 @@
 		        });
 			        $(document).on('pjax:error', function(event, xhr, textStatus, error, options) {
 			            $('body').removeClass('is-pjax-loading');
+			            // Announce error to screen readers
+			            var statusEl = document.getElementById('pjax-status');
+			            if (statusEl) statusEl.textContent = '页面加载失败，正在刷新...';
 			            var fallbackUrl = getSafeSameOriginUrl(options && options.url);
 			            if (fallbackUrl) {
 			                window.location.assign(fallbackUrl);

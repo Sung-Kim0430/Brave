@@ -496,11 +496,11 @@ if (window.console && window.console.log) {
         var root = getArticleRoot();
         if (!root) return;
 
+        // Mark images as zoomable without individual event listeners
         var imgs = root.querySelectorAll('img');
         for (var i = 0; i < imgs.length; i++) {
             var img = imgs[i];
             if (img.dataset.braveZoomBound === '1') continue;
-            img.dataset.braveZoomBound = '1';
 
             var link = (img.closest ? img.closest('a') : null);
             if (link) {
@@ -511,13 +511,20 @@ if (window.console && window.console.log) {
             }
 
             img.classList.add('brave-zoomable');
-            img.addEventListener('click', function(e) {
-                var target = e.currentTarget;
-                if (!target) return;
-                if (e && e.preventDefault) e.preventDefault();
-                if (e && e.stopPropagation) e.stopPropagation();
-                openLightbox(target.currentSrc || target.src, target.alt || '');
+            img.dataset.braveZoomBound = '1';
+        }
+
+        // Use event delegation on article root instead of individual listeners
+        if (!root.dataset.braveLightboxBound) {
+            root.addEventListener('click', function(e) {
+                var target = e.target;
+                if (target.tagName === 'IMG' && target.classList.contains('brave-zoomable')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openLightbox(target.currentSrc || target.src, target.alt || '');
+                }
             });
+            root.dataset.braveLightboxBound = '1';
         }
     }
 

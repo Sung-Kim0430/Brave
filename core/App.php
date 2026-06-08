@@ -269,7 +269,12 @@ class App
         $schemeCheckUrl = preg_replace('/[\\x00-\\x20]+/', '', $decodedUrl);
 
         // Block dangerous schemes even if obfuscated with entities/whitespace.
-        if (preg_match('#^(?:javascript|data|vbscript):#i', $schemeCheckUrl)) {
+        if (preg_match('#^(?:javascript|data|vbscript|file):#i', $schemeCheckUrl)) {
+            return '';
+        }
+
+        // Block URLs with user info (username:password@host) to prevent SSRF
+        if (preg_match('#^[a-z][a-z0-9+.-]*://[^/@]*@#i', $schemeCheckUrl)) {
             return '';
         }
 
@@ -277,7 +282,11 @@ class App
         if (strpos($schemeCheckUrl, '//') === 0) {
             // Check that protocol-relative URL doesn't embed dangerous schemes after //
             $afterSlashes = substr($schemeCheckUrl, 2);
-            if (preg_match('#^(?:javascript|data|vbscript):#i', $afterSlashes)) {
+            if (preg_match('#^(?:javascript|data|vbscript|file):#i', $afterSlashes)) {
+                return '';
+            }
+            // Block user info in protocol-relative URLs
+            if (preg_match('#^[^/@]*@#', $afterSlashes)) {
                 return '';
             }
             return $decodedUrl;
@@ -288,6 +297,30 @@ class App
             if (!in_array($scheme, $allowedSchemes, true)) {
                 return '';
             }
+
+            // Additional SSRF protection for http/https URLs
+            if (($scheme === 'http' || $scheme === 'https') && !$allowRelative) {
+                // Extract hostname for validation
+                if (preg_match('#^https?://([^/:?#\[\]@]+)#i', $schemeCheckUrl, $hostMatch)) {
+                    $host = strtolower($hostMatch[1]);
+
+                    // Block localhost variants
+                    if (in_array($host, array('localhost', '127.0.0.1', '0.0.0.0', '[::1]', '::1'), true)) {
+                        return '';
+                    }
+
+                    // Block private IP ranges
+                    if (preg_match('#^(10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.|169\.254\.)#', $host)) {
+                        return '';
+                    }
+
+                    // Block IPv6 localhost and private ranges
+                    if (preg_match('#^\[?(::1|fe80:|fc00:|fd00:)#i', $host)) {
+                        return '';
+                    }
+                }
+            }
+
             return $decodedUrl;
         }
 

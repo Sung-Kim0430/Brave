@@ -170,3 +170,5 @@ if ($enableCSP) {
 <?php endif; ?>
 	</head>
 <body>
+<!-- PJAX加载状态屏幕阅读器反馈 -->
+<div id="pjax-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
