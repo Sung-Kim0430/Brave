@@ -56,8 +56,17 @@ if (window.console && window.console.log) {
         updateThemeToggle(theme);
     }
 
+    // Cache theme toggle button to avoid repeated queries
+    var themeToggleBtn = null;
+    function getThemeToggleBtn() {
+        if (!themeToggleBtn) {
+            themeToggleBtn = document.querySelector('[data-theme-toggle]');
+        }
+        return themeToggleBtn;
+    }
+
     function updateThemeToggle(theme) {
-        var btn = document.querySelector('[data-theme-toggle]');
+        var btn = getThemeToggleBtn();
         if (!btn) return;
 
         var isDark = (theme === 'dark');
@@ -67,7 +76,7 @@ if (window.console && window.console.log) {
     }
 
     function bindThemeToggle() {
-        var btn = document.querySelector('[data-theme-toggle]');
+        var btn = getThemeToggleBtn();
         if (!btn) return;
         if (btn.dataset.braveThemeBound === '1') return;
         btn.dataset.braveThemeBound = '1';
@@ -327,7 +336,10 @@ if (window.console && window.console.log) {
     }
 
     function copyTextToClipboard(text) {
-        if (text == null || text === '') return Promise.reject(new Error('empty'));
+        // Stricter validation
+        if (text == null || text === '' || typeof text !== 'string') {
+            return Promise.reject(new Error('Invalid text'));
+        }
 
         if (navigator.clipboard && window.isSecureContext) {
             return navigator.clipboard.writeText(text);

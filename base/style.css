@@ -9,11 +9,11 @@ body{
     background: unset;
 }
 ::-webkit-scrollbar-thumb {
-    background: rgba(0,0,0,.2);
+    background: var(--brave-overlay-medium);
     border-radius: 6px;
 }
 ::-webkit-scrollbar-track {
-    background: rgba(0,0,0,.05);
+    background: var(--brave-overlay-light);
 }
 
 .avatar-img {
@@ -95,7 +95,7 @@ body{
 	left: 0;
 	width: 100%;
 	height: 100%;
-	background: linear-gradient(180deg, rgba(0,0,0,.35) 0%, rgba(0,0,0,.15) 100%);
+	background: linear-gradient(180deg, var(--brave-overlay-dark) 0%, rgba(0,0,0,.15) 100%);
 }
 
 .main-hero-header, .main-hero-waves-area {
@@ -342,6 +342,9 @@ body{
 
 	--brave-card-bg: #ffffff;
 	--brave-card-border: rgba(0,0,0,.06);
+	--brave-overlay-light: rgba(0,0,0,.05);
+	--brave-overlay-medium: rgba(0,0,0,.2);
+	--brave-overlay-dark: rgba(0,0,0,.35);
 	--brave-shadow-xs: 0 1px 2px rgba(0,0,0,.05);
 	--brave-shadow-sm: 0 2px 8px rgba(0,0,0,.08);
 	--brave-shadow-md: 0 4px 16px rgba(0,0,0,.10);
@@ -1015,7 +1018,7 @@ body.is-pjax-loading #pjax-container {
 	top: 0;
 	right: 0;
 	bottom: 0;
-	background: linear-gradient(180deg, rgba(0,0,0,.05), rgba(0,0,0,.15));
+	background: linear-gradient(180deg, var(--brave-overlay-light), rgba(0,0,0,.15));
 	pointer-events: none;
 }
 
