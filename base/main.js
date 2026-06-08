@@ -284,10 +284,7 @@ if (window.console && window.console.log) {
         }
 
         // 高亮当前章节（IntersectionObserver 优先；不支持则跳过）。
-        if (window.BraveTheme && window.BraveTheme._tocObserver) {
-            try { window.BraveTheme._tocObserver.disconnect(); } catch (e) {}
-            window.BraveTheme._tocObserver = null;
-        }
+        // Note: Observer cleanup is handled by removeExistingToc() before this point
 
         if ('IntersectionObserver' in window) {
             var setActive = function(id) {

@@ -137,7 +137,8 @@ class App
         }
 
         // Protect against ReDoS: limit content length for shortcode parsing
-        if (strlen($content) > 100000) {
+        // Use same limit as HTML sanitization for consistency
+        if (strlen($content) > 50000) {
             return $content;
         }
 
