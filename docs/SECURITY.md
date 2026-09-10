@@ -36,6 +36,42 @@
 - Love List 短代码解析：`core/App.php` 使用主题专用解析器，仅处理 `[loveList]` 内的 `[item]`，避免引入通用短代码兼容层的额外复杂度与属性注入面。
 - SVG 外链 DTD 清理：`svg/*.svg` 移除 `<!DOCTYPE ...>` 外链声明，减少浏览器/解析器尝试加载外部 DTD 的风险与额外请求。
 
+## 2026-09-11 修复（独立审计 P0/P1/P2）
+
+详见 `docs/BUG_AUDIT_2026-09-11.md`。以下为触及安全边界的改动。
+
+### 评论净化：移除「整体转义」fast path
+
+- **原缺陷**：`core/App.php` 的 `sanitizeHtmlFragment()` 中存在一条 fast path，匹配 `^<(p|br|strong|em|b|i)>.*</\1>$`（`/s`）后直接 `htmlspecialchars()` 整段返回。HyperDown 渲染的单段/多段评论正好命中该形状，导致**祝福板所有评论显示成 `<p>祝你们幸福</p>` 原始标签文本**。
+- **方向**：过度转义，不构成 XSS，但属防御性代码反向破坏功能。
+- **现行为**：删除该 fast path，所有含标签的片段统一走 DOMDocument 白名单分支；仅保留 `strpos($html, '<') === false` 的纯文本 fast path（该分支行为正确）。
+- **连带修复**：`loveListTitleAllowHtml=1` 时 `<strong>/<em>/<br>` 此前同样被转义，现已按开关文档生效。
+
+### 超长输入：截断后继续净化
+
+- 原实现在超过 50000 字符时直接返回转义后的纯文本（长文破版）。现改为**截断后继续走白名单净化**，并在末尾追加「（内容过长，已截断）」提示。
+- 新增常量：`MAX_HTML_LENGTH` / `MAX_SHORTCODE_LENGTH` / `MAX_SHORTCODE_ATTR_LENGTH`。阈值目前不可配置。
+
+### 自定义代码脚本白名单：修正判定口径
+
+- **原缺陷**：`base/head.php`、`base/footer.php` 用 `src\s*=\s*["\']?(?!https?://(host))` 做域名校验，引号可选使负向先行可在**未消费引号**的位置求值 → 任何带引号的合规脚本（含白名单域名与本站）都被判为不可信并静默替换成一行注释；同时 `preg_quote(null)` 在 PHP 8.1+ 触发弃用告警。
+- **现行为**：抽出 `App::findUntrustedScriptHosts($html, $trustedHosts)` —— 提取 `src`（引号/非引号三种写法）→ `parse_url` 取 host → 白名单比对，head/footer 共用同一实现。
+- **重要**：该守卫**只是防误配的软约束，不是安全边界**。内联 `<script>` 仍会放行，而 `enableCustomCode` 本身就是「在前台执行任意脚本」的开关。不要用「外链域名白名单」当作限制不可信管理员的措施。
+
+### CSP：校验放宽、降级可见、与样式加载解耦
+
+- **校验**：原合法字符集 `[a-z0-9\s'\-:\/\.\*;_]` 缺少 `+ = , " @ % [ ]`，含 hash/nonce 的策略（如 `script-src 'sha256-abc+/='`）会被判非法并**静默降级为 meta**。现仅拒绝 `<>` 与 CR/LF，长度上限 2000 → 4000。
+- **降级可见性**：一旦回退到 `<meta http-equiv="Content-Security-Policy">`，输出 HTML 注释说明原因，并提示 meta 形式**不支持** `frame-ancestors` / `report-uri` / `sandbox`。
+- **样式加载解耦**：`style.css` 原先依赖 `<link rel="preload" onload="this.rel='stylesheet'">` 的内联事件处理器，需 `script-src 'unsafe-inline'`。自定义 CSP 一旦收紧，该处理器被拦 → **全站只剩内联关键 CSS**。现检测到策略中无 `'unsafe-inline'` 时改为同步加载 `style.css`。
+
+### `normalizeUrl()`：删除永不生效的私网拦截
+
+- 私网/回环地址拦截位于 `!$allowRelative` 分支，而所有调用点都传 `true` → 该分支不可达，属死代码。`PROJECT_STATUS.md` 曾把「SSRF 防护增强」列为已修复，与实现不符。
+- 明确：本主题的 `normalizeUrl()` 只做**输出上下文转义与协议白名单**，PHP 侧不会发起请求，本就不存在 SSRF 面。已删除误导性分支并在注释中记录原因。
+- **仍然有效且被行为测试覆盖**：危险协议拦截（`javascript:` / `data:` / `vbscript:` / `file:`，含实体与空白混淆绕过）、`user:pass@host` 凭据过滤、控制字符剥离。
+
+---
+
 ## 高权限配置项的风险提示
 
 主题设置中包含可直接输出 HTML/CSS/JS 的字段（见 `functions.php` 的 `themeConfig($form)`）：
@@ -59,10 +95,12 @@
 主题支持两种静态资源加载方式（见 `functions.php` 的 `assetsSource` 选项）：
 
 - 本地（默认）：从主题目录 `base/vendor/` 加载 jQuery / Bootstrap / pjax / nprogress，降低供应链风险。
+  - 2026-09-11 变更：`bootstrap-4.6.2.min.js` 实测**不含 Popper**（`createPopper` 缺失），已替换为 `bootstrap-4.6.2.bundle.min.js`（含 Popper）。该文件下载自 CDN 并通过 SRI 逐字节校验，与 `base/head.php` 中 CDN 模式引用的哈希一致。
 - CDN（兼容）：继续从第三方 CDN 加载资源（见 `base/head.php`、`base/footer.php`）。
   - 默认启用 `cdnEnableSRI`：为外链脚本/样式添加 `integrity`（SRI）校验与 `crossorigin="anonymous"`。
-  - 默认启用 `enableCSP`：启用 CSP（Content-Security-Policy）；本地/CDN 资源模式均生效，主题会尽量通过响应头发送 CSP，并在无法设置响应头时回退为 `<meta http-equiv>`。
-  - 可选配置 `cspPolicy`：自定义 CSP 策略（留空使用主题内置默认策略）。
+  - Bootstrap 同样改用 `bootstrap.bundle.min.js`，SRI 为 `sha384-Fy6S3B9q64WdZWQUiU+q4/2Lc9npb8tCaSX9FK7E8HnRr0Jz8D6OP9dO5Vg3Q9ct`。
+  - 默认启用 `enableCSP`：启用 CSP（Content-Security-Policy）；本地/CDN 资源模式均生效，主题会尽量通过响应头发送 CSP，并在无法设置响应头时回退为 `<meta http-equiv>`（降级会输出注释说明，且 meta 不支持 `frame-ancestors` / `report-uri` / `sandbox`）。
+  - 可选配置 `cspPolicy`：自定义 CSP 策略（留空使用主题内置默认策略）。**注意**：若策略中不含 `script-src 'unsafe-inline'`，主题会自动把 `style.css` 改为同步加载（见上文），无需站长手动处理。
 
 字体与外链：
 
