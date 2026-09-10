@@ -12,6 +12,15 @@ if (!defined('__TYPECHO_ROOT_DIR__')) exit;
 
 class App
 {
+    /** 净化 HTML 片段时的硬上限（超过则截断后继续净化，避免 DOM 解析开销失控） */
+    const MAX_HTML_LENGTH = 50000;
+
+    /** 短代码解析的硬上限（超过则不解析，避免正则与渲染开销） */
+    const MAX_SHORTCODE_LENGTH = 50000;
+
+    /** 单个短代码属性串的硬上限 */
+    const MAX_SHORTCODE_ATTR_LENGTH = 1000;
+
     public static function escapeHtml($value)
     {
         return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
@@ -138,7 +147,7 @@ class App
 
         // Protect against ReDoS: limit content length for shortcode parsing
         // Use same limit as HTML sanitization for consistency
-        if (strlen($content) > 50000) {
+        if (strlen($content) > self::MAX_SHORTCODE_LENGTH) {
             return $content;
         }
 
@@ -164,7 +173,7 @@ class App
         }
 
         // Add length limit for attribute parsing specifically to prevent ReDoS
-        if (strlen($text) > 1000) {
+        if (strlen($text) > self::MAX_SHORTCODE_ATTR_LENGTH) {
             return $attrs;
         }
 
@@ -194,13 +203,23 @@ class App
         $content = (string)$content;
 
         // Protect against ReDoS: limit item count and content length
-        if (strlen($content) > 50000) {
+        if (strlen($content) > self::MAX_SHORTCODE_LENGTH) {
             return '<div class="alert alert-warning">Love List 内容过长</div>';
         }
 
-        // Use possessive quantifiers and atomic groups to prevent backtracking
-        if (!preg_match_all('/\[item\b([^\]]++)(?:\/\]|\]((?:[^\[]|\[(?!\/item\]))*+)\[\/item\])/i', $content, $items, PREG_SET_ORDER)) {
-            return $content;
+        // Use possessive quantifiers and atomic groups to prevent backtracking.
+        // 属性区必须是「引号感知」的：否则简单排除 `/` 会破坏 `img="https://…"`、`img="/img/a.png"`；
+        // 而原来的 `[^\]]++` 会把自闭合写法 `[item …/]` 末尾的 `/` 一并吃掉，
+        // 使 `(?:\/\]|…)` 分支永不匹配（历史遗留死分支）。
+        // 各分支首字符互斥（非引号非斜杠 / 斜杠 / 双引号 / 单引号），因此不存在灾难性回溯。
+        if (!preg_match_all(
+            '/\[item\b((?:[^\]"\'\/]|\/[^\]"\'\/]|"[^"]*"|\'[^\']*\')*)\s*\/?\s*(?:\]((?:[^\[]|\[(?!\/item\]))*+)\[\/item\]|\])/i',
+            $content,
+            $items,
+            PREG_SET_ORDER
+        )) {
+            // 无法解析时按纯文本输出（不把 `[item …]` 原样当标记放行）。
+            return self::escapeHtml($content);
         }
 
         // Limit number of items to prevent excessive rendering
@@ -273,7 +292,7 @@ class App
             return '';
         }
 
-        // Block URLs with user info (username:password@host) to prevent SSRF
+        // 拦截带用户信息的 URL（user:pass@host），避免凭据被写进可见属性。
         if (preg_match('#^[a-z][a-z0-9+.-]*://[^/@]*@#i', $schemeCheckUrl)) {
             return '';
         }
@@ -298,29 +317,11 @@ class App
                 return '';
             }
 
-            // Additional SSRF protection for http/https URLs
-            if (($scheme === 'http' || $scheme === 'https') && !$allowRelative) {
-                // Extract hostname for validation
-                if (preg_match('#^https?://([^/:?#\[\]@]+)#i', $schemeCheckUrl, $hostMatch)) {
-                    $host = strtolower($hostMatch[1]);
-
-                    // Block localhost variants
-                    if (in_array($host, array('localhost', '127.0.0.1', '0.0.0.0', '[::1]', '::1'), true)) {
-                        return '';
-                    }
-
-                    // Block private IP ranges
-                    if (preg_match('#^(10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.|169\.254\.)#', $host)) {
-                        return '';
-                    }
-
-                    // Block IPv6 localhost and private ranges
-                    if (preg_match('#^\[?(::1|fe80:|fc00:|fd00:)#i', $host)) {
-                        return '';
-                    }
-                }
-            }
-
+            // 这里不做「禁止 localhost / 私有 IP」的 SSRF 黑名单：
+            // 1) 该方法只用于生成 HTML 属性，PHP 端不会发起任何请求，黑名单不构成实际防护；
+            // 2) 该分支原本被 `!$allowRelative` 保护，而所有调用点都传 true，属于永不生效的死代码；
+            // 3) 真要做内网图片/内网地址拦截，应交由站点层（反向代理 / 出网策略）处理，
+            //    否则会误伤内网部署时配置的内网图片地址。
             return $decodedUrl;
         }
 
@@ -550,6 +551,17 @@ class App
         return true;
     }
 
+    private static function truncationNoticeText()
+    {
+        // 与 App 内其他提示文案保持一致：不依赖 Typecho 的 _t()，保证该类可独立单测。
+        return '（内容过长，已截断）';
+    }
+
+    private static function truncationNoticeHtml()
+    {
+        return '<p class="brave-truncated-notice">' . self::truncationNoticeText() . '</p>';
+    }
+
     private static function sanitizeHtmlFragment($html, $allowedTags, $allowedAttrsByTag)
     {
         $html = (string)$html;
@@ -557,27 +569,30 @@ class App
             return '';
         }
 
-        // Protect against DoS: limit HTML length to prevent memory exhaustion
-        if (strlen($html) > 50000) {
-            return htmlspecialchars(substr($html, 0, 1000) . '... (内容过长，已截断)', ENT_QUOTES, 'UTF-8');
+        // Protect against DoS: limit HTML length to prevent memory exhaustion.
+        // 超长内容改为「截断后继续净化」，而不是整体转义（后者会让长评论/长列表破版）。
+        $truncated = false;
+        if (strlen($html) > self::MAX_HTML_LENGTH) {
+            $html = substr($html, 0, self::MAX_HTML_LENGTH);
+            $truncated = true;
         }
 
         // Fast path: pure text (no HTML tags)
         if (strpos($html, '<') === false) {
-            return htmlspecialchars($html, ENT_QUOTES, 'UTF-8');
+            $escaped = htmlspecialchars($html, ENT_QUOTES, 'UTF-8');
+            return $truncated ? $escaped . self::truncationNoticeText() : $escaped;
         }
 
-        // Fast path: simple safe tags that don't need full parsing
-        if (preg_match('/^<(p|br|strong|em|b|i)>.*<\/\1>$/s', $html) &&
-            !preg_match('/<script|<iframe|<object|javascript:/i', $html)) {
-            // Still escape for safety but skip DOMDocument overhead
-            return htmlspecialchars($html, ENT_QUOTES, 'UTF-8');
-        }
+        // 注意：这里不要加"整体包裹在单个白名单标签内就直接 htmlspecialchars"的快速路径。
+        // Typecho 的评论经 Markdown（HyperDown）渲染后必定是 `<p>…</p>` / `<p>…</p><p>…</p>`，
+        // 那种快速路径会把合法标签一起转义，导致祝福板显示成原始标签文本。
+        // 标签白名单判定统一交给下面的 DOM 分支。
 
         // DOMDocument is available in all standard PHP installations since PHP 5.
         // This check is kept for extreme edge cases (custom minimal builds).
         if (!class_exists('DOMDocument')) {
-            return htmlspecialchars($html, ENT_QUOTES, 'UTF-8');
+            $escaped = htmlspecialchars($html, ENT_QUOTES, 'UTF-8');
+            return $truncated ? $escaped . self::truncationNoticeText() : $escaped;
         }
 
         $dom = new DOMDocument('1.0', 'UTF-8');
@@ -613,7 +628,8 @@ class App
 
         $root = $dom->getElementsByTagName('div')->item(0);
         if (!$root) {
-            return htmlspecialchars($html, ENT_QUOTES, 'UTF-8');
+            $escaped = htmlspecialchars($html, ENT_QUOTES, 'UTF-8');
+            return $truncated ? $escaped . self::truncationNoticeText() : $escaped;
         }
 
         $allowedTagMap = array();
@@ -673,6 +689,10 @@ class App
         $out = '';
         foreach ($root->childNodes as $child) {
             $out .= $dom->saveHTML($child);
+        }
+
+        if ($truncated) {
+            $out .= self::truncationNoticeHtml();
         }
 
         return $out;
