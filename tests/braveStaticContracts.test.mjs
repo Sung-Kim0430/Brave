@@ -399,3 +399,90 @@ test('PJAX error fallback only navigates to validated same-origin URLs', () => {
   assert.match(footer, /window\.location\.assign\(fallbackUrl\)/);
   assert.doesNotMatch(footer, /window\.location\.href\s*=\s*options\.url/);
 });
+
+test('comment sanitizer keeps markdown-generated markup', () => {
+  const app = read('core/App.php');
+
+  // 历史上这里有一条「整体包裹在单个白名单标签内就直接 htmlspecialchars」的快速路径，
+  // Typecho 评论经 Markdown 渲染后必然是 <p>…</p>，会因此被整体转义。
+  assert.ok(!app.includes("simple safe tags that don't need full parsing"), 'fast path comment should be gone');
+  assert.ok(!app.includes('(p|br|strong|em|b|i)'), 'whole-fragment escaping whitelist should be gone');
+  assert.match(app, /private static function truncationNoticeHtml/);
+});
+
+test('comment sanitizer truncates long content instead of escaping it wholesale', () => {
+  const app = read('core/App.php');
+
+  assert.match(app, /const MAX_HTML_LENGTH = 50000;/);
+  assert.match(app, /\$truncated = true;/);
+  assert.doesNotMatch(app, /内容过长，已截断\)', ENT_QUOTES, 'UTF-8'\);/);
+});
+
+test('every page template renders an h1 heading', () => {
+  for (const file of ['index.php', 'post.php', 'indexPage.php', 'commentPage.php', 'loveListPage.php']) {
+    const template = read(file);
+    assert.match(template, /<h1\b/, `${file} should contain an h1`);
+    assert.doesNotMatch(template, /<h1[^>]*>\s*<\/h1>/, `${file} should not ship an empty h1`);
+  }
+});
+
+test('custom code guard extracts hosts instead of using a bypassable lookahead', () => {
+  const head = read('base/head.php');
+  const footer = read('base/footer.php');
+  const app = read('core/App.php');
+
+  for (const source of [head, footer]) {
+    assert.match(source, /App::findUntrustedScriptHosts\(/);
+    assert.ok(!source.includes('(?!https?:'), 'negative-lookahead domain check should be gone');
+    assert.ok(!source.includes('preg_quote'), 'preg_quote(null) deprecation source should be gone');
+  }
+
+  assert.match(app, /public static function findUntrustedScriptHosts/);
+  assert.match(app, /public static function describeUntrustedHosts/);
+});
+
+test('CSP header validation accepts hashes and nonces and keeps a meta fallback notice', () => {
+  const head = read('base/head.php');
+
+  assert.ok(!head.includes('a-z0-9\\s'), 'whitelist charset validation should be gone');
+  assert.match(head, /strpbrk\(\$cspHeader, '<>'\) === false/);
+  assert.match(head, /\$cspHeaderRejected = true;/);
+  assert.match(head, /unsupported|不支持/);
+});
+
+test('stylesheet loading degrades to blocking when CSP forbids inline scripts', () => {
+  const head = read('base/head.php');
+
+  assert.match(head, /\$cspBlocksInlineScript = true;/);
+  assert.match(head, /if\s*\(\$cspBlocksInlineScript\)\s*:/);
+  assert.match(head, /stripos\(\$cspPolicy, "'unsafe-inline'"\) === false/);
+});
+
+test('bootstrap bundle (with Popper) replaces the plain bootstrap build', () => {
+  const head = read('base/head.php');
+
+  assert.match(head, /bootstrap-4\.6\.2\.bundle\.min\.js/);
+  assert.match(head, /sha384-Fy6S3B9q64WdZWQUiU\+q4\/2Lc9npb8tCaSX9FK7E8HnRr0Jz8D6OP9dO5Vg3Q9ct/);
+  assert.equal(existsSync(path.join(root, 'base/vendor/bootstrap-4.6.2.bundle.min.js')), true);
+  assert.equal(existsSync(path.join(root, 'base/vendor/bootstrap-4.6.2.min.js')), false);
+});
+
+test('dead hooks and unreachable URL blacklist stay removed', () => {
+  const main = read('base/main.js');
+  const app = read('core/App.php');
+  const index = read('index.php');
+
+  assert.ok(!main.includes('is-page-ready'), 'is-page-ready hook has no CSS and should stay removed');
+  assert.ok(!index.includes('list-wbc'), 'list-wbc has no CSS and should stay removed');
+  assert.ok(!app.includes('Block private IP ranges'), 'unreachable SSRF blacklist should stay removed');
+});
+
+test('App behavior suite is wired into the repository', () => {
+  const testFile = path.join(root, 'tests/php/behavior.test.php');
+  assert.equal(existsSync(testFile), true, 'tests/php/behavior.test.php should exist');
+
+  const suite = readFileSync(testFile, 'utf8');
+  assert.match(suite, /sanitizeCommentHtml/);
+  assert.match(suite, /parseShortCode/);
+  assert.match(suite, /findUntrustedScriptHosts/);
+});
