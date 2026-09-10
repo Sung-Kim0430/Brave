@@ -13,6 +13,8 @@ $enableDarkMode = App::optionFlag('enableDarkMode', false);
 
 $cspPolicy = '';
 $cspHeaderSent = false;
+$cspHeaderRejected = false;
+$cspBlocksInlineScript = false;
 if ($enableCSP) {
     $customCsp = App::optionValue('cspPolicy', '');
     $customCsp = trim($customCsp);
@@ -46,21 +48,30 @@ if ($enableCSP) {
             "connect-src 'self';";
     }
 
+    // 自定义策略若禁用了内联脚本，页面里的内联 onload 处理器会被拦，
+    // 因此需要把 style.css 从「preload + onload 切换」改为同步加载（见下方样式加载分支）。
+    if (stripos($cspPolicy, "'unsafe-inline'") === false) {
+        $cspBlocksInlineScript = true;
+    }
+
     // Prefer response headers over meta tags when possible.
     if ($cspPolicy !== '' && !headers_sent()) {
         // Remove control chars AND newlines to prevent header injection
         $cspHeader = preg_replace('/[\x00-\x1F\x7F\r\n]+/', ' ', $cspPolicy);
         $cspHeader = trim($cspHeader);
 
-        // Validate CSP syntax (basic check to prevent injection)
-        // Allow alphanumeric, spaces, quotes, hyphens, colons, slashes, dots, asterisks, semicolons, underscores
-        if (preg_match('/^[a-z0-9\s\'\-:\/\.\*;_]+$/i', $cspHeader) && strlen($cspHeader) < 2000) {
+        // Header 注入防护：换行已被清除，这里只需再排除能提前结束 meta/script 上下文的 < >。
+        // 注意不要用「白名单字符集」校验：CSP 允许 hash/nonce（如 'sha256-xxx+/='）、
+        // report-uri、逗号、@ 等字符，过严会把合法策略判为非法并静默降级。
+        if (strpbrk($cspHeader, '<>') === false && strlen($cspHeader) < 4000) {
             header('Content-Security-Policy: ' . $cspHeader);
             // Add additional security headers
             header('X-Content-Type-Options: nosniff');
             header('X-Frame-Options: SAMEORIGIN');
             header('Referrer-Policy: strict-origin-when-cross-origin');
             $cspHeaderSent = true;
+        } else {
+            $cspHeaderRejected = true;
         }
     }
 }
@@ -109,9 +120,14 @@ if ($enableCSP) {
         .card{background:var(--brave-card-bg);border:1px solid var(--brave-card-border);border-radius:var(--brave-radius-md);margin-bottom:var(--brave-spacing-lg);}
     </style>
 
-    <!-- Preload and async load full CSS -->
-    <link rel="preload" href="<?php $this->options->themeUrl('/base/style.css'); ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="<?php $this->options->themeUrl('/base/style.css'); ?>"></noscript>
+    <?php if ($cspBlocksInlineScript) : ?>
+        <?php /* 自定义 CSP 未包含 'unsafe-inline'，内联 onload 会被拦截导致样式永不加载，故同步加载完整样式表 */ ?>
+        <link rel="stylesheet" href="<?php $this->options->themeUrl('/base/style.css'); ?>">
+    <?php else : ?>
+        <!-- Preload and async load full CSS -->
+        <link rel="preload" href="<?php $this->options->themeUrl('/base/style.css'); ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="<?php $this->options->themeUrl('/base/style.css'); ?>"></noscript>
+    <?php endif; ?>
 
     <?php if ($enableRemoteFont) : ?>
         <link href="https://gfonts.ctfile.com/css2?family=Inter:wght@400;700&display=swap"
@@ -119,6 +135,7 @@ if ($enableCSP) {
     <?php endif; ?>
 
     <?php if ($enableCSP && !$cspHeaderSent) : ?>
+        <!-- CSP 未通过响应头发送，已回退为 http-equiv；该形式不支持 frame-ancestors / report-uri / sandbox。<?php echo $cspHeaderRejected ? '（原因：自定义策略含非法字符，尖括号不合法）' : ''; ?> -->
         <meta http-equiv="Content-Security-Policy" content="<?php echo htmlspecialchars($cspPolicy, ENT_QUOTES, 'UTF-8'); ?>">
     <?php endif; ?>
 

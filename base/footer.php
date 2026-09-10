@@ -205,11 +205,13 @@
 		            <?php endif; ?>
 		            if (window.NProgress) NProgress.done();
 		        });
-			        $(document).on('pjax:error', function(event, xhr, textStatus, error, options) {
-			            $('body').removeClass('is-pjax-loading');
-			            // Announce error to screen readers
-			            var statusEl = document.getElementById('pjax-status');
-			            if (statusEl) statusEl.textContent = '页面加载失败，正在刷新...';
+		        $(document).on('pjax:error', function(event, xhr, textStatus, error, options) {
+		            $('body').removeClass('is-pjax-loading');
+		            // 异常路径也要收掉进度条，避免停在半截
+		            if (window.NProgress) NProgress.done();
+		            // Announce error to screen readers
+		            var statusEl = document.getElementById('pjax-status');
+		            if (statusEl) statusEl.textContent = '页面加载失败，正在刷新...';
 			            var fallbackUrl = getSafeSameOriginUrl(options && options.url);
 			            if (fallbackUrl) {
 			                window.location.assign(fallbackUrl);
