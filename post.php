@@ -30,10 +30,17 @@ $this->need('base/nav.php');
 	                <h5 class="list-text page-quote"><?php echo $introPostHtml; ?></h5>
 	                <hr class="quote-divider">
 	            <?php endif; ?>
-		        <h5 class="list-text">「<?php echo $postTitle; ?>」</h5>
+		        <h1 class="list-text">「<?php echo $postTitle; ?>」</h1>
 		        <time datetime="<?php $this->date('c'); ?>" itemprop="datePublished" class="d-block text-center text-muted small mb-4"><?php $this->date('Y-m-d'); ?></time>
 		        <article>
-		            <?php $this->content(); ?>
+		            <?php
+		            // 正文也走一遍短代码解析，保证 [loveList] 在普通文章/页面里同样生效
+		            // （内容不含 `[loveList` 时 parseShortCode 会原样返回，开销可忽略）。
+		            ob_start();
+		            $this->content();
+		            $contentHtml = ob_get_clean();
+		            echo App::parseShortCode($contentHtml);
+		            ?>
 		        </article>
 		    </div>
 		</div>

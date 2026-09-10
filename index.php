@@ -34,8 +34,10 @@ $this->need('base/nav.php');
 	        );
 	        ?>
 	        <?php if ($introIndexHtml !== '') : ?>
-	            <h5 class="list-text page-quote"><?php echo $introIndexHtml; ?></h5>
+	            <h1 class="list-text page-quote"><?php echo $introIndexHtml; ?></h1>
 	            <hr class="quote-divider">
+	        <?php else : ?>
+	            <h1 class="sr-only"><?php _e('点滴时光'); ?></h1>
 	        <?php endif; ?>
 	        <?php if ($this->have()) : ?>
 	            <?php while ($this->next()) : ?>
@@ -50,17 +52,17 @@ $this->need('base/nav.php');
 	                $postTitle = App::escapeHtml($postTitleText);
 	                ?>
 	                <article class="post post-item text-center">
-	                    <h4 class="post-title" itemprop="name headline"><a class=" list-wbc" itemprop="url" href="<?php echo $postPermalink; ?>"><?php echo $postTitle; ?></a></h4>
+	                    <h2 class="post-title" itemprop="name headline"><a itemprop="url" href="<?php echo $postPermalink; ?>"><?php echo $postTitle; ?></a></h2>
 	                    <time datetime="<?php $this->date('c'); ?>" itemprop="datePublished"><?php $this->date('Y-m-d'); ?></time>
 	                </article>
-            <?php endwhile; ?>
-        <?php else : ?>
-            <article class="post">
-                <h2 class="post-title"><?php _e('没有找到内容'); ?></h2>
-            </article>
-        <?php endif; ?>
-        <?php $this->pageNav('&laquo; 上一页', '下一页 &raquo;'); ?>
-    </div>
-</div>
+	            <?php endwhile; ?>
+	            <?php $this->pageNav('&laquo; 上一页', '下一页 &raquo;'); ?>
+	        <?php else : ?>
+	            <article class="post">
+	                <h2 class="post-title"><?php _e('没有找到内容'); ?></h2>
+	            </article>
+	        <?php endif; ?>
+	    </div>
+	</div>
 
 <?php $this->need('base/footer.php'); ?>

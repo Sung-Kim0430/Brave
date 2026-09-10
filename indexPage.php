@@ -25,7 +25,7 @@ $this->need('base/nav.php');
 ?>
 	<div class="container">
 	    <blockquote class="blockquote text-center my-5 py-2">
-	        <h5 class="card-title lover-card-title">已相伴</h5>
+	        <h1 class="card-title lover-card-title">已相伴</h1>
 	        <h5 id="site_runtime"></h5>
 	    </blockquote>
 	    <?php
@@ -35,7 +35,7 @@ $this->need('base/nav.php');
 		    );
 		    ?>
 	    <?php if ($introHomeHtml !== '') : ?>
-	        <h5 class="list-text page-quote"><?php echo $introHomeHtml; ?></h5>
+	        <p class="list-text page-quote"><?php echo $introHomeHtml; ?></p>
 	        <hr class="quote-divider">
 	    <?php endif; ?>
 		    <div class="row indexPlate">

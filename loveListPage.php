@@ -33,8 +33,10 @@ $this->need('base/nav.php');?>
 		);
 	?>
 	<?php if ($introLoveListHtml !== '') : ?>
-		<h5 class="list-text page-quote"><?php echo $introLoveListHtml; ?></h5>
+		<h1 class="list-text page-quote"><?php echo $introLoveListHtml; ?></h1>
 		<hr class="quote-divider">
+	<?php else : ?>
+		<h1 class="sr-only"><?php _e('恋爱清单'); ?></h1>
 	<?php endif; ?>
 		<?php
 		ob_start();

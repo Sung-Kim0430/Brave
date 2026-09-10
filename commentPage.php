@@ -83,11 +83,13 @@ $commentFormAction = App::escapeUrlAttribute($this->commentUrl, true, array('htt
             </a>
         </div>
         <?php if ($introCommentHtml !== '') : ?>
-            <h5 class="list-text page-quote"><?php echo $introCommentHtml; ?></h5>
+            <h1 class="list-text page-quote"><?php echo $introCommentHtml; ?></h1>
             <hr class="quote-divider">
+        <?php else : ?>
+            <h1 class="sr-only"><?php _e('祝福墙'); ?></h1>
         <?php endif; ?>
         <?php if ($comments->have()) : ?>
-            <h5 class="text-center"><?php $this->commentsNum(_t('尚无祝愿'), _t('仅有一则祝愿'), _t('已收下<span class="bigfontNum"> %d </span>份祝愿')); ?></h5>
+            <h2 class="text-center comment-total"><?php $this->commentsNum(_t('尚无祝愿'), _t('仅有一则祝愿'), _t('已收下<span class="bigfontNum"> %d </span>份祝愿')); ?></h2>
             <?php $comments->listComments(); ?>
             <?php $comments->pageNav('&laquo; 上一页', '下一页 &raquo;'); ?>
         <?php endif; ?>
@@ -153,7 +155,7 @@ $commentFormAction = App::escapeUrlAttribute($this->commentUrl, true, array('htt
                 </form>
             </div>
         <?php else : ?>
-            <h3 class="text-center"><?php _e('留言暂已关闭'); ?></h3>
+            <h2 class="text-center comment-closed"><?php _e('留言暂已关闭'); ?></h2>
         <?php endif; ?>
     </div>
 </div>

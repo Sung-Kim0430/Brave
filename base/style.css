@@ -1239,6 +1239,41 @@ body.is-pjax-loading #pjax-container {
 	}
 }
 
+/* 标题层级：页面主标题用 h1、列表/卡片标题用 h2，字号沿用原来的 Bootstrap 视觉尺寸，
+   避免为了语义化（SEO / 屏幕阅读器大纲）而改动现有版式 */
+h1.list-text,
+h1.page-quote,
+h1.lover-card-title{
+	font-size: 1.25rem;
+	font-weight: 500;
+	line-height: 1.4;
+	margin-top: .5rem;
+	margin-bottom: .5rem;
+}
+
+h2.post-title{
+	font-size: 1.5rem;
+	margin-bottom: .5rem;
+}
+
+h2.comment-total{
+	font-size: 1.25rem;
+	margin-bottom: .5rem;
+}
+
+h2.comment-closed{
+	font-size: 1.75rem;
+	margin-bottom: .5rem;
+}
+
+/* 超长内容被截断时的提示（core/App.php 的 sanitizeHtmlFragment） */
+.brave-truncated-notice{
+	font-size: .85rem;
+	color: var(--brave-text-secondary);
+	text-align: center;
+	margin: .75rem 0 0;
+}
+
 /* 打印样式 */
 @media print{
 	.navbar,
