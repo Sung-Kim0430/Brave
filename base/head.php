@@ -146,13 +146,18 @@ if ($enableCSP) {
 		    $this->options->头部自定义();
 		    $customHead = ob_get_clean();
 
-		    // Basic security check: block external scripts from untrusted domains
-		    $siteHost = parse_url(App::optionValue('siteUrl', ''), PHP_URL_HOST);
-		    $trustedHosts = array('cdn.staticfile.org', $siteHost);
-		    $trustedPattern = implode('|', array_map('preg_quote', $trustedHosts));
+		    // 防误配检查：外链 <script src> 的域名必须在白名单内（同源相对路径始终放行）。
+		    // 这不是安全边界（内联 <script> 仍会放行），仅用于避免在主题设置里误粘贴第三方脚本。
+		    // 历史实现用负向先行做域名校验，因 `["\']?` 可选导致白名单内脚本也被阻断，已修正。
+		    $customCodeTrustedHosts = array(
+		        'cdn.staticfile.org',
+		        (string)parse_url(App::optionValue('siteUrl', ''), PHP_URL_HOST)
+		    );
+		    $customHeadBlocked = App::findUntrustedScriptHosts($customHead, $customCodeTrustedHosts);
 
-		    if (preg_match('/<script[^>]*src\s*=\s*["\']?(?!https?:\/\/(' . $trustedPattern . '))/i', $customHead)) {
-		        echo '<!-- Custom header blocked: external script from untrusted domain detected -->';
+		    if (!empty($customHeadBlocked)) {
+		        echo '<!-- 头部自定义已阻止：检测到白名单外的外链脚本域名 '
+		            . App::escapeHtml(App::describeUntrustedHosts($customHeadBlocked)) . ' -->';
 		    } else {
 		        echo $customHead;
 		    }

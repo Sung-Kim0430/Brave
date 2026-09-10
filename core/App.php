@@ -394,6 +394,89 @@ class App
         return self::guardInlineStyleSnippet($css);
     }
 
+    /**
+     * 提取自定义代码片段里外链 <script src> 的主机名，返回不在白名单内的主机。
+     *
+     * 注意：这只是「防误配」的软约束，不是安全边界 —— enableCustomCode 本身就等价于
+     * 允许在前台执行任意脚本（内联 <script> 同样会放行），请只给可信管理员开放该权限。
+     *
+     * @param string $html 自定义代码片段
+     * @param array $trustedHosts 可信主机名（大小写不敏感；空值会被忽略）
+     * @return array 不在白名单内的主机名（空数组表示放行）
+     */
+    public static function findUntrustedScriptHosts($html, $trustedHosts)
+    {
+        $html = (string)$html;
+
+        $allowed = array();
+        foreach ((array)$trustedHosts as $host) {
+            $host = strtolower(trim((string)$host));
+            if ($host !== '') {
+                $allowed[$host] = true;
+            }
+        }
+
+        // 显式匹配引号包住 / 不包住的 src 取值，避免用负向先行做域名校验
+        // （`src\s*=\s*["\']?(?!https?://(host))` 在引号处会误判，导致白名单内脚本也被阻断）。
+        if (!preg_match_all(
+            '/<script\b[^>]*\bsrc\s*=\s*(?:"([^"]*)"|\'([^\']*)\'|([^\s"\'>]+))/i',
+            $html,
+            $matches,
+            PREG_SET_ORDER
+        )) {
+            return array();
+        }
+
+        $untrusted = array();
+        foreach ($matches as $match) {
+            $src = '';
+            for ($i = 1; $i <= 3; $i++) {
+                if (isset($match[$i]) && $match[$i] !== '') {
+                    $src = $match[$i];
+                    break;
+                }
+            }
+
+            $src = trim($src);
+            if ($src === '') {
+                continue;
+            }
+
+            // 同源相对路径（/base/vendor/x.js、./x.js、x.js）没有主机名，视为可信。
+            $host = parse_url($src, PHP_URL_HOST);
+            if ($host === null && strpos($src, '//') === 0) {
+                // 协议相对写法 //host/x.js
+                $host = parse_url('http:' . $src, PHP_URL_HOST);
+            }
+
+            $host = strtolower(trim((string)$host));
+            if ($host === '' && strpos($src, '//') !== 0) {
+                continue;
+            }
+
+            if ($host === '' || !isset($allowed[$host])) {
+                $untrusted[] = ($host !== '') ? $host : $src;
+            }
+        }
+
+        return array_values(array_unique($untrusted));
+    }
+
+    /**
+     * 生成用于 HTML 注释展示的主机名列表（把 `--` 中和，避免提前结束注释）。
+     *
+     * @param array $hosts
+     * @return string
+     */
+    public static function describeUntrustedHosts($hosts)
+    {
+        $hosts = array_map(function ($host) {
+            return str_replace('--', '- -', (string)$host);
+        }, (array)$hosts);
+
+        return implode(', ', $hosts);
+    }
+
     private static function normalizeClassList($class)
     {
         $class = (string)$class;
