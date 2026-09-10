@@ -540,14 +540,7 @@ if (window.console && window.console.log) {
         }
     }
 
-    function setPageReadyState() {
-        try {
-            document.body.classList.add('is-page-ready');
-        } catch (e) {}
-    }
-
     function init() {
-        setPageReadyState();
         initTheme();
         bindBackLinks();
         buildArticleToc();

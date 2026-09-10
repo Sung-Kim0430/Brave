@@ -5,7 +5,9 @@
 文件来源（下载自 jsDelivr npm 镜像）：
 
 - jQuery `3.7.1`：`jquery-3.7.1.min.js`
-- Bootstrap `4.6.2`：`bootstrap-4.6.2.min.css`、`bootstrap-4.6.2.min.js`
+- Bootstrap `4.6.2`：`bootstrap-4.6.2.min.css`、`bootstrap-4.6.2.bundle.min.js`
+  - 使用 `bundle` 版本：其中已内置 Popper（`bootstrap.min.js` 不含 Popper，使用 dropdown / tooltip / popover 时会报错）。
+  - `bootstrap.bundle.min.js` 的 SRI：`sha384-Fy6S3B9q64WdZWQUiU+q4/2Lc9npb8tCaSX9FK7E8HnRr0Jz8D6OP9dO5Vg3Q9ct`（与 `base/head.php` CDN 模式中使用的值一致）。
 - jquery-pjax `2.0.1`：`jquery.pjax-2.0.1.min.js`
 - nprogress `0.2.0`：`nprogress-0.2.0.min.js`
 

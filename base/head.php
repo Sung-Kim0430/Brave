@@ -146,14 +146,14 @@ if ($enableCSP) {
         <script src="https://cdn.staticfile.org/jquery/3.7.1/jquery.min.js"
                 type="application/javascript"
                 <?php if ($enableSRI) : ?>integrity="sha384-1H217gwSVyLSIfaLxHbE7dRb3v4mYCKbpQvzx0cegeju1MVsGrX5xXxAvs/HgeFs" crossorigin="anonymous"<?php endif; ?>></script>
-        <script src="https://cdn.staticfile.org/bootstrap/4.6.2/js/bootstrap.min.js" type="application/javascript"
-                <?php if ($enableSRI) : ?>integrity="sha384-+sLIOodYLS7CIrQpBjl+C7nPvqq+FbNUBDunl/OZv93DB7Ln/533i8e/mZXLi/P+" crossorigin="anonymous"<?php endif; ?>></script>
+        <script src="https://cdn.staticfile.org/bootstrap/4.6.2/js/bootstrap.bundle.min.js" type="application/javascript"
+                <?php if ($enableSRI) : ?>integrity="sha384-Fy6S3B9q64WdZWQUiU+q4/2Lc9npb8tCaSX9FK7E8HnRr0Jz8D6OP9dO5Vg3Q9ct" crossorigin="anonymous"<?php endif; ?>></script>
 	    <?php else : ?>
 	        <link href="<?php $this->options->themeUrl('/base/vendor/bootstrap-4.6.2.min.css'); ?>" type="text/css"
 	              rel="stylesheet" />
 	        <script src="<?php $this->options->themeUrl('/base/vendor/jquery-3.7.1.min.js'); ?>"
 	                type="application/javascript"></script>
-	        <script src="<?php $this->options->themeUrl('/base/vendor/bootstrap-4.6.2.min.js'); ?>" type="application/javascript"></script>
+	        <script src="<?php $this->options->themeUrl('/base/vendor/bootstrap-4.6.2.bundle.min.js'); ?>" type="application/javascript"></script>
 	    <?php endif; ?>
 	    <?php if ($enableCustomCode) : ?>
 		    <?php
