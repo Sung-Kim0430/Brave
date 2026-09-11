@@ -946,6 +946,29 @@ body.brave-lightbox-open{
 	color: var(--brave-muted);
 }
 
+/* 回复 / 取消回复：类名与内核 TypechoComment 脚本约定一致（comment-reply、cancel-comment-reply） */
+.commentlist .comment .comment-actions {
+	text-align: right;
+	margin-top: .5rem;
+	font-size: var(--brave-font-xs);
+}
+.commentlist .comment .comment-actions > span {
+	display: inline-block;
+	margin-left: .75rem;
+}
+.commentlist .comment .comment-actions a {
+	color: var(--brave-muted);
+	text-decoration: none;
+	min-height: 44px;
+	display: inline-flex;
+	align-items: center;
+}
+.commentlist .comment .comment-actions a:hover,
+.commentlist .comment .comment-actions a:focus {
+	color: var(--brave-brand-1);
+	text-decoration: underline;
+}
+
 .comment-form .form-control{
 	border-radius: var(--brave-radius-md);
 	border: 1px solid var(--brave-card-border);

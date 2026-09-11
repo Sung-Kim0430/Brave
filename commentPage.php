@@ -68,6 +68,17 @@ $commentFormAction = App::escapeUrlAttribute($this->commentUrl, true, array('htt
                             ?>
                         </div>
                     </div>
+                    <?php if (App::optionFlag('commentsThreaded', false)) : ?>
+                        <?php /* 回复/取消回复的类名与内核 TypechoComment 脚本约定一致：cp-{id} / cl-{id} */ ?>
+                        <div class="comment-actions">
+                            <span class="comment-reply cp-<?php $comments->theId(); ?>">
+                                <?php $comments->reply(_t('回复')); ?>
+                            </span>
+                            <span class="cancel-comment-reply cl-<?php $comments->theId(); ?>" style="display:none">
+                                <?php $comments->cancelReply(_t('取消回复')); ?>
+                            </span>
+                        </div>
+                    <?php endif; ?>
                     <?php $comments->threadedComments($options); ?>
                 </div>
             </div>
@@ -96,6 +107,8 @@ $commentFormAction = App::escapeUrlAttribute($this->commentUrl, true, array('htt
         <?php if ($this->allow('comment')) : ?>
             <div id="<?php echo $commentRespondId; ?>" class="respond">
                 <form method="post" action="<?php echo $commentFormAction; ?>" name="comment-form" id="comment-form" role="form" class="comment-form">
+                    <?php /* 嵌套回复的父评论 id；内核 TypechoComment 脚本会复用这个 input（没有时才新建） */ ?>
+                    <input type="hidden" name="parent" id="comment-parent" value="0">
                     <?php if ($this->user->hasLogin()) : ?>
                         <?php
                         $profileUrl = App::safeCardLink(App::optionValue('profileUrl', ''), '#');
