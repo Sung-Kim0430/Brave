@@ -276,6 +276,15 @@ function themeConfig($form)
     );
     $form->addInput($cdnEnableSRI);
 
+    $htmlLang = new Text(
+        'htmlLang',
+        NULL,
+        NULL,
+        _t('页面语言（html lang）'),
+        _t('留空则跟随 Typecho 语言设置（如 zh_CN 会输出 zh-CN）；多语言或英文站点可手动填写，例如 en、en-US、ja。仅允许字母、数字与连字符。')
+    );
+    $form->addInput($htmlLang);
+
     $enableCSP = new Radio(
         'enableCSP',
         array(
@@ -296,6 +305,15 @@ function themeConfig($form)
         _t('留空则使用主题内置默认策略；仅在「启用 CSP」时生效。示例：default-src \'self\'; script-src \'self\' \'unsafe-inline\' https://cdn.staticfile.org;')
     );
     $form->addInput($cspPolicy);
+
+    $contentMaxLength = new Text(
+        'contentMaxLength',
+        NULL,
+        '50000',
+        _t('内容硬上限（字符数）'),
+        _t('评论与短代码内容的长度上限，默认 50000，可调范围 10000~200000；超过时先截断再继续输出，并追加「内容过长，已截断」提示。调大可容纳超长文章/评论，但会增加解析开销。')
+    );
+    $form->addInput($contentMaxLength);
 
     $enableCustomCode = new Radio(
         'enableCustomCode',

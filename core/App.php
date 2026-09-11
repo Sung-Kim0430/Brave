@@ -12,11 +12,13 @@ if (!defined('__TYPECHO_ROOT_DIR__')) exit;
 
 class App
 {
-    /** 净化 HTML 片段时的硬上限（超过则截断后继续净化，避免 DOM 解析开销失控） */
+    /**
+     * 内容硬上限的默认值（字符数）。
+     *
+     * 评论净化与短代码解析共用该上限；可通过主题设置 `contentMaxLength` 覆盖，
+     * 见 `App::contentMaxLength()`。
+     */
     const MAX_HTML_LENGTH = 50000;
-
-    /** 短代码解析的硬上限（超过则不解析，避免正则与渲染开销） */
-    const MAX_SHORTCODE_LENGTH = 50000;
 
     /** 单个短代码属性串的硬上限 */
     const MAX_SHORTCODE_ATTR_LENGTH = 1000;
@@ -108,6 +110,65 @@ class App
         return ($safe !== '') ? $safe : '/';
     }
 
+    /**
+     * 当前请求是否走 HTTPS。
+     *
+     * 用于决定默认 CSP 是否放行 `http:` 来源 —— HTTPS 站点若继续放行 http:，
+     * 会允许混合内容图片（浏览器仅警告不拦截），等于放弃了 CSP 的协议约束。
+     * 识别 `X-Forwarded-Proto` 是为了兼容反向代理/CDN 场景。
+     */
+    public static function isHttpsRequest()
+    {
+        $https = isset($_SERVER['HTTPS']) ? strtolower((string)$_SERVER['HTTPS']) : '';
+        if ($https !== '' && $https !== 'off') {
+            return true;
+        }
+
+        if (isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443) {
+            return true;
+        }
+
+        $proto = isset($_SERVER['HTTP_X_FORWARDED_PROTO'])
+            ? strtolower((string)$_SERVER['HTTP_X_FORWARDED_PROTO'])
+            : '';
+        // 多级代理下可能是 "https, http"，只取第一段。
+        $first = trim(current(explode(',', $proto)));
+
+        return $first === 'https';
+    }
+
+    /**
+     * `<html lang>` 的取值。
+     *
+     * 主题原先硬编码 `zh-cn`，英文站点语义错误。取值优先级：
+     * 主题设置 `htmlLang` → Typecho 语言设置 `lang` → `zh-CN`。
+     * 输出前过滤为 BCP47 允许的字符，可直接用于属性上下文。
+     */
+    public static function htmlLang($default = 'zh-CN')
+    {
+        $lang = self::optionValue('htmlLang', '');
+        if ($lang === '') {
+            $lang = self::optionValue('lang', $default);
+        }
+
+        // Typecho 的语言标识形如 zh_CN / en_US，转成 BCP47 的 zh-CN / en-US。
+        $lang = str_replace('_', '-', $lang);
+        $lang = preg_replace('/[^A-Za-z0-9\-]/', '', $lang);
+
+        return ($lang !== '') ? $lang : $default;
+    }
+
+    /**
+     * 内容硬上限（字符数）。超过会先截断再继续净化，并追加「内容过长，已截断」提示。
+     *
+     * 原先是写死的常量，长文会被截断破版且无法调整；现在可用主题设置 `contentMaxLength`
+     * 覆盖，并夹在 10000~200000 之间（下限保证防护有效，上限避免 DOM 解析开销失控）。
+     */
+    public static function contentMaxLength()
+    {
+        return self::optionIntRange('contentMaxLength', self::MAX_HTML_LENGTH, 10000, 200000);
+    }
+
     public static function pageIntroHtml($enabled, $text, $fallback = '')
     {
         if (!$enabled) {
@@ -147,7 +208,7 @@ class App
 
         // Protect against ReDoS: limit content length for shortcode parsing
         // Use same limit as HTML sanitization for consistency
-        if (strlen($content) > self::MAX_SHORTCODE_LENGTH) {
+        if (strlen($content) > self::contentMaxLength()) {
             return $content;
         }
 
@@ -203,7 +264,7 @@ class App
         $content = (string)$content;
 
         // Protect against ReDoS: limit item count and content length
-        if (strlen($content) > self::MAX_SHORTCODE_LENGTH) {
+        if (strlen($content) > self::contentMaxLength()) {
             return '<div class="alert alert-warning">Love List 内容过长</div>';
         }
 
@@ -656,8 +717,9 @@ class App
         // Protect against DoS: limit HTML length to prevent memory exhaustion.
         // 超长内容改为「截断后继续净化」，而不是整体转义（后者会让长评论/长列表破版）。
         $truncated = false;
-        if (strlen($html) > self::MAX_HTML_LENGTH) {
-            $html = substr($html, 0, self::MAX_HTML_LENGTH);
+        $maxLength = self::contentMaxLength();
+        if (strlen($html) > $maxLength) {
+            $html = substr($html, 0, $maxLength);
             $truncated = true;
         }
 

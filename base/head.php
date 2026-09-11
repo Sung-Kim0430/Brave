@@ -35,13 +35,20 @@ if ($enableCSP) {
             $fontSrc[] = 'https://gfonts.ctfile.com';
         }
 
+        // HTTPS 站点不再放行 http: —— 否则混合内容图片会被静默允许（浏览器只警告不拦截），
+        // CSP 的协议约束等于失效。HTTP 站点保留 http: 以兼容旧的外链图片。
+        $imgSrc = "'self' data: blob: https:";
+        if (!App::isHttpsRequest()) {
+            $imgSrc .= ' http:';
+        }
+
         $cspPolicy =
             "default-src 'self'; " .
             "base-uri 'self'; " .
             "object-src 'none'; " .
             "frame-ancestors 'self'; " .
             "form-action 'self'; " .
-            "img-src 'self' data: blob: https: http:; " .
+            "img-src " . $imgSrc . "; " .
             "font-src " . implode(' ', $fontSrc) . "; " .
             "style-src " . implode(' ', $styleSrc) . "; " .
             "script-src " . implode(' ', $scriptSrc) . "; " .
@@ -77,7 +84,7 @@ if ($enableCSP) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="zh-cn"<?php if ($enableDarkMode) : ?> data-darkmode="1"<?php endif; ?>>
+<html lang="<?php echo App::escapeHtml(App::htmlLang()); ?>"<?php if ($enableDarkMode) : ?> data-darkmode="1"<?php endif; ?>>
 <head>
     <meta charset="<?php $this->options->charset(); ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
