@@ -123,23 +123,23 @@ test('theme-owned site title text nodes are escaped locally', () => {
 });
 
 test('logged-in comment identity output is escaped locally', () => {
-  const commentPage = read('commentPage.php');
+  const comments = read('base/comments.php');
 
-  assert.doesNotMatch(commentPage, /\$this->user->screenName\(\)/);
-  assert.doesNotMatch(commentPage, /\$this->options->profileUrl\(\)/);
-  assert.doesNotMatch(commentPage, /\$this->options->logoutUrl\(\)/);
-  assert.match(commentPage, /App::escapeHtml\(\$this->user->screenName\)/);
-  assert.match(commentPage, /App::safeCardLink\(App::optionValue\('profileUrl',\s*''\),\s*'#'\)/);
-  assert.match(commentPage, /App::safeCardLink\(App::optionValue\('logoutUrl',\s*''\),\s*'#'\)/);
+  assert.doesNotMatch(comments, /\$this->user->screenName\(\)/);
+  assert.doesNotMatch(comments, /\$this->options->profileUrl\(\)/);
+  assert.doesNotMatch(comments, /\$this->options->logoutUrl\(\)/);
+  assert.match(comments, /App::escapeHtml\(\$this->user->screenName\)/);
+  assert.match(comments, /App::safeCardLink\(App::optionValue\('profileUrl',\s*''\),\s*'#'\)/);
+  assert.match(comments, /App::safeCardLink\(App::optionValue\('logoutUrl',\s*''\),\s*'#'\)/);
 });
 
 test('comment form action and respond id use local escaping helpers', () => {
-  const commentPage = read('commentPage.php');
+  const comments = read('base/comments.php');
 
-  assert.doesNotMatch(commentPage, /\$this->respondId\(\)/);
-  assert.doesNotMatch(commentPage, /\$this->commentUrl\(\)/);
-  assert.match(commentPage, /App::escapeHtml\(\$this->respondId\)/);
-  assert.match(commentPage, /App::escapeUrlAttribute\(\$this->commentUrl,\s*true,\s*array\('http',\s*'https'\)\)/);
+  assert.doesNotMatch(comments, /\$this->respondId\(\)/);
+  assert.doesNotMatch(comments, /\$this->commentUrl\(\)/);
+  assert.match(comments, /App::escapeHtml\(\$this->respondId\)/);
+  assert.match(comments, /App::escapeUrlAttribute\(\$this->commentUrl,\s*true,\s*array\('http',\s*'https'\)\)/);
 });
 
 test('post titles and list permalinks use local escaping helpers', () => {
@@ -332,19 +332,36 @@ test('comment sanitizer drops image tags without a safe src', () => {
 });
 
 test('blessing board shows existing comments even when new comments are closed', () => {
-  const commentPage = read('commentPage.php');
-  const allowGate = commentPage.indexOf("$this->allow('comment')");
-  const listComments = commentPage.indexOf('$comments->listComments()');
-  const commentForm = commentPage.indexOf('<form method="post"');
-  const closedMessage = commentPage.indexOf('留言暂已关闭');
+  const comments = read('base/comments.php');
+  const section = comments.indexOf('<section id="comments"');
+  const listComments = comments.indexOf('$comments->listComments()');
+  const commentForm = comments.indexOf('<form method="post"');
+  // 文档块里也出现过这几个字样，从表单之后开始找才算真正的分支位置。
+  const closedMessage = comments.indexOf('留言暂已关闭', commentForm);
 
-  assert.notEqual(allowGate, -1);
+  // 输出顺序：先渲染已有评论，再是表单，最后才是「已关闭」分支。
+  assert.notEqual(section, -1);
   assert.notEqual(listComments, -1);
   assert.notEqual(commentForm, -1);
   assert.notEqual(closedMessage, -1);
-  assert.ok(listComments < allowGate, 'existing comments should render before the new-comment gate');
-  assert.ok(commentForm > allowGate, 'comment form should remain gated by allow(comment)');
-  assert.ok(closedMessage > allowGate, 'closed message should remain in the closed branch');
+  assert.ok(section < listComments, 'comment section wrapper should precede the list');
+  assert.ok(listComments < commentForm, 'existing comments should render before the form');
+  assert.ok(commentForm < closedMessage, 'closed message should be the fallback branch');
+  assert.match(comments, /if \(\$commentHasList\)/);
+  assert.match(comments, /elseif \(\$commentShowClosedNotice\)/);
+  assert.match(comments, /\$commentFormOpen = \$this->allow\('comment'\)/);
+});
+
+test('comment block lives in one shared partial used by both templates', () => {
+  const comments = read('base/comments.php');
+  const commentPage = read('commentPage.php');
+
+  assert.match(comments, /require_once __DIR__ \. '\/\.\.\/core\/App\.php'/);
+  assert.match(comments, /if \(!function_exists\('threadedComments'\)\)/);
+  // 模板用 include 而不是 $this->need()，这样调用方预置的文案变量才传得进来。
+  assert.match(commentPage, /include __DIR__ \. '\/base\/comments\.php'/);
+  assert.doesNotMatch(commentPage, /function threadedComments\(/);
+  assert.doesNotMatch(commentPage, /<form method="post"/);
 });
 
 test('front-end lightbox avoids raw HTML injection surfaces and data URI link promotion', () => {
@@ -506,7 +523,7 @@ test('default CSP only allows http: images on plain HTTP requests', () => {
 });
 
 test('comment form can carry the nested-reply parent id', () => {
-  const page = read('commentPage.php');
+  const page = read('base/comments.php');
 
   assert.match(page, /<input type="hidden" name="parent" id="comment-parent" value="0">/);
   assert.match(page, /\$comments->reply\(/);
