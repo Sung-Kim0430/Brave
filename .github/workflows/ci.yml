@@ -58,6 +58,9 @@ jobs:
       - name: Run App behavior tests
         run: php tests/php/behavior.test.php
 
+      - name: Run template render tests
+        run: php tests/php/template.test.php
+
   lint-php:
     name: PHP Syntax Check
     runs-on: ubuntu-latest

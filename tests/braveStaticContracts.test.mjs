@@ -534,6 +534,20 @@ test('App behavior suite is wired into the repository', () => {
   assert.match(suite, /findUntrustedScriptHosts/);
 });
 
+test('template render suite is wired into the repository and CI', () => {
+  const testFile = path.join(root, 'tests/php/template.test.php');
+  assert.equal(existsSync(testFile), true, 'tests/php/template.test.php should exist');
+
+  const suite = readFileSync(testFile, 'utf8');
+  // 必须真的渲染本地模板，而不是断言源码字符串
+  assert.match(suite, /include __DIR__ \. '\/\.\.\/\.\.\/base\/comments\.php'/);
+  assert.match(suite, /function threadedComments/);
+  assert.match(suite, /renderTemplate\('post\.php'\)/);
+
+  const workflow = read('.github/workflows/ci.yml');
+  assert.match(workflow, /php tests\/php\/template\.test\.php/);
+});
+
 test('html lang is no longer hardcoded to zh-cn', () => {
   const head = read('base/head.php');
 
