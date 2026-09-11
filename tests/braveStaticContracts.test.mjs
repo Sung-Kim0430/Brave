@@ -364,6 +364,36 @@ test('comment block lives in one shared partial used by both templates', () => {
   assert.doesNotMatch(commentPage, /<form method="post"/);
 });
 
+test('article template gains prev/next navigation and its own comment block', () => {
+  const post = read('post.php');
+
+  // 上下篇：用内核渲染，两篇都缺时不渲染整块导航
+  assert.match(post, /\$this->thePrev\('%s', ''\)/);
+  assert.match(post, /\$this->theNext\('%s', ''\)/);
+  assert.match(post, /post-near__prev/);
+  assert.match(post, /post-near__next/);
+  assert.match(post, /\$prevNavHtml !== '' \|\| \$nextNavHtml !== ''/);
+
+  // 分类 / 标签：内核的 category()/tags() 直接拼 HTML 不转义，主题自己遍历走 App helper
+  assert.doesNotMatch(post, /\$this->tags\(/);
+  assert.doesNotMatch(post, /\$this->category\(/);
+  assert.match(post, /App::escapeUrlAttribute\(\$tag\['permalink'\],\s*true,\s*array\('http',\s*'https'\)\)/);
+  assert.match(post, /App::escapeHtml\(\$tag\['name'\]\)/);
+  assert.match(post, /App::escapeHtml\(\$category\['name'\]\)/);
+
+  // 文章页文案与祝福板区分；关闭评论时不输出「留言暂已关闭」
+  assert.match(post, /\$commentCountLabels = array\(/);
+  assert.match(post, /\$commentShowClosedNotice = false/);
+});
+
+test('article-only styles are shipped', () => {
+  const style = read('base/style.css');
+
+  for (const cls of ['.post-meta', '.post-near', '.post-near__col', '.comment-area']) {
+    assert.ok(style.includes(cls), `${cls} should be styled`);
+  }
+});
+
 test('front-end lightbox avoids raw HTML injection surfaces and data URI link promotion', () => {
   const main = read('base/main.js');
 

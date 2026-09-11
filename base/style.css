@@ -1000,6 +1000,80 @@ body.brave-lightbox-open{
 	box-shadow: var(--brave-shadow-md);
 }
 
+/* 文章页：分类 / 标签 */
+.post-meta{
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--brave-spacing-md);
+	margin-top: var(--brave-spacing-lg);
+	padding-top: var(--brave-spacing-md);
+	border-top: 1px solid var(--brave-card-border);
+	font-size: var(--brave-font-sm);
+	color: var(--brave-muted);
+}
+.post-meta__group{
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: .35rem;
+}
+.post-meta a{
+	color: var(--brave-text-secondary);
+	text-decoration: none;
+}
+.post-meta a:hover,
+.post-meta a:focus{
+	color: var(--brave-brand-1);
+	text-decoration: underline;
+}
+
+/* 文章页：上下篇导航 */
+.post-near{
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--brave-spacing-md);
+	margin-top: var(--brave-spacing-xl);
+	padding-top: var(--brave-spacing-lg);
+	border-top: 1px solid var(--brave-card-border);
+	font-size: var(--brave-font-sm);
+}
+.post-near__col{
+	flex: 1 1 45%;
+	min-width: 0;
+}
+.post-near__next{
+	text-align: right;
+}
+.post-near__label{
+	display: block;
+	margin-bottom: .25rem;
+	font-size: var(--brave-font-xs);
+	color: var(--brave-muted);
+}
+.post-near a{
+	color: var(--brave-text-secondary);
+	text-decoration: none;
+	min-height: 44px;
+	display: inline-flex;
+	align-items: center;
+}
+.post-near a:hover,
+.post-near a:focus{
+	color: var(--brave-brand-1);
+	text-decoration: underline;
+}
+.post-near__empty{
+	color: var(--brave-muted);
+}
+
+/* 评论区块容器（base/comments.php，祝福板与文章页共用） */
+.comment-area{
+	margin-top: var(--brave-spacing-xl);
+}
+.comment-area .respond{
+	margin-top: var(--brave-spacing-lg);
+}
+
 /* PJAX 过渡 */
 #pjax-container {
 	transition: opacity var(--brave-transition-fast);

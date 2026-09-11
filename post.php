@@ -42,6 +42,63 @@ $this->need('base/nav.php');
 		            echo App::parseShortCode($contentHtml);
 		            ?>
 		        </article>
+		        <?php
+		        // 分类 / 标签：内核自带的 tags() / category() 会把标签名直接拼进 HTML 且不转义
+		        // （标签名入库时未实体化），这里自己遍历并走 App 的转义 helper。
+		        ?>
+		        <?php if (!empty($this->categories) || !empty($this->tags)) : ?>
+		            <div class="post-meta">
+		                <?php if (!empty($this->categories)) : ?>
+		                    <span class="post-meta__group">
+		                        <span class="post-meta__label"><?php _e('分类'); ?>:</span>
+		                        <?php foreach ($this->categories as $category) : ?><a href="<?php echo App::escapeUrlAttribute($category['permalink'], true, array('http', 'https')); ?>"><?php echo App::escapeHtml($category['name']); ?></a><?php endforeach; ?>
+		                    </span>
+		                <?php endif; ?>
+		                <?php if (!empty($this->tags)) : ?>
+		                    <span class="post-meta__group">
+		                        <span class="post-meta__label"><?php _e('标签'); ?>:</span>
+		                        <?php foreach ($this->tags as $tag) : ?><a href="<?php echo App::escapeUrlAttribute($tag['permalink'], true, array('http', 'https')); ?>"><?php echo App::escapeHtml($tag['name']); ?></a><?php endforeach; ?>
+		                    </span>
+		                <?php endif; ?>
+		            </div>
+		        <?php endif; ?>
+		        <?php
+		        // 评论区：文案按「文章」口径，且评论关闭时不输出「留言暂已关闭」——
+		        // 没有评论功能的文章不该凭空多一行提示。
+		        $commentSectionLabel = _t('评论');
+		        $commentCountLabels = array(
+		            _t('还没有评论'),
+		            _t('仅有一条评论'),
+		            _t('已有<span class="bigfontNum"> %d </span>条评论'),
+		        );
+		        $commentSubmitLabel = _t('发表评论');
+		        $commentPlaceholder = _t('说点什么吧');
+		        $commentTextLabel = _t('评论内容');
+		        $commentShowClosedNotice = false;
+		        include __DIR__ . '/base/comments.php';
+		        ?>
+		        <?php
+		        // 上下篇导航：直接用内核 theLink 的输出（标题在入库时已由 Typecho 实体化、
+		        // 链接由路由生成），交由内核渲染比在主题里重建一份更不容易出错。
+		        ob_start();
+		        $this->thePrev('%s', '');
+		        $prevNavHtml = trim(ob_get_clean());
+		        ob_start();
+		        $this->theNext('%s', '');
+		        $nextNavHtml = trim(ob_get_clean());
+		        ?>
+		        <?php if ($prevNavHtml !== '' || $nextNavHtml !== '') : ?>
+		            <nav class="post-near" aria-label="<?php echo App::escapeHtml(_t('相邻文章')); ?>">
+		                <div class="post-near__col post-near__prev">
+		                    <span class="post-near__label"><?php _e('上一篇'); ?></span>
+		                    <?php echo $prevNavHtml !== '' ? $prevNavHtml : '<span class="post-near__empty">' . App::escapeHtml(_t('没有了')) . '</span>'; ?>
+		                </div>
+		                <div class="post-near__col post-near__next">
+		                    <span class="post-near__label"><?php _e('下一篇'); ?></span>
+		                    <?php echo $nextNavHtml !== '' ? $nextNavHtml : '<span class="post-near__empty">' . App::escapeHtml(_t('没有了')) . '</span>'; ?>
+		                </div>
+		            </nav>
+		        <?php endif; ?>
 		    </div>
 		</div>
 
