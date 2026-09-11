@@ -66,6 +66,17 @@
 - `cdnEnableSRI`：CDN 模式下是否为外链资源启用 SRI（默认开启）
 - `enableCSP`：是否启用 CSP（默认开启；本地/CDN 资源模式均生效）
 - `cspPolicy`：自定义 CSP 策略（可选；留空使用主题内置默认）
+- 内置默认策略的 `img-src` 会随请求协议变化：HTTPS 站点只放行 `https:`，HTTP 站点额外放行 `http:`。HTTPS 站点若确实需要外链 http 图片，请用 `cspPolicy` 自定义
+
+站点信息 / 内容处理：
+
+- `htmlLang`：`<html lang>` 取值；留空则跟随 Typecho 语言设置（`zh_CN` 会输出 `zh-CN`），多语言或英文站点可手动填写（如 `en`、`en-US`、`ja`）。仅保留字母、数字与连字符
+- `contentMaxLength`：内容硬上限（字符数，默认 50000，可调范围 10000~200000）；评论净化与短代码解析共用。超过时先截断再继续输出，并追加「内容过长，已截断」提示；调大会增加解析开销
+
+祝福板嵌套回复：
+
+- 入口由 Typecho 内核的「启用评论回复」（`commentsThreaded`）控制：在后台「设置 → 评论」开启后，每条祝愿下方会出现「回复 / 取消回复」
+- 回复依赖内核 `$this->header()` 注入的 `TypechoComment` 脚本；主题已提供 `parent` 隐藏字段承载父评论 id
 
 高级项（具备脚本/样式执行能力，请谨慎授权）：
 

@@ -57,13 +57,16 @@
 
 - ⛔ **P2-1 PJAX 后标题不更新**：实测 `jquery.pjax` 内核已有 `h.title && (document.title = h.title)`，属审计误报，未改动。
 
+### 第二轮（同日）补齐的 P3
+
+- ✅ CSP `img-src` 不再无条件放行 `http:`：HTTPS 站点只放行 `https:`，HTTP 站点保留 `http:`
+- ✅ 祝福板补齐嵌套回复入口：表单加 `parent` 隐藏字段 + 每条评论「回复 / 取消回复」
+- ✅ `<html lang>` 不再硬编码：`htmlLang` 设置 → Typecho `lang` → `zh-CN`
+- ✅ 内容硬上限可配置：`contentMaxLength`（默认 50000，可调 10000~200000）
+
 ### 仍未处理（P3）
 
-- `img-src` 含 `http:`（HTTPS 站点会放行混合内容图片）
-- 祝福板表单无 `parent` 字段，后台开启嵌套回复后无法使用
-- `<html lang="zh-cn">` 硬编码，英文站点语义错误
-- 文章页缺评论区入口、上下篇/标签导航
-- 超长内容阈值（50000）仍为常量，不可配置
+- 文章页缺评论区入口、上下篇/标签导航（属新增功能，非缺陷）
 
 ---
 
@@ -83,7 +86,7 @@
 - ✅ 修复 2 个必现功能缺陷（P0-1、P1-3）
 - ✅ 修复 6 个高/中优先级问题（P1-1、P1-2、P2-2、P2-3、P2-4、P2-5）
 - ✅ 撤销 1 条误报结论（P2-1）
-- ✅ 新增行为测试 70 条并接入 CI，静态契约测试 30 → 39 条
+- ✅ 新增行为测试并接入 CI；静态契约测试 30 → 43 条，行为测试 92 条
 
 ---
 
@@ -239,11 +242,11 @@
 ```bash
 # 行为测试：真实输入 → 输出断言（覆盖评论净化、URL 规范、短代码、脚本白名单、超长截断）
 php tests/php/behavior.test.php
-# 行为测试：70 passed, 0 failed
+# 行为测试：92 passed, 0 failed
 
 # 静态契约测试：源文件字符串匹配
 node --test tests/braveStaticContracts.test.mjs
-# pass 39
+# pass 43
 ```
 
 > 行为测试是 2026-09-11 新增的。在此之前只有字符串契约匹配，**无法**发现「评论被整体转义」这类逻辑回归 —— 详见 `docs/BUG_AUDIT_2026-09-11.md` §1。
@@ -265,14 +268,20 @@ php -l base/footer.php             # ✓ 通过
 
 ## 剩余P3可选项（低优先级）
 
-以下为未实施项。前 5 项来自 2026-09-11 审计，有明确证据；后两组为历史遗留的「建议」，无实测收益数据支撑。
+以下为未实施项。审计遗留 5 项中已修 4 项，仅剩「文章页导航」属新增功能；后两组为历史遗留的「建议」，无实测收益数据支撑。
 
-### 审计遗留（有证据，建议按需处理）
-- `img-src` 含 `http:` → HTTPS 站点放行混合内容图片
-- 祝福板表单缺 `parent` 字段 → 后台开启嵌套回复后不可用
-- `<html lang="zh-cn">` 硬编码 → 英文站点语义错误
-- 文章页缺评论区入口、上下篇/标签导航
-- 超长阈值（`MAX_HTML_LENGTH` / `MAX_SHORTCODE_LENGTH` = 50000）为常量，不可配置；长文会被「内容过长，已截断」破坏排版
+### 审计遗留
+
+已修（2026-09-11 第二轮）：
+
+- ✅ `img-src` 不再无条件含 `http:`（HTTPS 只放行 `https:`）
+- ✅ 祝福板补 `parent` 隐藏字段 + 回复/取消回复入口
+- ✅ `<html lang>` 不再硬编码（`htmlLang` → Typecho `lang` → `zh-CN`）
+- ✅ 超长阈值改为 `contentMaxLength` 可配置（10000~200000，默认 50000）
+
+未修：
+
+- 文章页缺评论区入口、上下篇/标签导航（属新增功能，非缺陷）
 
 ### 性能微优化（历史建议，收益未实测）
 - 字符串哈希算法优化（20ms → 12ms）
@@ -292,7 +301,7 @@ php -l base/footer.php             # ✓ 通过
 
 ### 生产部署前检查
 
-- [x] 运行完整测试套件（`php tests/php/behavior.test.php` 70 条 + `node --test` 39 条）
+- [x] 运行完整测试套件（`php tests/php/behavior.test.php` 92 条 + `node --test` 43 条）
 - [x] 检查Git状态（无未提交修改）
 - [x] 2026-09-11 审计的 P0/P1/P2 问题全部处理（含 1 项撤销）
 - [ ] 性能基准测试 —— **未做**，如需请先补基准脚本
@@ -353,8 +362,8 @@ mv Brave.backup.YYYYMMDD Brave
 
 ### 基础设施
 - **CI配置**: `.github/workflows/ci.yml` - GitHub Actions（`test-php` 行为测试 + 契约测试作业）
-- **行为测试**: `tests/php/behavior.test.php` - 70 条输入→输出断言
-- **契约测试**: `tests/braveStaticContracts.test.mjs` - 39 条源码字符串契约
+- **行为测试**: `tests/php/behavior.test.php` - 92 条输入→输出断言
+- **契约测试**: `tests/braveStaticContracts.test.mjs` - 43 条源码字符串契约
 
 ---
 
@@ -364,7 +373,7 @@ mv Brave.backup.YYYYMMDD Brave
 - ✅ 修复 2 个必现功能缺陷（评论整体转义、Love List 自闭合项）
 - ✅ 修复 6 个高/中优先级问题（脚本白名单、CSP×2、标题层级、短代码作用域）
 - ✅ 撤销 1 条误报结论（PJAX 标题）
-- ✅ 新增行为测试 70 条并接入 CI
+- ✅ 新增行为测试 92 条并接入 CI
 - ⚠️ 下调总体评分 4.9 → 4.0（实测口径修正）
 - ⚠️ 更正历史声明：SSRF 防护实为死代码；性能数字从未实测
 

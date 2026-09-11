@@ -70,6 +70,31 @@
 - 明确：本主题的 `normalizeUrl()` 只做**输出上下文转义与协议白名单**，PHP 侧不会发起请求，本就不存在 SSRF 面。已删除误导性分支并在注释中记录原因。
 - **仍然有效且被行为测试覆盖**：危险协议拦截（`javascript:` / `data:` / `vbscript:` / `file:`，含实体与空白混淆绕过）、`user:pass@host` 凭据过滤、控制字符剥离。
 
+### 默认 CSP 的 `img-src` 随协议收紧
+
+- 原默认策略固定为 `img-src 'self' data: blob: https: http:`。HTTPS 站点上 `http:` 会让**混合内容图片被静默放行**（浏览器对图片这类被动混合内容只告警不拦截），CSP 的协议约束形同虚设。
+- 现按请求协议决定：HTTPS 只放行 `https:`；HTTP 站点保留 `http:` 以兼容旧的外链图片。
+- 协议判定见 `App::isHttpsRequest()`，识别 `HTTPS`、`SERVER_PORT=443` 与 `X-Forwarded-Proto`（多级代理取第一段）。
+- 若 HTTPS 站点确实需要外链 http 图片，请用 `cspPolicy` 自定义策略显式放行 —— 这是显式授权，而不是默认行为。
+
+### 内容硬上限改为可配置
+
+- 原先写死 50000 字符，超长评论/文章会被截断破版且无法调整。
+- 现可用主题设置 `contentMaxLength` 覆盖（默认 50000，夹在 10000~200000）。下限保证防护有效，上限避免 DOM 解析开销失控。
+- 行为不变：超过时先截断再继续净化，并追加「内容过长，已截断」提示（不是整体转义）。
+- 常量 `MAX_SHORTCODE_LENGTH` 已删除（与 `MAX_HTML_LENGTH` 重复且未被引用）。
+
+### 评论嵌套回复入口
+
+- 原先 `threadedComments()` 保留了嵌套渲染，但表单没有 `parent` 字段，后台开启「启用评论回复」后用户无法实际使用。
+- 现补上 `<input type="hidden" name="parent" id="comment-parent" value="0">`，并在每条评论下输出「回复 / 取消回复」入口；仅当内核 `commentsThreaded` 开启时显示。
+- 类名（`comment-reply cp-{id}`、`cancel-comment-reply cl-{id}`）与内核 `TypechoComment` 脚本约定一致。该脚本由 `$this->header()` 自动注入，主题未重复实现 —— 若用 `header('commentReply=')` 关闭了它，回复功能会失效。
+- 该入口依赖内联 `onclick`，因此同样需要 CSP 允许 `script-src 'unsafe-inline'`（与 Typecho 评论机制本身一致）。
+
+### 页面语言
+
+- `<html lang>` 原先硬编码 `zh-cn`，英文站点语义错误。现取 `htmlLang` 主题设置 → Typecho `lang` → `zh-CN`，并过滤为字母/数字/连字符后输出。属于语义/无障碍修正，不涉及安全边界。
+
 ---
 
 ## 高权限配置项的风险提示
