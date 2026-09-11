@@ -486,3 +486,43 @@ test('App behavior suite is wired into the repository', () => {
   assert.match(suite, /parseShortCode/);
   assert.match(suite, /findUntrustedScriptHosts/);
 });
+
+test('html lang is no longer hardcoded to zh-cn', () => {
+  const head = read('base/head.php');
+
+  assert.ok(!head.includes('lang="zh-cn"'), 'html lang should not be hardcoded');
+  assert.match(head, /<html lang="<\?php echo App::escapeHtml\(App::htmlLang\(\)\); \?>/);
+});
+
+test('default CSP only allows http: images on plain HTTP requests', () => {
+  const head = read('base/head.php');
+
+  assert.match(head, /img-src " \. \$imgSrc \. ";/);
+  assert.match(head, /if \(!App::isHttpsRequest\(\)\) \{\s*\n\s*\$imgSrc \.= ' http:';/);
+  assert.ok(
+    !/img-src 'self' data: blob: https: http:;/.test(head),
+    'static img-src with http: should be gone'
+  );
+});
+
+test('comment form can carry the nested-reply parent id', () => {
+  const page = read('commentPage.php');
+
+  assert.match(page, /<input type="hidden" name="parent" id="comment-parent" value="0">/);
+  assert.match(page, /\$comments->reply\(/);
+  assert.match(page, /\$comments->cancelReply\(/);
+  assert.match(page, /comment-reply cp-<\?php \$comments->theId\(\); \?>/);
+  assert.match(page, /cancel-comment-reply cl-<\?php \$comments->theId\(\); \?>/);
+  assert.match(page, /App::optionFlag\('commentsThreaded', false\)/);
+});
+
+test('content length limit is configurable and the dead constant is gone', () => {
+  const app = read('core/App.php');
+  const functions = read('functions.php');
+
+  assert.ok(!app.includes('MAX_SHORTCODE_LENGTH'), 'unused MAX_SHORTCODE_LENGTH should stay removed');
+  assert.match(app, /public static function contentMaxLength\(\)/);
+  assert.match(app, /self::optionIntRange\('contentMaxLength', self::MAX_HTML_LENGTH, 10000, 200000\)/);
+  assert.match(functions, /new Text\(\s*\n\s*'contentMaxLength',/);
+  assert.match(functions, /new Text\(\s*\n\s*'htmlLang',/);
+});

@@ -300,6 +300,84 @@ $elapsed = microtime(true) - $start;
 checkTrue(sprintf('parseShortCode: 畸形输入耗时可控（%.3fs）', $elapsed), $elapsed < 1.0);
 
 /* ------------------------------------------------------------------ *
+ * HTTPS 判定：决定默认 CSP 是否放行 http: 来源
+ * ------------------------------------------------------------------ */
+$serverBackup = $_SERVER;
+
+function withServer($vars, $label, $expected)
+{
+    $_SERVER = array();
+    foreach ($vars as $k => $v) {
+        $_SERVER[$k] = $v;
+    }
+    checkSame($label, App::isHttpsRequest(), $expected);
+}
+
+withServer(array('HTTPS' => 'on'), 'isHttpsRequest: HTTPS=on', true);
+withServer(array('HTTPS' => '1'), 'isHttpsRequest: HTTPS=1', true);
+withServer(array('HTTPS' => 'off'), "isHttpsRequest: HTTPS=off（IIS 惯例）", false);
+withServer(array('SERVER_PORT' => '443'), 'isHttpsRequest: 端口 443', true);
+withServer(array('SERVER_PORT' => '80'), 'isHttpsRequest: 端口 80', false);
+withServer(array('HTTP_X_FORWARDED_PROTO' => 'https'), 'isHttpsRequest: 反代 X-Forwarded-Proto=https', true);
+withServer(
+    array('HTTP_X_FORWARDED_PROTO' => 'https, http'),
+    'isHttpsRequest: 多级代理取第一段',
+    true
+);
+withServer(array('HTTP_X_FORWARDED_PROTO' => 'http'), 'isHttpsRequest: X-Forwarded-Proto=http', false);
+withServer(array(), 'isHttpsRequest: 无任何标记', false);
+
+$_SERVER = $serverBackup;
+
+/* ------------------------------------------------------------------ *
+ * 页面语言：不再硬编码 zh-cn
+ * ------------------------------------------------------------------ */
+Helper::set(array('themeUrl' => 'https://example.com/usr/themes/Brave'));
+checkSame('htmlLang: 无配置时回退 zh-CN', App::htmlLang(), 'zh-CN');
+
+Helper::set(array('lang' => 'zh_CN'));
+checkSame('htmlLang: Typecho zh_CN 转 BCP47', App::htmlLang(), 'zh-CN');
+
+Helper::set(array('lang' => 'en_US'));
+checkSame('htmlLang: Typecho en_US 转 BCP47', App::htmlLang(), 'en-US');
+
+Helper::set(array('lang' => 'en_US', 'htmlLang' => 'ja'));
+checkSame('htmlLang: 主题设置优先', App::htmlLang(), 'ja');
+
+Helper::set(array('htmlLang' => 'zh"><script>alert(1)</script>'));
+$injectedLang = App::htmlLang();
+checkTrue('htmlLang: 注入字符被过滤', strpos($injectedLang, '<') === false);
+checkTrue('htmlLang: 注入后仅剩字母数字与连字符', preg_match('/^[A-Za-z0-9\-]*$/', $injectedLang) === 1);
+
+/* ------------------------------------------------------------------ *
+ * 内容硬上限：可配置且带范围夹取
+ * ------------------------------------------------------------------ */
+Helper::set(array());
+checkSame('contentMaxLength: 默认 50000', App::contentMaxLength(), 50000);
+
+Helper::set(array('contentMaxLength' => '100000'));
+checkSame('contentMaxLength: 可调大', App::contentMaxLength(), 100000);
+
+Helper::set(array('contentMaxLength' => '10'));
+checkSame('contentMaxLength: 低于下限夹到 10000', App::contentMaxLength(), 10000);
+
+Helper::set(array('contentMaxLength' => '9999999'));
+checkSame('contentMaxLength: 高于上限夹到 200000', App::contentMaxLength(), 200000);
+
+Helper::set(array('contentMaxLength' => 'abc'));
+checkSame('contentMaxLength: 非法值回退默认', App::contentMaxLength(), 50000);
+
+Helper::set(array('contentMaxLength' => '20000'));
+$shortLimit = App::sanitizeCommentHtml('a' . str_repeat('x', 25000));
+checkTrue('contentMaxLength: 生效于评论净化截断', strpos($shortLimit, '已截断') !== false);
+checkTrue('contentMaxLength: 截断后长度受控', strlen($shortLimit) <= 20000 + 200);
+
+Helper::set(array(
+    'themeUrl' => 'https://example.com/usr/themes/Brave',
+    'loveListTitleAllowHtml' => '0',
+));
+
+/* ------------------------------------------------------------------ *
  * 汇总
  * ------------------------------------------------------------------ */
 echo "\n行为测试：{$passed} passed, {$failed} failed\n";
