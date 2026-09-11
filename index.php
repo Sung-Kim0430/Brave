@@ -5,9 +5,9 @@
  * @package     Brave
  * @author      Sung Kim
  * @creator     Veen Zhao
- * @version     1.2
+ * @version     1.3
  * @link        https://blog.zwying.com
- * @update      2026/6/7 23:05
+ * @update      2026/9/11 22:30
  */
 if (!defined('__TYPECHO_ROOT_DIR__')) exit;
 if (!class_exists('App', false)) {

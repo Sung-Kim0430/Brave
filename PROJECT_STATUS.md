@@ -64,9 +64,16 @@
 - ✅ `<html lang>` 不再硬编码：`htmlLang` 设置 → Typecho `lang` → `zh-CN`
 - ✅ 内容硬上限可配置：`contentMaxLength`（默认 50000，可调 10000~200000）
 
+### 第三轮（同日）新增功能与测试
+
+- ✅ 文章页补上下篇导航、分类/标签、评论区入口（`post.php` + `.post-meta` / `.post-near` 样式）
+- ✅ 评论列表/表单抽为 `base/comments.php`，祝福板与文章页共用一份实现
+- ✅ 分类/标签不再走内核 `tags()` / `category()`（它们不转义），改为主题侧 `App::escapeHtml()` + `escapeUrlAttribute()`
+- ✅ 新增 `tests/php/template.test.php`（70 条模板渲染断言）并接入 CI
+
 ### 仍未处理（P3）
 
-- 文章页缺评论区入口、上下篇/标签导航（属新增功能，非缺陷）
+- 无。审计遗留项已清零，剩余只有下节的「历史建议」与需要真实环境人工复核的项。
 
 ---
 
@@ -86,7 +93,7 @@
 - ✅ 修复 2 个必现功能缺陷（P0-1、P1-3）
 - ✅ 修复 6 个高/中优先级问题（P1-1、P1-2、P2-2、P2-3、P2-4、P2-5）
 - ✅ 撤销 1 条误报结论（P2-1）
-- ✅ 新增行为测试并接入 CI；静态契约测试 30 → 43 条，行为测试 92 条
+- ✅ 新增行为测试并接入 CI；静态契约测试 30 → 47 条，行为测试 92 条，模板测试 70 条
 
 ---
 
@@ -244,12 +251,16 @@
 php tests/php/behavior.test.php
 # 行为测试：92 passed, 0 failed
 
+# 模板测试：用桩对象真实渲染 base/comments.php 与 post.php
+php tests/php/template.test.php
+# 模板测试：70 passed, 0 failed
+
 # 静态契约测试：源文件字符串匹配
 node --test tests/braveStaticContracts.test.mjs
-# pass 43
+# pass 47
 ```
 
-> 行为测试是 2026-09-11 新增的。在此之前只有字符串契约匹配，**无法**发现「评论被整体转义」这类逻辑回归 —— 详见 `docs/BUG_AUDIT_2026-09-11.md` §1。
+> 行为测试与模板测试均为 2026-09-11 新增。在此之前只有字符串契约匹配，**无法**发现「评论被整体转义」「模板确实调用了净化但输出仍是坏的」这类逻辑回归 —— 详见 `docs/BUG_AUDIT_2026-09-11.md` §1。
 
 ### 语法验证
 ```bash
@@ -268,20 +279,19 @@ php -l base/footer.php             # ✓ 通过
 
 ## 剩余P3可选项（低优先级）
 
-以下为未实施项。审计遗留 5 项中已修 4 项，仅剩「文章页导航」属新增功能；后两组为历史遗留的「建议」，无实测收益数据支撑。
+以下为未实施项。2026-09-11 审计遗留 5 项**已全部处理**（4 项为缺陷修复，1 项为新增功能）；后两组为历史遗留的「建议」，无实测收益数据支撑。
 
 ### 审计遗留
 
-已修（2026-09-11 第二轮）：
+已修：
 
 - ✅ `img-src` 不再无条件含 `http:`（HTTPS 只放行 `https:`）
 - ✅ 祝福板补 `parent` 隐藏字段 + 回复/取消回复入口
 - ✅ `<html lang>` 不再硬编码（`htmlLang` → Typecho `lang` → `zh-CN`）
 - ✅ 超长阈值改为 `contentMaxLength` 可配置（10000~200000，默认 50000）
+- ✅ 文章页补上下篇导航、分类/标签与评论区入口（评论区复用 `base/comments.php`）
 
-未修：
-
-- 文章页缺评论区入口、上下篇/标签导航（属新增功能，非缺陷）
+> 仍待**在真实 Typecho 上人工复核**（自动化测试覆盖不到）：嵌套回复的前端交互（依赖内核 `TypechoComment` 脚本）、PJAX 后的评论表单、多级评论缩进样式。
 
 ### 性能微优化（历史建议，收益未实测）
 - 字符串哈希算法优化（20ms → 12ms）
@@ -301,7 +311,7 @@ php -l base/footer.php             # ✓ 通过
 
 ### 生产部署前检查
 
-- [x] 运行完整测试套件（`php tests/php/behavior.test.php` 92 条 + `node --test` 43 条）
+- [x] 运行完整测试套件（行为测试 92 条 + 模板测试 70 条 + 契约测试 47 条）
 - [x] 检查Git状态（无未提交修改）
 - [x] 2026-09-11 审计的 P0/P1/P2 问题全部处理（含 1 项撤销）
 - [ ] 性能基准测试 —— **未做**，如需请先补基准脚本
@@ -361,13 +371,20 @@ mv Brave.backup.YYYYMMDD Brave
 - **项目状态**: `PROJECT_STATUS.md` - 本文档
 
 ### 基础设施
-- **CI配置**: `.github/workflows/ci.yml` - GitHub Actions（`test-php` 行为测试 + 契约测试作业）
-- **行为测试**: `tests/php/behavior.test.php` - 92 条输入→输出断言
-- **契约测试**: `tests/braveStaticContracts.test.mjs` - 43 条源码字符串契约
+- **CI配置**: `.github/workflows/ci.yml` - GitHub Actions（`test-php`：行为测试 + 模板测试；契约测试作业）
+- **行为测试**: `tests/php/behavior.test.php` - 92 条输入→输出断言（`core/App.php`）
+- **模板测试**: `tests/php/template.test.php` - 70 条模板渲染断言（`base/comments.php`、`post.php`）
+- **契约测试**: `tests/braveStaticContracts.test.mjs` - 47 条源码字符串契约
 
 ---
 
 ## 版本历史
+
+### v1.3.0 (2026-09-11) - 文章页收口与模板测试
+- ✅ 文章页补上下篇导航、分类/标签与评论区入口（审计遗留最后 1 项）
+- ✅ 评论区块抽为 `base/comments.php`，两个模板共用
+- ✅ 新增模板渲染测试 70 条；行为测试 92 条、契约测试 47 条
+- ⚠️ 新增未决观察：标题可能被二次转义（需真实 Typecho 复核）
 
 ### v1.2.0 (2026-09-11) - 独立审计与逻辑回归修复
 - ✅ 修复 2 个必现功能缺陷（评论整体转义、Love List 自闭合项）
