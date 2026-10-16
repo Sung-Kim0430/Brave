@@ -23,7 +23,7 @@
 
 登录状态和请求 URL 会影响令牌。缓存不能在登录/匿名用户之间共享带令牌页面，也不能跨 URL 复用表单；缓存插件应清除旧页面并正确区分登录 Cookie。切换用户或修改安全设置后刷新页面。
 
-完整页面缓存还必须考虑 CSP nonce：响应头与主题脚本属性必须使用同一响应的值。动态更新时须同时替换两处；不要长期重放静态 nonce 快照。具体缓存方案应在部署环境验证。
+完整页面缓存还必须考虑 CSP nonce：响应头与主题脚本属性必须使用同一响应的值。动态更新时须同时替换两处；不要长期重放静态 nonce 快照。具体缓存方案应在部署环境验证，详见 [性能说明](PERFORMANCE.md)。
 
 ## XSS、URL、HTML 与资源消耗
 
@@ -57,7 +57,7 @@ URL helper 只生成浏览器链接/图片，不在 PHP 发起请求。把私有
 
 CDN 模式改用 jsDelivr 的固定 npm 版本发布文件。PJAX/NProgress 使用包内实际发布的原始 JS，避免动态生成 min.js 的压缩器更新导致固定 SRI 失效。`cdnEnableSRI=1` 默认开启，外链资源附 integrity 与 crossorigin。SRI 能验证拿到的字节，不能证明依赖本身没有漏洞，也不能防止 CDN 宕机。
 
-`fontSource=local` 实际是系统字体回退，不包含随主题分发的字体文件，不请求 gfonts.ctfile.com。`fontSource=remote` 使用带 display=swap 的 Inter CSS；加载失败时保留系统字体。动态字体 CSS 无固定 SRI，远程字体仍有第三方可用性及供应链风险。
+`fontSource=local` 实际是系统字体回退，不包含随主题分发的字体文件，不请求 gfonts.ctfile.com。`fontSource=remote` 使用带 display=swap 的 Inter CSS，先以 print 媒体非阻塞加载，再由外部 main.js 激活；失败/禁 JS 时保留系统字体。动态字体 CSS 无固定 SRI，远程字体仍有第三方可用性及供应链风险。
 
 ## 验证与部署
 

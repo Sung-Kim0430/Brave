@@ -112,4 +112,8 @@
 - `status="1"`：已完成（显示 `svg/ok.svg`）
 - `img`：卡片背景图（渲染为 `background-image`）
 
+## 字体、首屏和验证
+
+默认系统字体不下载字体文件，默认本地依赖不产生第三方请求。可选远程 Inter CSS 使用 display=swap 与非阻塞加载；默认 defer 保持依赖顺序，主题 CSS 在 Bootstrap 后加载，配置头图时预加载背景图。开启高权限自定义代码时保留同步依赖兼容性。优化与服务器缓存建议见 [PERFORMANCE.md](PERFORMANCE.md)，测试命令见 [tests/README.md](../tests/README.md)。不应把隔离环境的功能验证当作生产速度基准。
+
 默认 CSP 禁止内联事件/未授权脚本；插件、自定义文章脚本和自定义 cspPolicy 需要站长明确配置。CSP/SRI 的边界与评论缓存要求见 [SECURITY.md](SECURITY.md)。

@@ -10,6 +10,8 @@ $fontSource = App::optionChoice('fontSource', 'local', array('local', 'remote'))
 $enableRemoteFont = ($fontSource === 'remote');
 $enableCustomCode = App::optionFlag('enableCustomCode', false);
 $enableDarkMode = App::optionFlag('enableDarkMode', false);
+// 自定义代码可能在 head/footer 立即调用 jQuery；显式启用该兼容能力时保留同步依赖。
+$scriptLoading = $enableCustomCode ? '' : ' defer';
 
 $cspPolicy = '';
 $cspHeaderSent = false;
@@ -140,8 +142,12 @@ if (!headers_sent()) {
     </style>
 
     <?php if ($enableRemoteFont) : ?>
+        <?php /* 只有选择远程字体才建立连接；本地模式不能产生字体域名请求。
+                 print 样式不会阻塞首屏，由 main.js 的外部事件监听器在加载后激活。
+                 CSS 的 display=swap 让文字先使用系统字体，避免字体下载期间不可见。 */ ?>
+        <link rel="preconnect" href="https://gfonts.ctfile.com" crossorigin>
         <link href="https://gfonts.ctfile.com/css2?family=Inter:wght@400;700&display=swap"
-              rel="stylesheet">
+              id="brave-remote-font" rel="stylesheet" media="print">
     <?php endif; ?>
 
     <?php if ($assetsSource === 'cdn') : ?>
@@ -149,20 +155,27 @@ if (!headers_sent()) {
               rel="stylesheet"
               <?php if ($enableSRI) : ?>integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous"<?php endif; ?> />
         <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"
+                <?php echo $scriptLoading; ?>
                 type="application/javascript"
                 <?php if ($enableSRI) : ?>integrity="sha384-1H217gwSVyLSIfaLxHbE7dRb3v4mYCKbpQvzx0cegeju1MVsGrX5xXxAvs/HgeFs" crossorigin="anonymous"<?php endif; ?>></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js" type="application/javascript"
+                <?php echo $scriptLoading; ?>
                 <?php if ($enableSRI) : ?>integrity="sha384-Fy6S3B9q64WdZWQUiU+q4/2Lc9npb8tCaSX9FK7E8HnRr0Jz8D6OP9dO5Vg3Q9ct" crossorigin="anonymous"<?php endif; ?>></script>
 	    <?php else : ?>
 	        <link href="<?php $this->options->themeUrl('/base/vendor/bootstrap-4.6.2.min.css'); ?>" type="text/css"
 	              rel="stylesheet" />
 	        <script src="<?php $this->options->themeUrl('/base/vendor/jquery-3.7.1.min.js'); ?>"
-	                 type="application/javascript"></script>
-	        <script src="<?php $this->options->themeUrl('/base/vendor/bootstrap-4.6.2.bundle.min.js'); ?>" type="application/javascript"></script>
+	                <?php echo $scriptLoading; ?> type="application/javascript"></script>
+	        <script src="<?php $this->options->themeUrl('/base/vendor/bootstrap-4.6.2.bundle.min.js'); ?>"<?php echo $scriptLoading; ?> type="application/javascript"></script>
 	    <?php endif; ?>
         <?php /* 主题样式必须在 Bootstrap 后，确保最终层叠顺序稳定。
                  普通 stylesheet 可被预加载扫描器并行发现；不依赖被 CSP 禁止的 onload 属性。 */ ?>
         <link rel="stylesheet" href="<?php $this->options->themeUrl('/base/style.css'); ?>">
+        <?php $heroPreload = App::escapeUrlAttribute(App::optionValue('heroimg', '')); ?>
+        <?php if ($heroPreload !== '') : ?>
+            <?php /* hero 是 CSS 背景图，浏览器原本须等待 body 样式才能发现；提前提示可缩短 LCP 链路。 */ ?>
+            <link rel="preload" as="image" href="<?php echo $heroPreload; ?>" fetchpriority="high">
+        <?php endif; ?>
 	    <?php if ($enableCustomCode) : ?>
 		    <?php
 		    // WARNING: Custom code is executed without sanitization

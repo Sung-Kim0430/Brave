@@ -4,6 +4,14 @@ if (window.console && window.console.log) {
 }
 
 (function() {
+    // 远程字体样式以 print 媒体低优先级下载，不阻塞首屏；本地模式没有这个节点。
+    // 外部监听器兼容 nonce CSP。缓存命中时 load 可能早已触发，检查 sheet 补齐激活。
+    var remoteFont = document.getElementById('brave-remote-font');
+    if (remoteFont) {
+        var activateFont = function () { remoteFont.media = 'all'; };
+        remoteFont.addEventListener('load', activateFont, { once: true });
+        if (remoteFont.sheet) activateFont();
+    }
     var THEME_STORAGE_KEY = 'brave-theme';
 
     function isDarkModeEnabled() {

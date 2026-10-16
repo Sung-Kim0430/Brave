@@ -61,4 +61,4 @@ node --test tests/typecho13.browser.test.mjs
 
 ## 仍需人工复核
 
-检查 Typecho 自定义模板、评论开关/网址必填、分页和登录退出；两种资源模式与远程字体；插件自定义脚本在 nonce CSP 下的兼容性；暗色模式及浏览器存储禁用场景；线上缓存、CDN、HTTP/HTTPS 代理和移动端。字体/首屏的线上速度需在实际部署环境测量。
+检查 Typecho 自定义模板、评论开关/网址必填、分页和登录退出；两种资源模式与远程字体；插件自定义脚本在 nonce CSP 下的兼容性；暗色模式及浏览器存储禁用场景；线上缓存、CDN、HTTP/HTTPS 代理和移动端。字体/首屏的线上速度需按 [性能说明](../docs/PERFORMANCE.md) 测量。

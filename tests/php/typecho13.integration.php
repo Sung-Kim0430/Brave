@@ -132,11 +132,11 @@ integrationCheck(strpos($html, 'name="_"') !== false, 'real comment form include
 integrationCheck(strpos($html, 'onload="') === false, 'no inline stylesheet handler');
 integrationCheck(strpos($html, 'media="print"') === false, 'system font default produces no remote font CSS');
 integrationCheck(strpos($html, 'gfonts.ctfile.com') === false, 'local font default must make no remote connection');
-integrationCheck(!preg_match('/<script src=[^>]*\bdefer\b/', $html), 'synchronous dependencies remain compatible');
+integrationCheck(strpos($html, 'defer type="application/javascript"') !== false, 'scripts do not block parsing');
 integrationCheck(strpos($html, 'window.TypechoComment =') === false, 'header must not install stale native reply script');
 integrationCheck(strpos($html, 'customCodeMustStayDisabled') === false, 'custom code stays opt-in');
 
-// 真实 head 模板的配置分支：CDN 使用固定发布路径，远程字体按选项加载，非法 CSP 安全回退。
+// 真实 head 模板的配置分支：CDN 使用固定发布路径，远程字体 print 媒体，非法 CSP 安全回退。
 $options->assetsSource = 'cdn';
 $options->fontSource = 'remote';
 $options->cspPolicy = "default-src 'self'\r\nInjected: yes";
@@ -145,7 +145,7 @@ ob_start();
 $cdnHead = ob_get_clean();
 integrationCheck(strpos($cdnHead, 'jquery@3.7.1/dist/jquery.min.js') !== false, 'CDN fixed npm artifact');
 integrationCheck(substr_count($cdnHead, 'integrity="sha384-') === 3, 'all head CDN assets carry SRI');
-integrationCheck(strpos($cdnHead, 'gfonts.ctfile.com/css2?family=Inter:') !== false, 'remote font opt-in');
+integrationCheck(strpos($cdnHead, 'id="brave-remote-font" rel="stylesheet" media="print"') !== false, 'remote font nonblocking');
 integrationCheck(strpos($cdnHead, '已使用内置默认策略') !== false, 'invalid custom CSP falls back');
 // 自定义完整策略仍须匹配本响应 nonce，不能把占位符原样发给浏览器或复用静态值。
 $options->cspPolicy = "default-src 'self'; script-src 'self' 'nonce-{nonce}'; style-src 'self' 'unsafe-inline'";

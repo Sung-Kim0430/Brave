@@ -15,17 +15,21 @@
 <?php $cdnEnableSRI = App::optionFlag('cdnEnableSRI', true); ?>
 <?php $enableSRI = ($assetsSource === 'cdn' && $cdnEnableSRI); ?>
 <?php $enableCustomCode = App::optionFlag('enableCustomCode', false); ?>
+<?php $scriptLoading = $enableCustomCode ? '' : ' defer'; ?>
 <?php if ($assetsSource === 'cdn') : ?>
     <?php /* 使用 npm 包中实际发布的文件，避免 CDN 动态生成 .min.js 时更换压缩器导致 SRI 失效。 */ ?>
-	<script src="https://cdn.jsdelivr.net/npm/jquery-pjax@2.0.1/jquery.pjax.js" type="application/javascript"
+	<script src="https://cdn.jsdelivr.net/npm/jquery-pjax@2.0.1/jquery.pjax.js"<?php echo $scriptLoading; ?> type="application/javascript"
 	        <?php if ($enableSRI) : ?>integrity="sha384-s9FgFS3wBp+4PO+tW068OQGy8nbd7TdRKxH7XLZdetjFCYG2BJ4n6Xe4IMfbRRkf" crossorigin="anonymous"<?php endif; ?>></script>
-	<script src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.js" type="application/javascript"
+	<script src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.js"<?php echo $scriptLoading; ?> type="application/javascript"
 	        <?php if ($enableSRI) : ?>integrity="sha384-Khp+WGU135XsFuEWvnA1WVJNvQ7T6CI9uxs+8RZes7B2JOmM5kjifb3AJ6V3JxY8" crossorigin="anonymous"<?php endif; ?>></script>
 <?php else : ?>
-	<script src="<?php $this->options->themeUrl('/base/vendor/jquery.pjax-2.0.1.min.js'); ?>" type="application/javascript"></script>
-	<script src="<?php $this->options->themeUrl('/base/vendor/nprogress-0.2.0.min.js'); ?>" type="application/javascript"></script>
+	<script src="<?php $this->options->themeUrl('/base/vendor/jquery.pjax-2.0.1.min.js'); ?>"<?php echo $scriptLoading; ?> type="application/javascript"></script>
+	<script src="<?php $this->options->themeUrl('/base/vendor/nprogress-0.2.0.min.js'); ?>"<?php echo $scriptLoading; ?> type="application/javascript"></script>
 	<?php endif; ?>
 		<script nonce="<?php echo App::escapeHtml(App::scriptNonce()); ?>">
+            // defer 脚本按文档顺序执行完毕后才触发 DOMContentLoaded，保持 jQuery →
+            // Bootstrap → PJAX → 初始化的依赖顺序，同时不阻塞 HTML 解析。
+            document.addEventListener('DOMContentLoaded', function () {
 			window.parseLoveTime = function(value) {
 				if (!value) return null;
 				var str = String(value).trim();
@@ -226,9 +230,10 @@
 			            return true;
 		        });
 		    }
+            });
 </script>
-<script src="<?php $this->options->themeUrl('/base/main.js'); ?>"></script>
-<script src="<?php $this->options->themeUrl('/base/comments.js'); ?>"></script>
+<script src="<?php $this->options->themeUrl('/base/main.js'); ?>"<?php echo $scriptLoading; ?>></script>
+<script src="<?php $this->options->themeUrl('/base/comments.js'); ?>"<?php echo $scriptLoading; ?>></script>
 <?php $this->footer(); ?>
 <?php if ($enableCustomCode) : ?>
 <?php
