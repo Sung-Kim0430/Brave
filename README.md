@@ -2,6 +2,8 @@
 
 Brave 是一个 Typecho 情侣主题，提供「已相伴」计时、祝福板（评论墙）、Love List（恋爱清单）等页面模板与组件。
 
+当前主题版本 **1.3.1**，适配 **Typecho 1.3.0**。PHP 最低 7.4（沿用内核要求），建议使用受维护的 PHP 并开启 DOM/libxml；缺少 DOM 时评论降级为纯文本。升级后请保存一次主题设置并清缓存，使评论防护配置同步到内核。
+
 ![Brave 主题截图](screenshot.png)
 
 ## 功能
@@ -23,6 +25,9 @@ Brave 是一个 Typecho 情侣主题，提供「已相伴」计时、祝福板�
 
 - 使用与配置：`docs/USAGE.md`
 - 安全说明：`docs/SECURITY.md`
+- 适配与 OWASP 检查：`docs/TYPECHO_1_3_AUDIT.md`
+- 字体与首屏优化：`docs/PERFORMANCE.md`
+- 自动化与真内核测试：`tests/README.md`
 
 ## 安全提示（重要）
 
@@ -30,4 +35,4 @@ Brave 是一个 Typecho 情侣主题，提供「已相伴」计时、祝福板�
 这些能力等价于「在前台执行任意脚本」，默认关闭；需要时请由可信管理员显式开启，并确保只有可信管理员账号能修改主题设置。
 
 主题默认使用本地 `base/vendor/` 加载前端依赖，以降低 CDN 供应链风险；也可在主题设置中切换到 CDN 模式。
-CDN 模式下主题默认启用 SRI（Subresource Integrity）与 CSP（Content-Security-Policy），如遇兼容性问题可按需关闭或自定义（详见 `docs/SECURITY.md`）。
+CDN 模式使用固定 npm 发布文件并默认开启 SRI；CSP 在本地/CDN 模式均默认开启。关闭自定义代码时采用随机 nonce 脚本策略。默认系统字体不发起字体网络请求；可选远程字体按非阻塞方式加载。详见对应文档，性能收益需要在实际部署环境测量。

@@ -15,7 +15,7 @@
 
 ## Build, Test, and Development Commands
 
-This repository is a Typecho theme and has no build pipeline.
+This repository targets Typecho 1.3.0 and has no asset build pipeline. Automated checks run in `.github/workflows/ci.yml`.
 
 - Install locally: copy the theme directory to `usr/themes/Brave/`, then enable it in Typecho Admin → Appearance.
 - Verify settings: Admin → Theme Settings (notably per-page intro `intro*` options, `assetsSource`, `fontSource`, `enableDarkMode`, `enableCustomCode`, comment security options, and CSP/SRI toggles).
@@ -31,7 +31,7 @@ This repository is a Typecho theme and has no build pipeline.
 
 ## Testing Guidelines
 
-No automated test suite is configured. Manually validate:
+Run `node --test tests/braveStaticContracts.test.mjs tests/vendorIntegrity.test.mjs`, and the PHP behavior, template, and security suites in `tests/php/`. The optional real Typecho integration/browser fixtures are documented in `tests/README.md`; never run comment submission tests against production. CI covers PHP 7.4/8.2/8.4. Also manually validate:
 
 - Comment submission + rendering (`commentPage.php`), with `commentAllowImg` on/off.
 - Comment author output (`commentPage.php`): verify author name/link renders correctly and is sanitized.
