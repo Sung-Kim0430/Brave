@@ -9,13 +9,13 @@ if (!class_exists('App', false)) {
  * Editor: Sung Kim
  * Creator: Veen Zhao
  * CreateTime: 2021/2/6 22:32
- * UpdateTime: 2026/6/8
+ * UpdateTime: 2026/10/16 (previous Git revision: 2026/9/11)
  */
 $siteUrl = App::siteUrl(true);
 $blessingPageHref = App::safeCardLink(App::optionValue('blessingPageLink', ''), '');
 $blessingPageAvailable = ($blessingPageHref !== '');
 $blessingPageIcon = App::escapeUrlAttribute(App::optionValue('blessingPageIcon', ''), true, array('http', 'https'));
-$timePageHref = App::safeCardLink(App::optionValue('timePageLink', ''), $siteUrl . 'blog/');
+$timePageHref = App::safeCardLink(App::optionValue('timePageLink', ''), App::rawSiteUrl() . 'blog/');
 $timePageIcon = App::escapeUrlAttribute(App::optionValue('timePageIcon', ''), true, array('http', 'https'));
 $loveListPageHref = App::safeCardLink(App::optionValue('loveListPageLink', ''), '');
 $loveListPageAvailable = ($loveListPageHref !== '');

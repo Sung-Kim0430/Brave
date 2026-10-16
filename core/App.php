@@ -4,7 +4,7 @@ if (!defined('__TYPECHO_ROOT_DIR__')) exit;
  * Editor: Sung Kim
  * Creator: Veen Zhao
  * CreateTime: 2020/9/5 18:26
- * UpdateTime: 2026/6/8
+ * UpdateTime: 2026/10/16 (previous Git revision: 2026/9/11)
  *
  * Note: This class depends on Typecho's Helper class, which is autoloaded by the framework.
  * All methods assume Typecho environment is properly initialized.
@@ -13,7 +13,7 @@ if (!defined('__TYPECHO_ROOT_DIR__')) exit;
 class App
 {
     /**
-     * 内容硬上限的默认值（字符数）。
+     * 内容硬上限的默认值（UTF-8 字节数）。
      *
      * 评论净化与短代码解析共用该上限；可通过主题设置 `contentMaxLength` 覆盖，
      * 见 `App::contentMaxLength()`。
@@ -25,7 +25,10 @@ class App
 
     public static function escapeHtml($value)
     {
-        return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+        // 截断、插件或历史数据可能包含不完整 UTF-8；替换非法字节，避免整段输出变为空串。
+        // Typecho 会将文章标题实体化入库，double_encode=false 保留已有实体，防止 & 显示成 &amp;。
+        // 这不会把 &lt;script&gt; 恢复成 HTML 标签；浏览器仍将其作为文本/属性值解析。
+        return htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8', false);
     }
 
     public static function escapeTextWithBr($value)
@@ -44,7 +47,7 @@ class App
     public static function optionValue($name, $default = '')
     {
         $options = Helper::options();
-        if (isset($options->{$name})) {
+        if (isset($options->{$name}) && is_scalar($options->{$name})) {
             return (string)$options->{$name};
         }
 
@@ -58,7 +61,12 @@ class App
             return (bool)$default;
         }
 
-        $value = (string)$options->{$name};
+        // 内核/插件可能返回布尔值；(string)false 是空串，不能误回退为默认 true。
+        if (is_bool($options->{$name})) {
+            return $options->{$name};
+        }
+
+        $value = self::optionValue($name, $default ? '1' : '0');
         if ($value === '1') {
             return true;
         }
@@ -111,6 +119,33 @@ class App
     }
 
     /**
+     * 返回未转义的站点地址，只用于继续拼接路径；最终输出仍须经过 URL 属性转义。
+     * siteUrl() 返回的是 HTML 属性值，不能继续拼接再转义，否则查询参数中的 & 会双重编码。
+     */
+    public static function rawSiteUrl()
+    {
+        $url = self::normalizeUrl(self::optionValue('siteUrl', '/'), true, array('http', 'https'));
+        return rtrim($url !== '' ? $url : '/', '/') . '/';
+    }
+
+    /** 每次响应生成独立 CSP nonce；同一响应中的 head/footer 共用，不能跨请求复用。 */
+    public static function scriptNonce()
+    {
+        static $nonce;
+        if ($nonce === null) {
+            $nonce = base64_encode(random_bytes(24));
+        }
+        return $nonce;
+    }
+
+    /** 仅接受可安全写入响应头的 CSP；非法配置回退内置策略，不能只回退到无效 meta。 */
+    public static function validCspPolicy($policy)
+    {
+        return is_string($policy) && trim($policy) !== '' && strlen($policy) < 4000
+            && !preg_match('/[\x00-\x1F\x7F<>]/', $policy);
+    }
+
+    /**
      * 当前请求是否走 HTTPS。
      *
      * 用于决定默认 CSP 是否放行 `http:` 来源 —— HTTPS 站点若继续放行 http:，
@@ -119,6 +154,10 @@ class App
      */
     public static function isHttpsRequest()
     {
+        // 与 Typecho 1.3 使用同一判断，包含 __TYPECHO_SECURE__、QUIC 和反向代理配置。
+        if (class_exists('Typecho\\Request')) {
+            return \Typecho\Request::getInstance()->isSecure();
+        }
         $https = isset($_SERVER['HTTPS']) ? strtolower((string)$_SERVER['HTTPS']) : '';
         if ($https !== '' && $https !== 'off') {
             return true;
@@ -159,7 +198,7 @@ class App
     }
 
     /**
-     * 内容硬上限（字符数）。超过会先截断再继续净化，并追加「内容过长，已截断」提示。
+     * 内容硬上限（UTF-8 字节数）。评论超限先截断再净化；文章短代码超限跳过解析。
      *
      * 原先是写死的常量，长文会被截断破版且无法调整；现在可用主题设置 `contentMaxLength`
      * 覆盖，并夹在 10000~200000 之间（下限保证防护有效，上限避免 DOM 解析开销失控）。
@@ -349,6 +388,12 @@ class App
         }
         $schemeCheckUrl = preg_replace('/[\\x00-\\x20]+/', '', $decodedUrl);
 
+        // WHATWG URL 解析会把反斜杠视为 HTTP(S) 分隔符，PHP parse_url 却不会。
+        // 拒绝这种歧义，避免 /\\evil.example 被误认为同源路径，以及凭据检查被绕过。
+        if (strpos($decodedUrl, '\\') !== false || preg_match('//u', $decodedUrl) !== 1) {
+            return '';
+        }
+
         // Block dangerous schemes even if obfuscated with entities/whitespace.
         if (preg_match('#^(?:javascript|data|vbscript|file):#i', $schemeCheckUrl)) {
             return '';
@@ -361,6 +406,10 @@ class App
 
         // Allow protocol-relative URLs (e.g. //example.com/a.png), but verify they don't contain dangerous schemes.
         if (strpos($schemeCheckUrl, '//') === 0) {
+            // 协议相对地址仍然是远程地址，不能绕过调用方的绝对 URL/协议限制。
+            if (!$allowRelative || (!in_array('http', $allowedSchemes, true) && !in_array('https', $allowedSchemes, true))) {
+                return '';
+            }
             // Check that protocol-relative URL doesn't embed dangerous schemes after //
             $afterSlashes = substr($schemeCheckUrl, 2);
             if (preg_match('#^(?:javascript|data|vbscript|file):#i', $afterSlashes)) {
@@ -370,13 +419,22 @@ class App
             if (preg_match('#^[^/@]*@#', $afterSlashes)) {
                 return '';
             }
-            return $decodedUrl;
+            $parts = parse_url('https:' . $decodedUrl);
+            return is_array($parts) && !empty($parts['host']) ? $decodedUrl : '';
         }
 
         if (preg_match('#^([a-z][a-z0-9+.-]*):#i', $schemeCheckUrl, $m)) {
             $scheme = strtolower($m[1]);
             if (!in_array($scheme, $allowedSchemes, true)) {
                 return '';
+            }
+
+            // 浏览器会修复 https:example.com 等畸形地址；只接受具有真实 authority 的 HTTP URL。
+            if ($scheme === 'http' || $scheme === 'https') {
+                $parts = parse_url($decodedUrl);
+                if (!preg_match('#^https?://#i', $decodedUrl) || !is_array($parts) || empty($parts['host'])) {
+                    return '';
+                }
             }
 
             // 这里不做「禁止 localhost / 私有 IP」的 SSRF 黑名单：
@@ -723,9 +781,15 @@ class App
             $truncated = true;
         }
 
+        // 上限按字节计算，substr 可能切断中文的 UTF-8 序列；先替换非法字节，
+        // 保留原有标记/实体，再交给 DOM，避免长评论丢失全部文本或产生乱码解析差异。
+        if (preg_match('//u', $html) !== 1) {
+            $html = htmlspecialchars_decode(htmlspecialchars($html, ENT_NOQUOTES | ENT_SUBSTITUTE, 'UTF-8'), ENT_NOQUOTES);
+        }
+
         // Fast path: pure text (no HTML tags)
         if (strpos($html, '<') === false) {
-            $escaped = htmlspecialchars($html, ENT_QUOTES, 'UTF-8');
+            $escaped = self::escapeHtml($html);
             return $truncated ? $escaped . self::truncationNoticeText() : $escaped;
         }
 
@@ -737,7 +801,7 @@ class App
         // DOMDocument is available in all standard PHP installations since PHP 5.
         // This check is kept for extreme edge cases (custom minimal builds).
         if (!class_exists('DOMDocument')) {
-            $escaped = htmlspecialchars($html, ENT_QUOTES, 'UTF-8');
+            $escaped = self::escapeHtml($html);
             return $truncated ? $escaped . self::truncationNoticeText() : $escaped;
         }
 
@@ -747,11 +811,8 @@ class App
         $dom->substituteEntities = false;
         $dom->validateOnParse = false;
 
-        // Additional XXE protection
-        if (function_exists('libxml_disable_entity_loader')) {
-            @libxml_disable_entity_loader(true);
-        }
-
+        // 不调用 libxml_disable_entity_loader()：PHP 8 已弃用，且修改进程全局状态会干扰插件。
+        // loadHTML 不展开 XML 外部实体；同时禁用解析器相关选项并加 LIBXML_NONET，禁止网络加载。
         $prev = libxml_use_internal_errors(true);
 
         $wrapped = '<div>' . $html . '</div>';
@@ -763,18 +824,17 @@ class App
             $flags |= LIBXML_NONET;
         }
 
-        if ($flags !== 0) {
-            $dom->loadHTML('<?xml encoding="UTF-8">' . $wrapped, $flags);
-        } else {
-            $dom->loadHTML('<?xml encoding="UTF-8">' . $wrapped);
+        try {
+            $loaded = $dom->loadHTML('<?xml encoding="UTF-8">' . $wrapped, $flags);
+        } finally {
+            // 即使解析器抛出异常也恢复错误处理方式，避免污染 Typecho/其他插件的后续解析。
+            libxml_clear_errors();
+            libxml_use_internal_errors($prev);
         }
 
-        libxml_clear_errors();
-        libxml_use_internal_errors($prev);
-
         $root = $dom->getElementsByTagName('div')->item(0);
-        if (!$root) {
-            $escaped = htmlspecialchars($html, ENT_QUOTES, 'UTF-8');
+        if (!$loaded || !$root) {
+            $escaped = self::escapeHtml($html);
             return $truncated ? $escaped . self::truncationNoticeText() : $escaped;
         }
 
@@ -876,7 +936,7 @@ class App
         $title = (string)$title;
 
         if (!$allowHtml) {
-            return htmlspecialchars($title, ENT_QUOTES, 'UTF-8');
+            return self::escapeHtml($title);
         }
 
         return self::sanitizeHtmlFragment(

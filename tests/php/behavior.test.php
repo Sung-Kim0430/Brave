@@ -9,6 +9,7 @@
  * 运行：php tests/php/behavior.test.php
  */
 
+if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 define('__TYPECHO_ROOT_DIR__', dirname(__DIR__, 2));
 
 /**
@@ -77,6 +78,8 @@ Helper::set(array(
     'themeUrl' => 'https://example.com/usr/themes/Brave',
     'loveListTitleAllowHtml' => '0',
 ));
+
+checkSame('Typecho 实体化标题不应二次编码', App::escapeHtml('A &amp; B &lt;C&gt;'), 'A &amp; B &lt;C&gt;');
 
 /* ------------------------------------------------------------------ *
  * 评论净化：Markdown 产物必须原样保留

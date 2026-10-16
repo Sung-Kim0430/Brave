@@ -520,7 +520,7 @@ checkNotContains('文章页：标签名不产生裸标签', $html, '<img src=x')
 checkContains('文章页：标签名被实体化', $html, '&lt;img src=x onerror=alert(1)&gt;');
 
 checkContains('文章页：输出上下篇导航', $html, '<nav class="post-near"');
-checkContains('文章页：渲染上一篇链接', $html, '<a href="https://example.com/post/0">更早的一篇</a>');
+checkContains('文章页：渲染安全上一篇链接', $html, '<a href="https://example.com/post/0" rel="nofollow ugc noopener noreferrer">更早的一篇</a>');
 checkContains('文章页：缺失的下一篇用占位文案', $html, '<span class="post-near__empty">没有了</span>');
 checkSame('文章页：占位文案只出现在缺失的一侧', substr_count($html, 'post-near__empty'), 1);
 

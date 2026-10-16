@@ -3,7 +3,7 @@ if (!defined('__TYPECHO_ROOT_DIR__')) exit;
 if (!class_exists('App', false)) {
     require_once __DIR__ . '/core/App.php';
 }
-$blogUrl = App::safeCardLink(App::optionValue('timePageLink', ''), App::siteUrl(true) . 'blog/');
+$blogUrl = App::safeCardLink(App::optionValue('timePageLink', ''), App::rawSiteUrl() . 'blog/');
 ob_start();
 $this->title();
 $postTitleText = ob_get_clean();
@@ -78,14 +78,13 @@ $this->need('base/nav.php');
 		        include __DIR__ . '/base/comments.php';
 		        ?>
 		        <?php
-		        // 上下篇导航：直接用内核 theLink 的输出（标题在入库时已由 Typecho 实体化、
-		        // 链接由路由生成），交由内核渲染比在主题里重建一份更不容易出错。
+		        // 上下篇仍交由内核查询，输出再限制为安全链接；历史标题/插件输出不能盲目信任。
 		        ob_start();
 		        $this->thePrev('%s', '');
-		        $prevNavHtml = trim(ob_get_clean());
+		        $prevNavHtml = App::sanitizeCommentAuthorHtml(trim(ob_get_clean()));
 		        ob_start();
 		        $this->theNext('%s', '');
-		        $nextNavHtml = trim(ob_get_clean());
+		        $nextNavHtml = App::sanitizeCommentAuthorHtml(trim(ob_get_clean()));
 		        ?>
 		        <?php if ($prevNavHtml !== '' || $nextNavHtml !== '') : ?>
 		            <nav class="post-near" aria-label="<?php echo App::escapeHtml(_t('相邻文章')); ?>">
