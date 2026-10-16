@@ -3,32 +3,75 @@ use Typecho\Widget\Helper\Form\Element\Text;
 use Typecho\Widget\Helper\Form\Element\Textarea;
 use Typecho\Widget\Helper\Form\Element\Radio;
 if (!defined('__TYPECHO_ROOT_DIR__')) exit;
-require_once("core/App.php");
+// 使用绝对路径：后台外观设置和前台路由的当前工作目录不同。
+require_once __DIR__ . '/core/App.php';
 function themeInit($archive = null)
 {
     $options = Helper::options();
-
-    // 评论安全相关：提供可配置开关（默认偏安全，但尽量避免影响原有可用性）。
-    $commentAntiSpam = App::optionFlag('commentAntiSpam', true);
-    // Referer 检查默认开启；若站点代理/隐私策略导致评论失败，可在后台关闭。
-    $commentCheckReferer = App::optionFlag('commentCheckReferer', true);
-    $commentMaxNestingLevels = App::optionIntRange('commentMaxNestingLevels', 10, 1, 10);
-    $allowCommentImg = App::optionFlag('commentAllowImg', false);
-
-    $options->commentsAntiSpam = $commentAntiSpam;
-    $options->commentsCheckReferer = $commentCheckReferer;
-    $options->commentsRequireURL = false;
-    $options->commentsMaxNestingLevels = (string)$commentMaxNestingLevels;
+    // Feedback 通过外部 Archive 查找文章时不会执行 themeInit()。
+    // 因此禁止在这里覆盖 AntiSpam/Referer：否则 GET 页面和 POST 校验使用不同的配置。
+    // 安全设置由 themeConfigHandle() 在管理员保存时写入内核；升级未保存时沿用内核策略。
+    $options->commentsMaxNestingLevels = App::optionIntRange('commentsMaxNestingLevels', 10, 1, 10);
     $options->commentsPageDisplay = 'first'; //强制评论第一页
     $options->commentsOrder = 'DESC'; //将最新的评论展示在前
+}
 
-    // 仅放行评论中必要的基础标签与属性（额外净化在模板输出阶段处理）。
+/** 主题允许的评论标签；模板仍使用 DOM 白名单净化，不能把内核 strip_tags 当成完整 XSS 防护。 */
+function braveCommentAllowedTags($allowImages)
+{
     $allowedTags = '<a href="" title="" rel="" target=""> <code> <pre> <del> <strong> <em> <blockquote> <p> <br> <ul> <ol> <li> <hr>';
-    if ($allowCommentImg) {
+    if ($allowImages) {
         $allowedTags .= ' <img src="" alt="" title="" class="">';
     }
-    $options->commentsHTMLTagAllowed = $allowedTags;
-    $options->commentsMarkdown = true;
+    return $allowedTags;
+}
+
+/**
+ * Typecho 1.3 的外观配置回调接管「整个保存过程」，内核不会再替主题保存设置。
+ * 同时保存 JSON 格式的主题设置和内核评论选项，使页面渲染与 Feedback POST 的策略一致。
+ * 此回调只由已通过 administrator 权限和 Security::protect() 的 Themes\\Edit 调用；
+ * 不注册匿名 action，不在访问前台时写数据库，也不接受请求参数作为选项名或 SQL。
+ */
+function themeConfigHandle($settings, $isInit)
+{
+    $db = \Typecho\Db::get();
+    $options = Helper::options();
+    // 激活时 Edit 已更新数据库，但 options->theme 可能还缓存旧值。
+    // 读回已生效的主题名，兼容不同安装目录名及符号链接，不能按 __DIR__ 猜配置键。
+    $themeRow = $db->fetchRow($db->select('value')->from('table.options')
+        ->where('name = ?', 'theme')->where('user = ?', 0));
+    $themeKey = 'theme:' . $themeRow['value'];
+    $encoded = json_encode($settings, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+    $existing = $db->fetchRow($db->select('name')->from('table.options')
+        ->where('name = ?', $themeKey)->where('user = ?', 0));
+    if ($existing) {
+        $db->query($db->update('table.options')->rows(array('value' => $encoded))
+            ->where('name = ?', $themeKey)->where('user = ?', 0));
+    } else {
+        $db->query($db->insert('table.options')->rows(array('name' => $themeKey, 'user' => 0, 'value' => $encoded)));
+    }
+
+    // 显式校验取值，异常值按安全默认处理；表单的历史值可能来自旧版本或损坏的数据。
+    $flag = function ($name, $default) use ($settings) {
+        if (isset($settings[$name]) && is_bool($settings[$name])) return (int)$settings[$name];
+        $value = isset($settings[$name]) && is_scalar($settings[$name]) ? (string)$settings[$name] : '';
+        return $value === '1' ? 1 : ($value === '0' ? 0 : (int)$default);
+    };
+    $levels = isset($settings['commentMaxNestingLevels']) && is_numeric($settings['commentMaxNestingLevels'])
+        ? (int)$settings['commentMaxNestingLevels'] : 10;
+    $coreSettings = array(
+        'commentsAntiSpam' => $flag('commentAntiSpam', true),
+        'commentsCheckReferer' => $flag('commentCheckReferer', true),
+        'commentsMaxNestingLevels' => max(1, min(10, $levels)),
+        'commentsHTMLTagAllowed' => braveCommentAllowedTags($flag('commentAllowImg', false)),
+        'commentsMarkdown' => 1,
+    );
+    foreach ($coreSettings as $name => $value) {
+        $db->query($db->update('table.options')->rows(array('value' => (string)$value))
+            ->where('name = ?', $name)->where('user = ?', 0));
+        $options->{$name} = $value;
+    }
+    // 不改动 commentsRequireUrl：它是站点的讨论策略，主题不应通过拼错大小写的字段尝试覆盖。
 }
 /**
  * 主题后台设置
@@ -302,7 +345,7 @@ function themeConfig($form)
         NULL,
         NULL,
         _t('自定义 CSP 策略（可选）'),
-        _t('留空则使用主题内置默认策略；仅在「启用 CSP」时生效。示例：default-src \'self\'; script-src \'self\' \'unsafe-inline\' https://cdn.staticfile.org;')
+        _t('留空使用内置 nonce 策略。自定义策略可写 script-src \'self\' \'nonce-{nonce}\'，占位符会替换为本响应随机值；非法字符或过长配置回退默认。第三方资源域名须由站长审核。')
     );
     $form->addInput($cspPolicy);
 
@@ -310,8 +353,8 @@ function themeConfig($form)
         'contentMaxLength',
         NULL,
         '50000',
-        _t('内容硬上限（字符数）'),
-        _t('评论与短代码内容的长度上限，默认 50000，可调范围 10000~200000；超过时先截断再继续输出，并追加「内容过长，已截断」提示。调大可容纳超长文章/评论，但会增加解析开销。')
+        _t('内容处理上限（UTF-8 字节数）'),
+        _t('默认 50000，范围 10000~200000。评论净化超限会截断并提示；文章/清单短代码超限则跳过解析并保留原文，避免截断文章。UTF-8 中文通常每字 3 字节。')
     );
     $form->addInput($contentMaxLength);
 

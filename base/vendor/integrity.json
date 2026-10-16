@@ -1,0 +1,27 @@
+{
+  "jquery-3.7.1.min.js": {
+    "localSha384": "1H217gwSVyLSIfaLxHbE7dRb3v4mYCKbpQvzx0cegeju1MVsGrX5xXxAvs/HgeFs",
+    "cdnUrl": "https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js",
+    "cdnSha384": "1H217gwSVyLSIfaLxHbE7dRb3v4mYCKbpQvzx0cegeju1MVsGrX5xXxAvs/HgeFs"
+  },
+  "bootstrap-4.6.2.bundle.min.js": {
+    "localSha384": "Fy6S3B9q64WdZWQUiU+q4/2Lc9npb8tCaSX9FK7E8HnRr0Jz8D6OP9dO5Vg3Q9ct",
+    "cdnUrl": "https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js",
+    "cdnSha384": "Fy6S3B9q64WdZWQUiU+q4/2Lc9npb8tCaSX9FK7E8HnRr0Jz8D6OP9dO5Vg3Q9ct"
+  },
+  "bootstrap-4.6.2.min.css": {
+    "localSha384": "xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N",
+    "cdnUrl": "https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css",
+    "cdnSha384": "xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N"
+  },
+  "jquery.pjax-2.0.1.min.js": {
+    "localSha384": "KlbzGrz/B1TD4xN/OK1N0kJiSuZ3dy4/TcrUDfPct8LzRoK6NQPLdtWWyBJu6llx",
+    "cdnUrl": "https://cdn.jsdelivr.net/npm/jquery-pjax@2.0.1/jquery.pjax.js",
+    "cdnSha384": "s9FgFS3wBp+4PO+tW068OQGy8nbd7TdRKxH7XLZdetjFCYG2BJ4n6Xe4IMfbRRkf"
+  },
+  "nprogress-0.2.0.min.js": {
+    "localSha384": "4CSxpAdvo0qDftQz4rp79ZHCtwb5WiQ+PJHvnt5zhASbfNNxfplvow06BG0kZK+B",
+    "cdnUrl": "https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.js",
+    "cdnSha384": "Khp+WGU135XsFuEWvnA1WVJNvQ7T6CI9uxs+8RZes7B2JOmM5kjifb3AJ6V3JxY8"
+  }
+}

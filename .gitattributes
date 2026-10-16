@@ -1,0 +1,3 @@
+# 固定供应商文件字节，避免 Windows autocrlf 使本地副本的哈希漂移。
+base/vendor/*.js text eol=lf
+base/vendor/*.css text eol=lf

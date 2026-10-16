@@ -1,5 +1,8 @@
 name: Tests and Quality Checks
 
+permissions:
+  contents: read
+
 on:
   push:
     branches: [ main, develop ]
@@ -21,7 +24,7 @@ jobs:
           node-version: '20'
 
       - name: Run tests
-        run: node --test tests/braveStaticContracts.test.mjs
+        run: node --test tests/braveStaticContracts.test.mjs tests/vendorIntegrity.test.mjs
 
   lint-js:
     name: JavaScript Syntax Check
@@ -39,11 +42,15 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           node --check base/main.js
+          node --check base/comments.js
           echo "✓ JavaScript syntax is valid"
 
   test-php:
-    name: PHP Behavior Tests
+    name: PHP ${{ matrix.php }} Behavior and Typecho 1.3 Tests
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['7.4', '8.2', '8.4']
 
     steps:
       - name: Checkout code
@@ -52,14 +59,35 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
-          extensions: dom, libxml
+          php-version: ${{ matrix.php }}
+          extensions: dom, libxml, mbstring, pdo_sqlite
 
       - name: Run App behavior tests
         run: php tests/php/behavior.test.php
 
       - name: Run template render tests
         run: php tests/php/template.test.php
+
+      - name: Run security behavior tests
+        run: php tests/php/security.test.php
+
+      - name: Checkout Typecho 1.3.0 official source
+        uses: actions/checkout@v4
+        with:
+          repository: typecho/typecho
+          ref: e9f23304bf20c0c355ef1df9634d42148cbc53b5
+          path: .typecho-test
+
+      - name: Install theme into isolated Typecho fixture
+        run: |
+          mkdir -p .typecho-test/usr/themes/Brave
+          cp -R base core svg .typecho-test/usr/themes/Brave/
+          cp *.php .typecho-test/usr/themes/Brave/
+
+      - name: Run real Typecho integration tests
+        env:
+          TYPECHO_ROOT: ${{ github.workspace }}/.typecho-test
+        run: php tests/php/typecho13.integration.php
 
   lint-php:
     name: PHP Syntax Check

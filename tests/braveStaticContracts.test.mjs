@@ -26,7 +26,7 @@ function loadParseLoveTime(overrides = {}) {
 
 function runFooterRuntime(loveTimeValue) {
   const footer = read('base/footer.php');
-  const scriptMatch = footer.match(/<script>([\s\S]*?)<\/script>\s*<script src=/);
+  const scriptMatch = footer.match(/<script nonce="[^\n]*?">([\s\S]*?)<\/script>\s*<script src=/);
   assert.ok(scriptMatch, 'footer inline script should exist');
 
   let script = scriptMatch[1];
@@ -57,6 +57,7 @@ function runFooterRuntime(loveTimeValue) {
       },
     },
     document: {
+      addEventListener(name, callback) { if (name === 'DOMContentLoaded') callback(); },
       body: { classList: { add() {}, remove() {} } },
       createElement() {
         return { className: '', textContent: '' };
@@ -269,13 +270,13 @@ test('URL normalizer emits entity-decoded safe URLs before context escaping', ()
   assert.doesNotMatch(app, /return\s+\$url;\s*\n\s*}\s*\n\s*return\s+'';/);
 });
 
-test('theme init uses shared option helpers for comment safety defaults', () => {
+test('comment safety settings are persisted for Feedback instead of only overriding GET requests', () => {
   const functions = read('functions.php');
 
-  assert.match(functions, /App::optionFlag\('commentAntiSpam',\s*true\)/);
-  assert.match(functions, /App::optionFlag\('commentCheckReferer',\s*true\)/);
-  assert.match(functions, /App::optionIntRange\('commentMaxNestingLevels',\s*10,\s*1,\s*10\)/);
-  assert.match(functions, /App::optionFlag\('commentAllowImg',\s*false\)/);
+  assert.match(functions, /function themeConfigHandle/);
+  assert.match(functions, /'commentsAntiSpam' => \$flag\('commentAntiSpam', true\)/);
+  assert.match(functions, /'commentsCheckReferer' => \$flag\('commentCheckReferer', true\)/);
+  assert.match(functions, /'commentsMaxNestingLevels' => max\(1, min\(10, \$levels\)\)/);
   assert.doesNotMatch(functions, /isset\(\$options->commentAntiSpam\)/);
   assert.doesNotMatch(functions, /isset\(\$options->commentMaxNestingLevels\)/);
 });
@@ -319,7 +320,7 @@ test('Love List generated DOM ids are scoped per shortcode instance', () => {
 test('comment nesting is capped to the documented safe maximum', () => {
   const functions = read('functions.php');
 
-  assert.match(functions, /App::optionIntRange\('commentMaxNestingLevels',\s*10,\s*1,\s*10\)/);
+  assert.match(functions, /App::optionIntRange\('commentsMaxNestingLevels',\s*10,\s*1,\s*10\)/);
   assert.doesNotMatch(functions, /\$commentMaxNestingLevels\s*>\s*50/);
   assert.match(functions, /已在代码中限制最大为 10/);
 });
@@ -497,12 +498,11 @@ test('CSP header validation accepts hashes and nonces and keeps a meta fallback 
   assert.match(head, /unsupported|不支持/);
 });
 
-test('stylesheet loading degrades to blocking when CSP forbids inline scripts', () => {
+test('theme stylesheet loads after Bootstrap without an inline onload handler', () => {
   const head = read('base/head.php');
 
-  assert.match(head, /\$cspBlocksInlineScript = true;/);
-  assert.match(head, /if\s*\(\$cspBlocksInlineScript\)\s*:/);
-  assert.match(head, /stripos\(\$cspPolicy, "'unsafe-inline'"\) === false/);
+  assert.doesNotMatch(head, /onload="/);
+  assert.ok(head.indexOf("themeUrl('/base/style.css')") > head.indexOf('bootstrap-4.6.2.min.css'));
 });
 
 test('bootstrap bundle (with Popper) replaces the plain bootstrap build', () => {
@@ -569,11 +569,11 @@ test('default CSP only allows http: images on plain HTTP requests', () => {
 test('comment form can carry the nested-reply parent id', () => {
   const page = read('base/comments.php');
 
-  assert.match(page, /<input type="hidden" name="parent" id="comment-parent" value="0">/);
+  assert.match(page, /name="parent" id="comment-parent" value="<\?php echo App::commentReplyParent\(\); \?>"/);
   assert.match(page, /\$comments->reply\(/);
   assert.match(page, /\$comments->cancelReply\(/);
   assert.match(page, /comment-reply cp-<\?php \$comments->theId\(\); \?>/);
-  assert.match(page, /cancel-comment-reply cl-<\?php \$comments->theId\(\); \?>/);
+  assert.match(page, /data-brave-cancel-reply/);
   assert.match(page, /App::optionFlag\('commentsThreaded', false\)/);
 });
 

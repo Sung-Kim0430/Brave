@@ -16,15 +16,16 @@
 <?php $enableSRI = ($assetsSource === 'cdn' && $cdnEnableSRI); ?>
 <?php $enableCustomCode = App::optionFlag('enableCustomCode', false); ?>
 <?php if ($assetsSource === 'cdn') : ?>
-	<script src="https://cdn.staticfile.org/jquery.pjax/2.0.1/jquery.pjax.min.js" type="application/javascript"
-	        <?php if ($enableSRI) : ?>integrity="sha384-VLg3MPOy+5T9leB7r4BBB56zHq4/e0We8vujbAvJwp3xNDhj3b7Fg6+jOVs6bym1" crossorigin="anonymous"<?php endif; ?>></script>
-	<script src="https://cdn.staticfile.org/nprogress/0.2.0/nprogress.min.js" type="application/javascript"
-	        <?php if ($enableSRI) : ?>integrity="sha384-WVrcwN/kiINFnwTi170GvMPVLHVBao1WfcXL/BZAK3VaUaaWX0OOsxMgCiFmrIb1" crossorigin="anonymous"<?php endif; ?>></script>
+    <?php /* 使用 npm 包中实际发布的文件，避免 CDN 动态生成 .min.js 时更换压缩器导致 SRI 失效。 */ ?>
+	<script src="https://cdn.jsdelivr.net/npm/jquery-pjax@2.0.1/jquery.pjax.js" type="application/javascript"
+	        <?php if ($enableSRI) : ?>integrity="sha384-s9FgFS3wBp+4PO+tW068OQGy8nbd7TdRKxH7XLZdetjFCYG2BJ4n6Xe4IMfbRRkf" crossorigin="anonymous"<?php endif; ?>></script>
+	<script src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.js" type="application/javascript"
+	        <?php if ($enableSRI) : ?>integrity="sha384-Khp+WGU135XsFuEWvnA1WVJNvQ7T6CI9uxs+8RZes7B2JOmM5kjifb3AJ6V3JxY8" crossorigin="anonymous"<?php endif; ?>></script>
 <?php else : ?>
 	<script src="<?php $this->options->themeUrl('/base/vendor/jquery.pjax-2.0.1.min.js'); ?>" type="application/javascript"></script>
 	<script src="<?php $this->options->themeUrl('/base/vendor/nprogress-0.2.0.min.js'); ?>" type="application/javascript"></script>
 	<?php endif; ?>
-		<script>
+		<script nonce="<?php echo App::escapeHtml(App::scriptNonce()); ?>">
 			window.parseLoveTime = function(value) {
 				if (!value) return null;
 				var str = String(value).trim();
@@ -163,10 +164,15 @@
 			    var pjaxLinkSelector = 'a[href]' +
 			        ':not([target])' +
 			        ':not([download])' +
+		        ':not([onclick])' +
 		        ':not([data-pjax=\"false\"])' +
 		        ':not([href^=\"#\"])' +
 		        ':not([href^=\"mailto:\"])' +
 		        ':not([href^=\"tel:\"])';
+
+            // 外观设置、退出登录、附件等也可能同源；只允许主题正文容器内的普通链接
+            // 触发 PJAX，并排除评论表单中的身份链接，避免 Ajax 消费安全令牌和登录状态。
+            pjaxLinkSelector = '#pjax-container ' + pjaxLinkSelector + ':not(.comment-form a)';
 
 		    if (window.jQuery && window.jQuery.pjax) {
 		        $(document).pjax(pjaxLinkSelector, '#pjax-container', {
@@ -222,6 +228,7 @@
 		    }
 </script>
 <script src="<?php $this->options->themeUrl('/base/main.js'); ?>"></script>
+<script src="<?php $this->options->themeUrl('/base/comments.js'); ?>"></script>
 <?php $this->footer(); ?>
 <?php if ($enableCustomCode) : ?>
 <?php
@@ -235,6 +242,7 @@ $customFooter = ob_get_clean();
 // 这不是安全边界（内联 <script> 仍会放行），仅用于避免在主题设置里误粘贴第三方脚本。
 $customCodeTrustedHosts = array(
     'cdn.staticfile.org',
+    'cdn.jsdelivr.net',
     (string)parse_url(App::optionValue('siteUrl', ''), PHP_URL_HOST)
 );
 $customFooterBlocked = App::findUntrustedScriptHosts($customFooter, $customCodeTrustedHosts);

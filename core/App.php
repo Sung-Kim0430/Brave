@@ -128,6 +128,37 @@ class App
         return rtrim($url !== '' ? $url : '/', '/') . '/';
     }
 
+    /**
+     * Typecho 1.3 的评论 CSRF 校验使用「当前用户 + 当前请求 URL」生成令牌。
+     * 必须使用内核的 Security/Request，不能自行生成随机值或改用文章 permalink：
+     * 评论分页和自定义首页的 Referer 与 permalink 可能不同。由表单直接携带令牌，
+     * 不再依赖 header() 中只在 DOMContentLoaded 执行一次的反垃圾脚本（PJAX 不会重触发）。
+     */
+    public static function commentToken()
+    {
+        $url = \Typecho\Request::getInstance()->getRequestUrl();
+        // jquery-pjax 给 Ajax URL 追加 _pjax，但 history.pushState 和后续 Referer 会移除它。
+        // 仅剔除这个内部参数，保留用户查询参数的原始编码/顺序，避免令牌与 Referer 不一致。
+        if (!empty($_SERVER['HTTP_X_PJAX'])) {
+            $parts = explode('?', $url, 2);
+            if (isset($parts[1])) {
+                $query = array_filter(explode('&', $parts[1]), function ($part) {
+                    $pair = explode('=', $part, 2);
+                    return urldecode($pair[0]) !== '_pjax';
+                });
+                $url = $parts[0] . ($query ? '?' . implode('&', $query) : '');
+            }
+        }
+        return \Widget\Security::alloc()->getToken($url);
+    }
+
+    /** 无 JavaScript 回复时，保留内核 replyTo 参数；父评论归属仍由 Feedback 校验。 */
+    public static function commentReplyParent()
+    {
+        $request = new \Typecho\Widget\Request(\Typecho\Request::getInstance());
+        return max(0, (int)$request->filter('int')->get('replyTo', 0));
+    }
+
     /** 每次响应生成独立 CSP nonce；同一响应中的 head/footer 共用，不能跨请求复用。 */
     public static function scriptNonce()
     {

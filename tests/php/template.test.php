@@ -12,6 +12,7 @@
  * 运行：php tests/php/template.test.php
  */
 
+if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 define('__TYPECHO_ROOT_DIR__', dirname(__DIR__, 2));
 
 /** Typecho Helper 的最小桩：只需支持 isset($options->x) 与 $options->x 读取。 */
@@ -41,6 +42,25 @@ class Helper
 }
 
 require dirname(__DIR__, 2) . '/core/App.php';
+
+// 模板测试只隔离内核依赖；真实令牌/Request API 另由 typecho13.integration.php 验证。
+class TemplateSecurity
+{
+    public static function alloc() { return new self(); }
+    public function getToken($url) { return 'template-test-token'; }
+}
+class TemplateRequest
+{
+    public static $parent = 0;
+    public static function getInstance() { return new self(); }
+    public function __construct($request = null) {}
+    public function getRequestUrl() { return 'https://example.com/post/1'; }
+    public function filter($name) { return $this; }
+    public function get($name, $default = null) { return self::$parent; }
+}
+class_alias('TemplateSecurity', 'Widget\\Security');
+class_alias('TemplateRequest', 'Typecho\\Request');
+class_alias('TemplateRequest', 'Typecho\\Widget\\Request');
 
 function _t($string)
 {
@@ -111,6 +131,7 @@ final class FakeUser
 final class FakeOptions
 {
     public $commentsRequireMail = 0;
+    public $commentsRequireUrl = 0;
 }
 
 final class FakeComment
@@ -119,12 +140,14 @@ final class FakeComment
     public $ownerId = 1;
     public $levels;
     public $id;
+    public $coid;
     public $authorName;
     public $contentHtml;
 
     public function __construct($id, $authorName, $contentHtml, $levels = 0, $authorId = 0)
     {
         $this->id = $id;
+        $this->coid = (int)$id;
         $this->authorName = $authorName;
         $this->contentHtml = $contentHtml;
         $this->levels = $levels;
@@ -220,6 +243,11 @@ final class FakeComments
         $this->pageNavCalled = true;
         echo '<div class="page-navigator">' . $prev . $next . '</div>';
     }
+
+    public function cancelReply($word = '')
+    {
+        echo '<a id="cancel-comment-reply-link" href="#respond" style="display:none" onclick="return TypechoComment.cancelReply();">' . $word . '</a>';
+    }
 }
 
 final class FakeArchive
@@ -231,6 +259,7 @@ final class FakeArchive
     public $allowComment = true;
     /** 记录 commentsNum 收到的三段文案，便于断言文案确实来自调用方 */
     public $countArgs = null;
+    public $remembered = array();
 
     /* 文章页（post.php）需要的一组字段 */
     public $titleText = '文章标题';
@@ -272,9 +301,11 @@ final class FakeArchive
         }
     }
 
-    public function remember($key)
+    public function remember($key, $return = false)
     {
-        echo '';
+        $value = isset($this->remembered[$key]) ? $this->remembered[$key] : '';
+        if ($return) return $value;
+        echo htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
     }
 
     public function title()
@@ -415,7 +446,10 @@ checkNotContains('祝福板：未关闭评论时不出现关闭提示', $html, '
 /* 嵌套回复入口 */
 checkContains('嵌套开启：渲染回复链接', $html, "TypechoComment.reply('comment-101', 101)");
 checkContains('嵌套开启：回复入口类名 cp-{id}', $html, 'comment-reply cp-comment-101');
-checkContains('嵌套开启：取消回复类名 cl-{id}', $html, 'cancel-comment-reply cl-comment-101');
+checkContains('嵌套开启：取消回复随表单移动', $html, 'data-brave-cancel-reply');
+checkSame('嵌套开启：取消回复链接 id 唯一', substr_count($html, 'id="cancel-comment-reply-link"'), 1);
+checkContains('表单：携带内核令牌', $html, 'name="_" value="template-test-token"');
+checkContains('嵌套开启：回复目标为整数', $html, 'data-brave-reply-to="101"');
 checkContains('嵌套开启：取消回复走内核脚本', $html, 'TypechoComment.cancelReply()');
 
 /* ------------------------------------------------------------------ *
@@ -542,8 +576,22 @@ $htmlClosed = $archive->renderTemplate('post.php');
 checkNotContains('文章页：关闭评论且无评论时不出评论区', $htmlClosed, '<section id="comments"');
 checkNotContains('文章页：关闭评论且无评论时不出关闭提示', $htmlClosed, '留言暂已关闭');
 
-/* ------------------------------------------------------------------ *
- * 汇总
- * ------------------------------------------------------------------ */
+$archive = makeArchive();
+$archive->remembered = array('author' => '\"><img src=x onerror=alert(1)>', 'mail' => 'a\" autofocus onfocus=alert(1)', 'url' => '\"><script>x</script>');
+$archive->options->commentsRequireUrl = 1;
+TemplateRequest::$parent = 101;
+$html = $archive->render();
+checkContains('无 JS 回复：保留 replyTo', $html, 'id="comment-parent" value="101"');
+checkNotContains('记忆字段：不能注入 img', $html, '<img src=x');
+checkNotContains('记忆字段：不能注入 script', $html, '<script>');
+checkContains('网址必填：尊重内核配置', $html, 'placeholder="网站/博客*"');
+checkContains('记忆字段：引号转义', $html, '&quot;');
+TemplateRequest::$parent = 0;
+
+Helper::$opts['commentsAntiSpam'] = '0';
+$html = $archive->render();
+checkNotContains('内核明确关闭 AntiSpam：不输出令牌', $html, 'name="_"');
+
+/* 汇总 */
 echo "\n模板测试：{$passed} passed, {$failed} failed\n";
 exit($failed === 0 ? 0 : 1);

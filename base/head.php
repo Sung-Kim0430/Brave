@@ -14,20 +14,24 @@ $enableDarkMode = App::optionFlag('enableDarkMode', false);
 $cspPolicy = '';
 $cspHeaderSent = false;
 $cspHeaderRejected = false;
-$cspBlocksInlineScript = false;
 if ($enableCSP) {
     $customCsp = App::optionValue('cspPolicy', '');
-    $customCsp = trim($customCsp);
-    if ($customCsp !== '') {
+    // 站长自定义严格策略可写 'nonce-{nonce}'；替换为本响应随机值，禁止静态 nonce 复用。
+    $customCsp = str_replace('{nonce}', App::scriptNonce(), trim($customCsp));
+    if ($customCsp !== '' && App::validCspPolicy($customCsp)) {
         $cspPolicy = $customCsp;
     } else {
+        // 非法自定义策略必须回到有效默认策略；不能把被拒绝的值再塞进 meta 造成静默失防。
+        $cspHeaderRejected = ($customCsp !== '');
         $styleSrc = array("'self'", "'unsafe-inline'");
-        $scriptSrc = array("'self'", "'unsafe-inline'");
+        // 默认禁止 inline onclick/onerror。主题自身内联脚本逐个携带随机 nonce。
+        // 开启高权限自定义代码时保留原有兼容行为，这一开关只适合可信管理员。
+        $scriptSrc = array("'self'", $enableCustomCode ? "'unsafe-inline'" : "'nonce-" . App::scriptNonce() . "'");
         $fontSrc = array("'self'", 'data:');
 
         if ($assetsSource === 'cdn') {
-            $styleSrc[] = 'https://cdn.staticfile.org';
-            $scriptSrc[] = 'https://cdn.staticfile.org';
+            $styleSrc[] = 'https://cdn.jsdelivr.net';
+            $scriptSrc[] = 'https://cdn.jsdelivr.net';
         }
 
         if ($enableRemoteFont) {
@@ -55,12 +59,6 @@ if ($enableCSP) {
             "connect-src 'self';";
     }
 
-    // 自定义策略若禁用了内联脚本，页面里的内联 onload 处理器会被拦，
-    // 因此需要把 style.css 从「preload + onload 切换」改为同步加载（见下方样式加载分支）。
-    if (stripos($cspPolicy, "'unsafe-inline'") === false) {
-        $cspBlocksInlineScript = true;
-    }
-
     // Prefer response headers over meta tags when possible.
     if ($cspPolicy !== '' && !headers_sent()) {
         // Remove control chars AND newlines to prevent header injection
@@ -72,25 +70,35 @@ if ($enableCSP) {
         // report-uri、逗号、@ 等字符，过严会把合法策略判为非法并静默降级。
         if (strpbrk($cspHeader, '<>') === false && strlen($cspHeader) < 4000) {
             header('Content-Security-Policy: ' . $cspHeader);
-            // Add additional security headers
-            header('X-Content-Type-Options: nosniff');
-            header('X-Frame-Options: SAMEORIGIN');
-            header('Referrer-Policy: strict-origin-when-cross-origin');
             $cspHeaderSent = true;
         } else {
             $cspHeaderRejected = true;
         }
     }
 }
+// 这些响应头不依赖 CSP 开关，关闭 CSP 不应同时关闭 MIME/Referer/点击劫持防护。
+if (!headers_sent()) {
+    header('X-Content-Type-Options: nosniff');
+    header('X-Frame-Options: SAMEORIGIN');
+    header('Referrer-Policy: strict-origin-when-cross-origin');
+}
 ?>
 <!DOCTYPE html>
 <html lang="<?php echo App::escapeHtml(App::htmlLang()); ?>"<?php if ($enableDarkMode) : ?> data-darkmode="1"<?php endif; ?>>
 <head>
-    <meta charset="<?php $this->options->charset(); ?>">
+    <meta charset="<?php echo App::escapeHtml(App::optionValue('charset', 'UTF-8')); ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <?php if ($cspHeaderRejected) : ?>
+        <!-- 自定义 CSP 含非法字符或过长，已使用内置默认策略。 -->
+    <?php endif; ?>
+    <?php if ($enableCSP && !$cspHeaderSent) : ?>
+        <!-- CSP 响应头不可用时回退 meta；不支持 frame-ancestors / report-uri / sandbox。 -->
+        <?php /* 必须早于脚本、样式和内核 header()：meta CSP 不会追溯限制已加载的资源。 */ ?>
+        <meta http-equiv="Content-Security-Policy" content="<?php echo App::escapeHtml($cspPolicy); ?>">
+    <?php endif; ?>
     <?php if ($enableDarkMode) : ?>
         <meta name="color-scheme" content="light dark">
-        <script>
+        <script nonce="<?php echo App::escapeHtml(App::scriptNonce()); ?>">
             (function() {
                 try {
                     var key = 'brave-theme';
@@ -115,7 +123,11 @@ if ($enableCSP) {
     $archiveTitleText = ob_get_clean();
     ?>
     <title><?php echo App::escapeHtml($archiveTitleText); ?><?php echo App::escapeHtml(App::optionValue('title', '')); ?></title>
-	    <?php $this->header(); ?>
+	    <?php
+        // 评论令牌由表单携带，回复交互由外部 comments.js 提供，避免原生内联脚本在
+        // PJAX 后不初始化，以及 nonce CSP 下被浏览器阻止。其余元数据和插件钩子保留。
+        $this->header('antiSpam=&commentReply=');
+        ?>
 
     <!-- Critical CSS: Inline above-the-fold styles for faster FCP -->
     <style>
@@ -127,41 +139,30 @@ if ($enableCSP) {
         .card{background:var(--brave-card-bg);border:1px solid var(--brave-card-border);border-radius:var(--brave-radius-md);margin-bottom:var(--brave-spacing-lg);}
     </style>
 
-    <?php if ($cspBlocksInlineScript) : ?>
-        <?php /* 自定义 CSP 未包含 'unsafe-inline'，内联 onload 会被拦截导致样式永不加载，故同步加载完整样式表 */ ?>
-        <link rel="stylesheet" href="<?php $this->options->themeUrl('/base/style.css'); ?>">
-    <?php else : ?>
-        <!-- Preload and async load full CSS -->
-        <link rel="preload" href="<?php $this->options->themeUrl('/base/style.css'); ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
-        <noscript><link rel="stylesheet" href="<?php $this->options->themeUrl('/base/style.css'); ?>"></noscript>
-    <?php endif; ?>
-
     <?php if ($enableRemoteFont) : ?>
         <link href="https://gfonts.ctfile.com/css2?family=Inter:wght@400;700&display=swap"
               rel="stylesheet">
     <?php endif; ?>
 
-    <?php if ($enableCSP && !$cspHeaderSent) : ?>
-        <!-- CSP 未通过响应头发送，已回退为 http-equiv；该形式不支持 frame-ancestors / report-uri / sandbox。<?php echo $cspHeaderRejected ? '（原因：自定义策略含非法字符，尖括号不合法）' : ''; ?> -->
-        <meta http-equiv="Content-Security-Policy" content="<?php echo htmlspecialchars($cspPolicy, ENT_QUOTES, 'UTF-8'); ?>">
-    <?php endif; ?>
-
     <?php if ($assetsSource === 'cdn') : ?>
-        <link href="https://cdn.staticfile.org/bootstrap/4.6.2/css/bootstrap.min.css" type="text/css"
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" type="text/css"
               rel="stylesheet"
               <?php if ($enableSRI) : ?>integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous"<?php endif; ?> />
-        <script src="https://cdn.staticfile.org/jquery/3.7.1/jquery.min.js"
+        <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"
                 type="application/javascript"
                 <?php if ($enableSRI) : ?>integrity="sha384-1H217gwSVyLSIfaLxHbE7dRb3v4mYCKbpQvzx0cegeju1MVsGrX5xXxAvs/HgeFs" crossorigin="anonymous"<?php endif; ?>></script>
-        <script src="https://cdn.staticfile.org/bootstrap/4.6.2/js/bootstrap.bundle.min.js" type="application/javascript"
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js" type="application/javascript"
                 <?php if ($enableSRI) : ?>integrity="sha384-Fy6S3B9q64WdZWQUiU+q4/2Lc9npb8tCaSX9FK7E8HnRr0Jz8D6OP9dO5Vg3Q9ct" crossorigin="anonymous"<?php endif; ?>></script>
 	    <?php else : ?>
 	        <link href="<?php $this->options->themeUrl('/base/vendor/bootstrap-4.6.2.min.css'); ?>" type="text/css"
 	              rel="stylesheet" />
 	        <script src="<?php $this->options->themeUrl('/base/vendor/jquery-3.7.1.min.js'); ?>"
-	                type="application/javascript"></script>
+	                 type="application/javascript"></script>
 	        <script src="<?php $this->options->themeUrl('/base/vendor/bootstrap-4.6.2.bundle.min.js'); ?>" type="application/javascript"></script>
 	    <?php endif; ?>
+        <?php /* 主题样式必须在 Bootstrap 后，确保最终层叠顺序稳定。
+                 普通 stylesheet 可被预加载扫描器并行发现；不依赖被 CSP 禁止的 onload 属性。 */ ?>
+        <link rel="stylesheet" href="<?php $this->options->themeUrl('/base/style.css'); ?>">
 	    <?php if ($enableCustomCode) : ?>
 		    <?php
 		    // WARNING: Custom code is executed without sanitization
@@ -175,6 +176,7 @@ if ($enableCSP) {
 		    // 历史实现用负向先行做域名校验，因 `["\']?` 可选导致白名单内脚本也被阻断，已修正。
 		    $customCodeTrustedHosts = array(
 		        'cdn.staticfile.org',
+                'cdn.jsdelivr.net',
 		        (string)parse_url(App::optionValue('siteUrl', ''), PHP_URL_HOST)
 		    );
 		    $customHeadBlocked = App::findUntrustedScriptHosts($customHead, $customCodeTrustedHosts);

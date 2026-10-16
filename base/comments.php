@@ -96,11 +96,9 @@ if (!function_exists('threadedComments')) {
                     <?php if (App::optionFlag('commentsThreaded', false)) : ?>
                         <?php /* 回复/取消回复的类名与内核 TypechoComment 脚本约定一致：cp-{id} / cl-{id} */ ?>
                         <div class="comment-actions">
-                            <span class="comment-reply cp-<?php $comments->theId(); ?>">
+                            <?php /* coid 只能作为整数使用；外部脚本通过委托事件实现 PJAX 后的回复。 */ ?>
+                            <span class="comment-reply cp-<?php $comments->theId(); ?>" data-brave-reply-to="<?php echo (int)$comments->coid; ?>" data-brave-comment-id="<?php $comments->theId(); ?>">
                                 <?php $comments->reply(_t('回复')); ?>
-                            </span>
-                            <span class="cancel-comment-reply cl-<?php $comments->theId(); ?>" style="display:none">
-                                <?php $comments->cancelReply(_t('取消回复')); ?>
                             </span>
                         </div>
                     <?php endif; ?>
@@ -123,9 +121,19 @@ if (!function_exists('threadedComments')) {
     <?php endif; ?>
     <?php if ($commentFormOpen) : ?>
         <div id="<?php echo $commentRespondId; ?>" class="respond">
+            <?php if (App::optionFlag('commentsThreaded', false)) : ?>
+                <?php /* 内核脚本按唯一 id 查找取消入口，必须只渲染一次且随表单一起移动。 */ ?>
+                <div class="cancel-comment-reply" data-brave-cancel-reply>
+                    <?php $comments->cancelReply(_t('取消回复')); ?>
+                </div>
+            <?php endif; ?>
             <form method="post" action="<?php echo $commentFormAction; ?>" name="comment-form" id="comment-form" role="form" class="comment-form">
+                <?php if (App::optionFlag('commentsAntiSpam', true)) : ?>
+                    <?php /* 令牌来源与内核 Feedback::comment() 完全一致，支持 PJAX、触屏和无 JS 提交。 */ ?>
+                    <input type="hidden" name="_" value="<?php echo App::escapeHtml(App::commentToken()); ?>">
+                <?php endif; ?>
                 <?php /* 嵌套回复的父评论 id；内核 TypechoComment 脚本会复用这个 input（没有时才新建） */ ?>
-                <input type="hidden" name="parent" id="comment-parent" value="0">
+                <input type="hidden" name="parent" id="comment-parent" value="<?php echo App::commentReplyParent(); ?>">
                 <?php if ($this->user->hasLogin()) : ?>
                     <?php
                     $profileUrl = App::safeCardLink(App::optionValue('profileUrl', ''), '#');
@@ -133,7 +141,7 @@ if (!function_exists('threadedComments')) {
                     $screenName = App::escapeHtml($this->user->screenName);
                     ?>
                     <p><?php _e('当前身份: '); ?><a href="<?php echo $profileUrl; ?>"><?php echo $screenName; ?></a>.
-                        <a href="<?php echo $logoutUrl; ?>" title="Logout"><?php _e('退出登录'); ?> &raquo;</a>
+                        <a href="<?php echo $logoutUrl; ?>" data-pjax="false" title="Logout"><?php _e('退出登录'); ?> &raquo;</a>
                     </p>
                 <?php else : ?>
                     <div class="form-row">
@@ -142,7 +150,7 @@ if (!function_exists('threadedComments')) {
                             <input type="text" name="author" id="author"
                                    class="form-control"
                                    placeholder="<?php _e('你的称呼*'); ?>"
-                                   value="<?php $this->remember('author'); ?>"
+                                   value="<?php echo App::escapeHtml($this->remember('author', true)); ?>"
                                    required
                                    aria-required="true"
                                    aria-describedby="author-hint" />
@@ -153,7 +161,7 @@ if (!function_exists('threadedComments')) {
                             <input type="email" name="mail" id="mail"
                                    class="form-control"
                                    placeholder="<?php _e('邮箱*'); ?>"
-                                   value="<?php $this->remember('mail'); ?>"
+                                   value="<?php echo App::escapeHtml($this->remember('mail', true)); ?>"
                                    <?php if ($this->options->commentsRequireMail) : ?>required aria-required="true"<?php endif; ?>
                                    aria-describedby="mail-hint" />
                             <span id="mail-hint" class="form-hint"><?php if ($this->options->commentsRequireMail) : ?>必填<?php else : ?>选填<?php endif; ?></span>
@@ -162,10 +170,11 @@ if (!function_exists('threadedComments')) {
                             <label for="url" class="sr-only">网站</label>
                             <input type="url" name="url" id="url"
                                    class="form-control"
-                                   placeholder="<?php _e('网站/博客（可选）'); ?>"
-                                   value="<?php $this->remember('url'); ?>"
+                                   placeholder="<?php echo App::escapeHtml($this->options->commentsRequireUrl ? _t('网站/博客*') : _t('网站/博客（可选）')); ?>"
+                                   value="<?php echo App::escapeHtml($this->remember('url', true)); ?>"
+                                   <?php if ($this->options->commentsRequireUrl) : ?>required aria-required="true"<?php endif; ?>
                                    aria-describedby="url-hint" />
-                            <span id="url-hint" class="form-hint">选填</span>
+                            <span id="url-hint" class="form-hint"><?php echo $this->options->commentsRequireUrl ? '必填' : '选填'; ?></span>
                         </div>
                     </div>
                 <?php endif; ?>
@@ -176,7 +185,7 @@ if (!function_exists('threadedComments')) {
                               placeholder="<?php echo App::escapeHtml($commentPlaceholder); ?>"
                               required
                               aria-required="true"
-                              aria-describedby="textarea-hint"><?php $this->remember('text'); ?></textarea>
+                              aria-describedby="textarea-hint"></textarea>
                     <span id="textarea-hint" class="form-hint">必填</span>
                 </div>
                 <div class="form-group">

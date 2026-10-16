@@ -2,6 +2,8 @@
 
 ## 安装
 
+当前版本 Brave 1.3.1，目标 Typecho 1.3.0（PHP 7.4+，建议使用受维护版本并开启 DOM/libxml）。升级后请保存一次主题设置并清缓存。保存会同步全局评论防护、Markdown、允许标签和嵌套配置，详见 `SECURITY.md`。
+
 1. 将主题目录放到 Typecho 的主题目录中（通常是 `usr/themes/`）。
 2. 确保目录名为 `Brave`（与仓库名无关，以实际主题目录名为准）。
 3. 进入 Typecho 后台 → `控制台` → `外观`，启用 `Brave` 主题。
@@ -13,8 +15,9 @@
 - `indexPage.php`：主题首页（展示「已相伴」计时 + 三个入口卡片）
 - `commentPage.php`：祝福板（评论墙）
 - `loveListPage.php`：Love List（配合短代码渲染恋爱清单）
+- 普通独立页面不选自定义模板时走 `page.php`，复用文章正文/评论布局；`page.php` 本身不列为自定义模板。
 
-评论列表与表单实现在 `base/comments.php`，祝福板与文章页共用；两处只是文案不同（祝福板「送出祝愿 / 把祝愿写给我们」，文章页「发表评论 / 说点什么吧」）。
+评论列表与表单实现在 `base/comments.php`，祝福板与文章页共用；两处只是文案不同（祝福板按钮「送出祝愿」，文章页按钮「发表评论」）。
 
 使用方式（以 Typecho 后台为准）：
 
@@ -57,7 +60,7 @@
 安全相关（推荐保持默认）：
 
 - `commentAllowImg`：评论允许图片开关；关闭可减少追踪像素与外链风险
-- `commentAntiSpam`：评论反垃圾开关；开启可降低垃圾评论风险
+- `commentAntiSpam`：保存时同步到内核 `commentsAntiSpam`；开启使用原生令牌验证，表单直接携带令牌，不依赖鼠标/键盘启发式注入；不是验证码或请求限流
 - `commentCheckReferer`：评论 Referer 检查；默认开启，若代理/隐私策略导致评论失败可切换为兼容关闭
 - `commentMaxNestingLevels`：评论最大嵌套层数（建议 3~10）
 - `loveListTitleAllowHtml`：Love List 标题是否允许少量 HTML（兼容模式）
@@ -66,18 +69,18 @@
 - `enableDarkMode`：暗色模式开关（默认关闭）；开启后导航栏出现切换按钮：默认跟随系统，可手动切换并用 localStorage 记忆（`brave-theme`；Shift+点击恢复跟随系统）
 - `cdnEnableSRI`：CDN 模式下是否为外链资源启用 SRI（默认开启）
 - `enableCSP`：是否启用 CSP（默认开启；本地/CDN 资源模式均生效）
-- `cspPolicy`：自定义 CSP 策略（可选；留空使用主题内置默认）
+- `cspPolicy`：自定义完整 CSP 策略（可选；留空使用主题内置默认）。主题内联脚本需要 `script-src 'self' 'nonce-{nonce}'`；`{nonce}` 每响应替换为随机值。请同时配置其余指令及所用 CDN/字体域名，详见 `SECURITY.md`
 - 内置默认策略的 `img-src` 会随请求协议变化：HTTPS 站点只放行 `https:`，HTTP 站点额外放行 `http:`。HTTPS 站点若确实需要外链 http 图片，请用 `cspPolicy` 自定义
 
 站点信息 / 内容处理：
 
 - `htmlLang`：`<html lang>` 取值；留空则跟随 Typecho 语言设置（`zh_CN` 会输出 `zh-CN`），多语言或英文站点可手动填写（如 `en`、`en-US`、`ja`）。仅保留字母、数字与连字符
-- `contentMaxLength`：内容硬上限（字符数，默认 50000，可调范围 10000~200000）；评论净化与短代码解析共用。超过时先截断再继续输出，并追加「内容过长，已截断」提示；调大会增加解析开销
+- `contentMaxLength`：处理上限按 UTF-8 字节计数（默认 50000，范围 10000~200000，中文通常每字 3 字节）。评论净化超限会截断并提示；文章/清单短代码超限会跳过解析、保留原文，不截断文章
 
 评论与嵌套回复：
 
-- 入口由 Typecho 内核的「启用评论回复」（`commentsThreaded`）控制：在后台「设置 → 评论」开启后，每条评论下方会出现「回复 / 取消回复」
-- 回复依赖内核 `$this->header()` 注入的 `TypechoComment` 脚本；主题已提供 `parent` 隐藏字段承载父评论 id
+- 入口由内核 `commentsThreaded` 控制；满足内核回复权限/层数条件的评论会显示回复链接，取消入口位于表单中且只出现一次
+- 回复由外部 `base/comments.js` 委托事件处理，支持默认 nonce CSP 与 PJAX；令牌由表单直接携带，`parent` 承载父评论 id。无 JS 时保留内核 `replyTo` 回退；不要重新开启原生 header 的内联评论脚本
 - 祝福板关闭新评论时，已有祝愿仍会展示，仅隐藏提交表单并显示「留言暂已关闭」
 - 文章页的评论区同样受内核控制：单篇文章的「允许评论」关闭时不显示表单；若该文既无评论又关闭了评论，则整块不输出（不会留下空标题或提示）
 - 文章页底部另有「上一篇 / 下一篇」导航与分类、标签；两篇相邻文章都不存在时导航整块不输出
@@ -108,3 +111,5 @@
 - `status="0"`：未完成（显示 `svg/todo.svg`）
 - `status="1"`：已完成（显示 `svg/ok.svg`）
 - `img`：卡片背景图（渲染为 `background-image`）
+
+默认 CSP 禁止内联事件/未授权脚本；插件、自定义文章脚本和自定义 cspPolicy 需要站长明确配置。CSP/SRI 的边界与评论缓存要求见 [SECURITY.md](SECURITY.md)。

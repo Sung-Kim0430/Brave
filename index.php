@@ -5,9 +5,9 @@
  * @package     Brave
  * @author      Sung Kim
  * @creator     Veen Zhao
- * @version     1.3
+ * @version     1.3.1
  * @link        https://blog.zwying.com
- * @update      2026/9/11 22:30
+ * @update      2026/10/16 (previous Git revision: 2026/9/11)
  */
 if (!defined('__TYPECHO_ROOT_DIR__')) exit;
 if (!class_exists('App', false)) {
